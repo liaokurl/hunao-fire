@@ -354,7 +354,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
 <script src="three.min.js"></script>
 <script>
 (()=>{'use strict';
-const VERSION='車干製V2.2';
+const VERSION='車干製V2.3';
 const $=id=>document.getElementById(id);
 (function cover(){ const t=$('ovTitle'), im=new Image(); im.onload=()=>{t.style.backgroundImage='url(cover.jpg)'}; im.onerror=()=>t.classList.add('nocover'); im.src='cover.jpg'; })();
 if(!window.THREE){ $('tSub').textContent='3D 元件載入失敗，請檢查網路後重新整理'; return; }
@@ -371,7 +371,7 @@ const stars=n=>'★'.repeat(n)+'☆'.repeat(5-n);
 
 /* ============ 資料表（日後擴充階級只要加在這裡） ============ */
 const STAGES=[
- {name:'小型分隊',station:'圳頂分隊',crew:4, fire:1,amb:1,tank:0,grid:13,step:[3,3,4],sw:2,slots:3,xp:1200,perDay:5, zones:'res',burst:0},
+ {name:'小型分隊',station:'圳頂分隊',zd:true,crew:4, fire:1,amb:1,tank:0,grid:13,step:[3,3,4],sw:2,slots:3,xp:1200,perDay:5, zones:'res',burst:0},
  {name:'中型分隊',station:'中興分隊',crew:8, fire:2,amb:2,tank:0,grid:19,step:[3,4],  sw:3,slots:4,xp:4000,perDay:8, zones:'mix',burst:.25},
  {name:'大型分隊',station:'府前分隊',crew:14,fire:3,amb:3,tank:1,grid:22,step:[3,4,4],sw:3,slots:5,xp:9000,perDay:12,zones:'ind',burst:.35},
 ];
@@ -385,6 +385,7 @@ const EMS_T=[
  {sub:'疾病昏倒',xp:50,serious:false,desc:'民眾倒臥路旁'},{sub:'跌倒受傷',xp:50,serious:false,desc:'長者跌倒無法起身'},
  {sub:'打架受傷',xp:50,serious:false,desc:'鬥毆後頭部流血'},{sub:'胸痛',xp:100,serious:true,desc:'患者胸悶冒冷汗'},
  {sub:'呼吸困難',xp:100,serious:true,desc:'患者喘不過氣'},{sub:'車禍',xp:100,serious:true,desc:'兩車碰撞有人受傷',crash:true},
+ {sub:'大量傷病患',xp:320,serious:true,desc:'多車事故，4 人受傷，一台救護車載不完',mci:4,minStage:1,w:.55},
 ];
 const FIRE_T=[
  {sub:'垃圾火警',xp:100,lvl:1,need:2,where:'road',prop:'trash'},{sub:'車輛火警',xp:100,lvl:1,need:2,where:'road',prop:'car'},
@@ -394,7 +395,13 @@ const FIRE_T=[
  {sub:'油罐車火警',xp:320,lvl:2,need:3,where:'road',prop:'tanker',chem:true,minStage:1,want:'chem'},
  {sub:'化學工廠火警',xp:560,lvl:3,need:4,where:'factory',minStage:2,chem:true,want:'chem'},
 ];
-const SVC_T=[{sub:'捉蛇',xp:70,desc:'民宅前有蛇出沒',type:'snake'},{sub:'貓咪受困',xp:70,desc:'貓爬上樹不敢下來',type:'cat'},{sub:'車禍受困',xp:130,desc:'駕駛卡在車內出不來',type:'crash',need:3,want:'rescue'}];
+const SVC_T=[{sub:'捉蛇',xp:70,desc:'民宅前有蛇出沒',type:'snake'},{sub:'貓咪受困',xp:70,desc:'貓爬上樹不敢下來',type:'cat'},{sub:'車禍受困',xp:130,desc:'駕駛卡在車內出不來',type:'crash',need:3,want:'rescue'},
+ {sub:'捕蜂',xp:80,desc:'屋簷下有虎頭蜂窩',type:'bee'},{sub:'路樹倒塌',xp:90,desc:'路樹倒在馬路上擋住車道',type:'tree'},{sub:'瓦斯外洩',xp:100,desc:'屋內有瓦斯味',type:'gas'},{sub:'電梯受困',xp:90,desc:'有人卡在電梯裡',type:'lift',minStage:1}];
+/* 按住就能完成的零星勤務：l 按鈕文字、d 秒數、say 完成時說的話 */
+const JOB={bee:{l:'噴除<br>蜂窩',d:5,say:'蜂窩清掉了！'},tree:{l:'鋸開<br>路樹',d:6,say:'路通了！'},gas:{l:'關閉<br>瓦斯',d:4,say:'瓦斯關好了，開窗通風'},lift:{l:'撬開<br>電梯門',d:5.5,say:'門開了，請慢慢出來'}};
+/* 圳頂分隊的轄區用真實路名 */
+const ROADS_ZD=['埔頂路二段','仁善街','公園路','埔仁路','長興街二段','仁德二街','仁德六街','仁德南街','仁善一街','仁善二街','仁善三街','仁善七街','埔頂七街','埔頂八街','埔頂六街','埔頂五街','埔頂三街','埔頂二街','埔頂一街','埔頂街','員林路一段','仁和路一段','介壽路','長興街三段','埔頂路一段','仁和路二段'];
+const PETS=[['cat','波波'],['tabby','花花'],['tabby','捲捲']];
 const LVL=['','小火','中火','大火'];
 /* 車輛：cap 水量、seats 座位（含隊長）、max 極速、turn 轉向靈活度、L/W 車身長寬。img 是 vehicles.jpg 的第幾格 */
 const VEH={
@@ -624,7 +631,7 @@ function genMap(st,seed){
     const sR=placeRect(st.sw,2,2,(a,b)=>-Math.hypot(a-N/2,b-N/2)); if(!sR)continue;
     const hR=placeRect(2,2,3,(a,b)=>Math.min(N*.55,Math.hypot(a-(sR.i0+sR.w/2),b-(sR.j0+1)))); if(!hR)continue;
     if(!connected())continue;
-    const w={N,g,seed,st}; world=w;
+    const w={N,g,seed,st,LX,LZ}; world=w;
     w.station={...sR,cx:cx(sR.i0)+(sR.w-1)*CS/2,cz:cx(sR.j0)+CS/2,W:sR.w*CS};
     w.station.front={i:sR.i0+Math.floor(sR.w/2),j:sR.j0+2};
     w.hosp={...hR,cx:cx(hR.i0)+CS/2,cz:cx(hR.j0)+CS/2}; w.hosp.drop={x:w.hosp.cx,z:w.hosp.cz+CS+5}; w.hosp.cell={i:hR.i0,j:hR.j0+2};
@@ -822,8 +829,9 @@ const PR={cone:.45,bin:.6,scooter:.8,crate:.6,stool:.42,pot:.5,melon:.48,ball:.4
 function animalMesh(k){ let p;
   if(k==='dog')p=[B(0xb5803a,.5,.5,1,0,.6,0),Sp(0xb5803a,.56,0,.95,.55),B(0x8a5a22,.14,.3,.1,-.18,1.25,.5),B(0x8a5a22,.14,.3,.1,.18,1.25,.5),Sp(0x1d1d1d,.12,0,.9,.84),Sp(0x1d1d1d,.08,-.14,1.05,.76),Sp(0x1d1d1d,.08,.14,1.05,.76),B(0xb5803a,.1,.1,.5,0,.9,-.6,[.8,0,0]),
     B(0x8a5a22,.14,.4,.14,-.16,.2,.36),B(0x8a5a22,.14,.4,.14,.16,.2,.36),B(0x8a5a22,.14,.4,.14,-.16,.2,-.36),B(0x8a5a22,.14,.4,.14,.16,.2,-.36)];
-  else if(k==='cat')p=[B(0xf0a04b,.4,.4,.8,0,.45,0),Sp(0xf0a04b,.5,0,.75,.42),Ko(0xf0a04b,.16,.22,-.14,1.05,.42),Ko(0xf0a04b,.16,.22,.14,1.05,.42),Sp(0x1d1d1d,.07,-.12,.8,.64),Sp(0x1d1d1d,.07,.12,.8,.64),B(0xf0a04b,.08,.08,.6,0,.7,-.55,[1,0,0]),
-    B(0xd98a35,.1,.3,.1,-.13,.15,.28),B(0xd98a35,.1,.3,.1,.13,.15,.28),B(0xd98a35,.1,.3,.1,-.13,.15,-.28),B(0xd98a35,.1,.3,.1,.13,.15,-.28)];
+  else if(k==='cat'||k==='tabby'){ const c1=k==='cat'?0xf0a04b:0x9a8c74, c2=k==='cat'?0xd98a35:0x5a4f40; p=[B(c1,.4,.4,.8,0,.45,0),Sp(c1,.5,0,.75,.42),Ko(c1,.16,.22,-.14,1.05,.42),Ko(c1,.16,.22,.14,1.05,.42),Sp(0x1d1d1d,.07,-.12,.8,.64),Sp(0x1d1d1d,.07,.12,.8,.64),B(c1,.08,.08,.6,0,.7,-.55,[1,0,0]),
+    B(c2,.1,.3,.1,-.13,.15,.28),B(c2,.1,.3,.1,.13,.15,.28),B(c2,.1,.3,.1,-.13,.15,-.28),B(c2,.1,.3,.1,.13,.15,-.28)];
+    if(k==='tabby')p.push(B(c2,.42,.06,.1,0,.66,.2),B(c2,.42,.06,.1,0,.66,0),B(c2,.42,.06,.1,0,.66,-.2),B(c2,.1,.05,.12,0,.99,.5),Sp(0xffffff,.2,0,.62,.6,[1,.7,.5])); }
   else if(k==='snake')p=[Sp(0x4f9d2d,.34,0,.17,.7),Sp(0x6dbb3a,.3,.12,.15,.4),Sp(0x4f9d2d,.3,-.1,.15,.1),Sp(0x6dbb3a,.28,.1,.14,-.2),Sp(0x4f9d2d,.24,-.08,.12,-.5),Sp(0x6dbb3a,.18,0,.1,-.75),Sp(0x1d1d1d,.06,-.08,.26,.82),Sp(0x1d1d1d,.06,.08,.26,.82),B(0xe63946,.04,.02,.2,0,.14,.95)];
   else if(k==='pig')p=[Sp(0xf5a9b8,1.1,0,.7,0,[.8,.75,1.25]),Sp(0xf5a9b8,.7,0,.85,.75),Cy(0xe88aa0,.34,.2,0,.8,1.12,[Math.PI/2,0,0]),Sp(0x1d1d1d,.08,-.16,1,.98),Sp(0x1d1d1d,.08,.16,1,.98),Ko(0xe88aa0,.22,.26,-.22,1.25,.7),Ko(0xe88aa0,.22,.26,.22,1.25,.7),Sp(0xe88aa0,.18,0,.9,-.7),
     B(0xe88aa0,.18,.4,.18,-.25,.2,.4),B(0xe88aa0,.18,.4,.18,.25,.2,.4),B(0xe88aa0,.18,.4,.18,-.25,.2,-.4),B(0xe88aa0,.18,.4,.18,.25,.2,-.4)];
@@ -969,7 +977,11 @@ function buildWorld(){
     const lb=textSprite('西瓜','#2f8f3f','#ffffff',2.4,.6); lb.position.set(p.x,3.3,p.z+3.2); WG.add(lb);
     for(let k=0;k<5;k++)addProp('melon',p.x-1.6+k*.8,p.z+4.4+(k%2)*.5);
     for(let k=0;k<4;k++){const m=animalMesh('chicken');WG.add(m);G.animals.push({kind:'chicken',mesh:m,x:p.x+R(-3,3),z:p.z+R(-3,1),h:R(0,6),hx:p.x,hz:p.z,tx:p.x,tz:p.z,wait:R(0,3),y:0,vy:0,bubY:2.2,cool:0,scare:0})} }
-  for(let k=0;k<2+(S?S.stage:0);k++){const r=pick(w.roads), m=animalMesh('dog');WG.add(m);G.animals.push({kind:'dog',mesh:m,x:r.x+3.5,z:r.z+3.5,h:0,hx:r.x,hz:r.z,tx:r.x+3.5,tz:r.z+3.5,wait:R(0,3),y:0,vy:0,bubY:2.6,cool:0,follow:0,scare:0})}
+  const petName=(a,nm)=>{ a.name=nm; const t=makeLabel(256,64,3.2,.8,2.2); a.mesh.add(t.sp); drawTag(t,nm,'#b5653c'); };
+  for(let k=0;k<2+(S?S.stage:0);k++){ const near=k===0, r=near?{x:s0.cx-4,z:s0.cz+12}:pick(w.roads), m=animalMesh('dog'); WG.add(m); const a={kind:'dog',mesh:m,x:r.x+3.5,z:r.z+3.5,h:0,hx:r.x,hz:r.z,tx:r.x+3.5,tz:r.z+3.5,wait:R(0,3),y:0,vy:0,bubY:2.6,cool:0,follow:0,scare:0}; G.animals.push(a); if(near)petName(a,'茱蒂'); }
+  PETS.forEach(([kind,nm],k)=>{ const hx=s0.cx+(k-1)*6, hz=s0.cz+7.5, m=animalMesh(kind); WG.add(m); const a={kind:'cat',mesh:m,x:hx,z:hz,h:R(0,6),hx,hz,tx:hx,tz:hz,wait:R(0,3),y:0,vy:0,bubY:2.3,cool:0,scare:0}; G.animals.push(a); petName(a,nm); });
+  if(st.zd){ if(w.parks.length){ const p=w.parks[0], lb=textSprite('埔頂公園','#2f8f3f','#ffffff',5.4,1.35); lb.position.set(p.x,6.4,p.z-2); WG.add(lb); }
+    const sc=bl.find(b=>b.type==='school'); if(sc){ const lb=textSprite('仁善國小','#b5503c','#ffffff',5.4,1.35); lb.position.set(sc.x,sc.h+2.6,sc.z); WG.add(lb); } }
   // 實體
   G.vehicles=[]; G.crewEnt={}; G.peds=[]; G.incidents=[]; G.ai=[]; G.unit=null; G.mission=null;
   const vt=CF?CF.vehs.map(v=>v.type):S.bays.a.filter(Boolean), tot={}, vcn={}; for(let k=0;k<st.amb;k++)vt.push('amb'); vt.forEach(t=>tot[t]=(tot[t]||0)+1);
@@ -1222,18 +1234,19 @@ $('bPromo').addEventListener('click',()=>{Snd.click();openSched()});
 /* ============ 案件 ============ */
 let incId=1;
 const hasVeh=t=>G.vehicles.some(v=>v.type===t);
+function addrOf(b){ const w=world, L=w.st.zd?ROADS_ZD:ROADS, k=Math.max(0,w.LZ.indexOf(b.j+1)), seg=w.LX.filter(x=>x<=b.i).length; return L[(k*4+seg+(w.st.zd?0:w.seed%L.length))%L.length]+' '+(((b.i*7+b.j*13)%96)*2+1)+' 號'; }
 function wpick(L,w){ let tot=0; const ws=L.map(t=>{const x=w(t);tot+=x;return x}); let r=Math.random()*tot; for(let k=0;k<L.length;k++){r-=ws[k];if(r<=0)return L[k]} return L[L.length-1]; }
 function spawnIncident(force,sub){
   const w=world, r=Math.random(), kind=force||(r<.46?'ems':r<.8?'fire':'svc');
   const far=b=>Math.hypot(b.x-w.station.cx,b.z-w.station.cz)>22&&Math.hypot(b.x-w.hosp.cx,b.z-w.hosp.cz)>22&&!b.burnt&&!G.incidents.some(n=>n.b===b);
-  const wt=t=>t.want&&!hasVeh(t.want)?.35:1;   // 需要特種車的案件：分隊沒配那台車時比較少出現，但還是會來
+  const wt=t=>(t.w||1)*(t.want&&!hasVeh(t.want)?.35:1);   // 需要特種車的案件：分隊沒配那台車時比較少出現，但還是會來
   let T, cand;
   if(kind==='fire'){ const L=FIRE_T.filter(t=>(t.minStage||0)<=S.stage); T=(sub&&FIRE_T.find(t=>t.sub===sub))||wpick(L,wt); cand=w.blds.filter(b=>b.south&&far(b)&&(T.where==='road'||b.type===T.where));
     if(T.high&&cand.length){ const mx=Math.max(...cand.map(b=>b.fl)); cand=cand.filter(b=>b.fl===mx); }
     if(!cand.length){T=FIRE_T[2];cand=w.blds.filter(b=>b.south&&far(b))} }
-  else { const L=kind==='ems'?EMS_T:SVC_T; T=(sub&&L.find(t=>t.type===sub||t.sub===sub))||wpick(L,wt); cand=w.blds.filter(b=>b.south&&far(b)); }
+  else { const A=kind==='ems'?EMS_T:SVC_T, L=A.filter(t=>(t.minStage||0)<=S.stage); T=(sub&&A.find(t=>t.type===sub||t.sub===sub))||wpick(L,wt); cand=w.blds.filter(b=>b.south&&far(b)); if(T.type==='lift'){ const o=cand.filter(b=>b.type==='office'); if(o.length)cand=o; } }
   if(!cand.length)return null; const b=pick(cand), rx=cx(b.i), rz=cx(b.j+1);
-  const inc={id:incId++,kind,sub:T.sub,desc:T.desc||'',xp:T.xp,b,road:{i:b.i,j:b.j+1},x:rx,z:rz-2.6,addr:pick(ROADS)+' '+RI(3,298)+' 號',
+  const inc={id:incId++,kind,sub:T.sub,desc:T.desc||'',xp:T.xp,b,road:{i:b.i,j:b.j+1},x:rx,z:rz-2.6,addr:addrOf(b),
     state:'pending',shown:false,age:0,lastHit:-99,spread:false,objs:[],nodes:[],by:null,want:T.want||null,high:!!T.high,chem:!!T.chem,fx:{}};
   const wreck=(c,x,z,ry)=>{const m=vmeshAt([B(c,2,.8,3.8,0,.8,0),B(c,1.9,.7,2,0,1.5,-.1),B(0x2b3d57,1.96,.5,1.4,0,1.5,-.1),B(0x2b3d57,1.7,.5,.1,0,1.5,.92)],x,0,z);m.rotation.y=ry;WG.add(m);inc.objs.push(m);return m};
   if(kind==='fire'){ inc.lvl=T.lvl; inc.need=T.need; inc.where=T.where; inc.total=inc.left=T.lvl===1?135:T.lvl===2?160:190; if(T.high||T.chem)inc.total=inc.left=inc.total+30;
@@ -1247,16 +1260,22 @@ function spawnIncident(force,sub){
     else { inc.x=b.x; inc.z=b.maxZ+.4; addBuildingNodes(inc,b,T.lvl);
       if(Math.random()<(T.trap||0)){ inc.trap={state:'in',high:!!T.high,t:T.high?120:85,prog:0,hidden:!T.high}; if(T.high){ inc.desc='頂樓有人受困'; showTrap(inc); } } }
     if(!w.hyd.some(h=>Math.hypot(h.x-rx,h.z-rz)<17)){const h={x:rx+4,z:rz+4};w.hyd.push(h);addHydrantMesh(h)} }
-  else if(kind==='ems'){ inc.need=2; inc.serious=T.serious; inc.total=inc.left=T.serious?125:155;
-    const o=randomCiv(); o.scale=1.1; const pt=makePerson(o); pt.rotation.x=-Math.PI/2; pt.position.set(inc.x,.5,inc.z+.9); WG.add(pt);
-    inc.patient={mesh:pt,x:inc.x,z:inc.z,treated:false,prog:0,state:'ground'}; inc.objs.push(pt);
-    if(T.crash){ wreck(0xe76f51,inc.x-3.4,inc.z+.4,.5); wreck(0x8ecae6,inc.x-5.4,inc.z-1.2,-1.1); } }
+  else if(kind==='ems'){ inc.need=T.mci?3:2; inc.serious=T.serious; inc.total=inc.left=T.mci?260:T.serious?125:155;
+    const mkPt=(x,z)=>{ const o=randomCiv(); o.scale=1.1; const pt=makePerson(o); pt.rotation.x=-Math.PI/2; pt.position.set(x,.5,z+.9); WG.add(pt); inc.objs.push(pt); return {mesh:pt,x,z,treated:false,prog:0,state:'ground'}; };
+    if(T.mci){ inc.mci=true; inc.x=rx; inc.z=rz-2.2; inc.pts=[]; for(let k=0;k<T.mci;k++)inc.pts.push(mkPt(rx-5.4+k*3.6,rz-2.8+(k%2)*1.7)); inc.patient=inc.pts[0]; wreck(0xe76f51,rx-8,rz-.4,.5); wreck(0x8ecae6,rx+8,rz-1.4,-1.1); wreck(0xf1f1f1,rx+.8,rz+2.3,1.45); }
+    else { inc.patient=mkPt(inc.x,inc.z); if(T.crash){ wreck(0xe76f51,inc.x-3.4,inc.z+.4,.5); wreck(0x8ecae6,inc.x-5.4,inc.z-1.2,-1.1); } } }
   else { inc.need=T.need||1; inc.type=T.type; inc.total=inc.left=150;
     if(T.type==='snake'){ const m=animalMesh('snake'); m.scale.setScalar(1.5); WG.add(m); inc.snake={mesh:m,x:inc.x,z:inc.z,h:0,tx:inc.x,tz:inc.z,miss:0,dash:0,bubY:2.2}; inc.objs.push(m); }
     else if(T.type==='crash'){ inc.x=rx+R(-1.5,1.5); inc.z=rz-1.6; wreck(0xd9a441,inc.x-.2,inc.z-.2,.45); wreck(0x6b705c,inc.x+2.5,inc.z-1.3,-1.15); inc.cut={prog:0,done:false,sfx:0};
       const tk=textSprite('困','#ff7a1a','#ffffff',3,3,true); tk.position.set(inc.x-.2,4.4,inc.z-.2); WG.add(tk); inc.objs.push(tk); }
+    else if(JOB[T.type]){ inc.job={k:T.type,prog:0,sfx:0}; let m=null;
+      if(T.type==='tree'){ inc.x=rx; inc.z=rz; m=vmeshAt([Cy(0x7a5236,.7,7.4,0,.5,0,[0,0,Math.PI/2]),Sp(0x3f9b52,2.6,-3.8,1.1,0),Sp(0x4caf50,2,-4.6,1.4,.7),Sp(0x2f8a4a,1.8,-3.2,1.3,-.8),Cy(0x7a5236,.3,1.6,1.2,.9,.5,[.9,0,.3])],rx,0,rz); m.rotation.y=.35; inc.blk={x:rx,z:rz}; G.blockers.push(inc.blk); }
+      else if(T.type==='bee'){ inc.x=b.x+b.w*.28; inc.z=b.maxZ+1.2; m=vmeshAt([Sp(0xb5803a,.9,0,2.5,-.7,[1,1.25,1]),Sp(0x8a5a22,.7,0,2.05,-.7),Sp(0x1d1d1d,.22,0,2.3,-.28),Sp(0xffd23f,.12,.5,2.7,-.2),Sp(0xffd23f,.12,-.6,2.2,0),Sp(0xffd23f,.12,.3,1.9,.2),Sp(0xffd23f,.12,-.3,3,-.3),Sp(0xffd23f,.12,.7,2.3,.3)],inc.x,0,inc.z); }
+      else { inc.x=b.doorX||b.x; inc.z=b.maxZ+1.1; }
+      if(m){ WG.add(m); inc.objs.push(m); } }
     else { const tx=inc.x+2.5, tz=inc.z-.6, tree=vmeshAt([Cy(0x7a5236,.5,3.4,0,1.7,0),Sp(0x3f9b52,3,0,4.2,0),Sp(0x4caf50,2.2,1,5,-.3),Sp(0x2f8a4a,2,-1,4.6,.4)],tx,0,tz); WG.add(tree); inc.objs.push(tree);
-      const m=animalMesh('cat'); m.scale.setScalar(1.3); WG.add(m); inc.cat={mesh:m,x:tx,z:tz+.6,y:5.6,prog:0,down:false,wet:false,bubY:2.4}; m.position.set(tx,5.6,tz+.6); inc.objs.push(m); inc.x=tx; inc.z=tz+1.6; } }
+      const cn=pick(PETS), pet=G.animals.find(a=>a.name===cn[1]); inc.desc=cn[1]+'爬上樹不敢下來'; if(pet){pet.mesh.visible=false;inc.catPet=pet}
+      const m=animalMesh(cn[0]); m.scale.setScalar(1.3); WG.add(m); inc.cat={mesh:m,x:tx,z:tz+.6,y:5.6,prog:0,down:false,wet:false,bubY:2.4}; m.position.set(tx,5.6,tz+.6); inc.objs.push(m); inc.x=tx; inc.z=tz+1.6; } }
   const col=kind==='fire'?'#df3a2c':kind==='ems'?'#2f6fd0':'#17907f';
   const mk=textSprite(kind==='fire'?'火':kind==='ems'?'救':'助',col,'#ffffff',4.6,4.6,true); mk.position.set(inc.x,kind==='fire'?Math.max(9,b.h+(inc.high?9:5)):inc.cat?10:inc.cut?8.5:7,inc.z); WG.add(mk); inc.marker=mk; inc.objs.push(mk);
   G.incidents.push(inc);
@@ -1280,12 +1299,18 @@ function rescueTrap(inc,how,quiet,fromNet){ const tr=inc.trap; if(!tr||tr.state!
   let m=tr.mesh; if(!m){ m=makePerson(randomCiv()); WG.add(m); inc.objs.push(m); tr.mesh=m; } m.position.set(tr.door.x+R(-1.5,1.5),0,tr.door.z+4.2); m.rotation.set(0,0,0); tr.e={mesh:m,bubY:4.4}; say(tr.e,pick(['謝謝消防員！','得救了…','咳咳，謝謝']),3);
   if(!quiet){ toast(how+'：受困者救出來了！','good',2600); Snd.ok(); } }
 function hurtTrap(inc){ const tr=inc.trap; tr.state='hurt'; inc.rough=true; if(tr.mk)tr.mk.visible=false; if(tr.mesh)tr.mesh.visible=false; if(tr.e)bubs.delete(tr.e); toast(inc.sub+'：受困者嗆傷送醫，評價降一星','bad',3000); Snd.fail(); }
+/* 大量傷病患：傷患一個一個處理，一台救護車只載 2 人，載不完要加派第二台或多跑一趟 */
+const toHosp=inc=>inc.kind==='ems'&&(inc.patient.state==='loaded'||!!(inc.mci&&G.unit&&G.unit.veh.load>=2&&!G.player.carry));
+function mciNext(inc){ const P=G.player, left=inc.pts.filter(p=>p.state==='ground'); if(left.length){ let b=left[0],bd=1e9; left.forEach(p=>{const d=dist(P,p);if(d<bd){bd=d;b=p}}); inc.patient=b; return; }
+  const V=G.unit&&G.unit.veh; if(V&&V.load>0){ if(inc.patient.state!=='loaded'){ inc.patient={state:'loaded',treated:true,x:inc.x,z:inc.z,mesh:inc.pts[0].mesh,prog:1}; toast('傷患都上車了，送往急診','good',2400); } }
+  else finishIncident(inc,true,G.unit?G.unit.mates:[],true); }
 /* 現場有哪些車在幫忙：供水、雲梯、泡沫、破壞器材、照護 */
-function fxOf(inc){ const fx={}; const add=(v,sup)=>{ const t=v.type; if(t==='res'&&sup)fx.supply=1; if(t==='ladder')fx.ladder=1; if(t==='chem')fx.foam=1; if(t==='rescue')fx.tool=1; if(t==='support')fx.care=1; };
+function fxOf(inc){ const fx={}; const add=(v,sup)=>{ const t=v.type; if(t==='res'&&sup)fx.supply=1; if(t==='ladder')fx.ladder=1; if(t==='chem')fx.foam=1; if(t==='rescue')fx.tool=1; if(t==='support')fx.care=1; if(t==='amb'&&sup)fx.amb2=1; };
   G.ai.forEach(m=>{ if(m.inc===inc&&(m.sup?m.phase==='stay':m.phase==='work'))add(m.veh,m.sup) }); if(G.mission&&G.mission.inc===inc&&G.unit&&dist(G.unit.veh,inc)<32)add(G.unit.veh,false);
   if(inc.net&&CO)Object.keys(CO.rem).forEach(k=>{ const e=CO.rem[k]; if(e.on&&dist(e.veh,inc)<38)add(e.veh,true) }); return fx; }
 function hitNode(inc,n,amt,o){ const fx=inc.fx||{}; let k=1; if(n.high&&!(o&&o.elev))k*=.3; if(n.chem)k*=((o&&o.foam)||fx.foam)?1.2:.3; n.hp-=amt*k; inc.lastHit=G.t; if(inc.net&&CO){ n.lh=G.t; if(CO.host)(CO.stat[CO.me]||(CO.stat[CO.me]={dmg:0,res:0})).dmg+=amt*k; else if(n.i!=null)CO.dmg[n.i]+=amt*k; } return k; }
 function supText(inc,v){ const t=v.type, f=inc.kind==='fire';
+  if(t==='amb')return inc.mci?'載送：多載 2 名傷患':null;
   if(inc.kind==='ems')return null;
   if(t==='res')return f?'供水：現場的水用不完':null;
   if(t==='ladder')return f?(inc.high||(inc.trap&&!inc.trap.hidden)?'雲梯：打高處火點、救頂樓受困':'多一支水線'):null;
@@ -1295,12 +1320,14 @@ function supText(inc,v){ const t=v.type, f=inc.kind==='fire';
   return f?'多一支水線':null; }
 function supSpot(inc,k){ const r=inc.road, g=world.g, N=world.N, ok=(i,j)=>i>=0&&j>=0&&i<N&&j<N&&g[i][j]===1, side=k%2?-1:1, n=1+Math.floor(k/2);
   if(ok(r.i+side,r.j))return {x:cx(r.i)+side*(4.5+n*3.6),z:cx(r.j)+1.8}; if(ok(r.i-side,r.j))return {x:cx(r.i)-side*(4.5+n*3.6),z:cx(r.j)+1.8}; return {x:cx(r.i)+side*2.6,z:cx(r.j)+2.4+n*1.5}; }
-function sendSup(inc,v,k){ v.state='ai'; const f=world.station.front, m={sup:true,inc,veh:v,crew:[],phase:'go',pi:0,workT:0,speed:v.M.max*.72,k}; m.path=findPath(f.i,f.j,inc.road.i,inc.road.j); m.path.push(supSpot(inc,k)); G.ai.push(m); }
+function sendSup(inc,v,k){ v.state='ai'; v.load=0; const f=world.station.front, m={sup:true,inc,veh:v,crew:[],phase:'go',pi:0,workT:0,speed:v.M.max*.72,k}; m.path=findPath(f.i,f.j,inc.road.i,inc.road.j); m.path.push(supSpot(inc,k)); G.ai.push(m); }
 function stowVeh(V){ V.ladOn=false; V.turTgt=null; }
 function updateSup(m,dt){ const V=m.veh, inc=m.inc;
   if(inc.state==='done'){ stowVeh(V); sendBack(m); return; }
   if(m.phase==='go'){ V.lights=true; if(moveAlong(V,m,dt)){ m.phase='stay'; V.v=0; V.h=V.x<inc.x?Math.PI/2:-Math.PI/2; Snd.radio(); toast(V.label+' 抵達現場支援','',1800); } return; }
-  m.workT+=dt; V.lights=true; if(inc.kind!=='fire')return; const t=V.type, tr=inc.trap;
+  m.workT+=dt; V.lights=true;
+  if(V.type==='amb'&&inc.mci){ const left=inc.pts.some(p=>p.state==='ground'||p.state==='carried'); if((V.load||0)>=2||(!left&&(V.load||0)>0)){ V.load=0; m.sup=false; const c=roadCellNear(V.x,V.z), h=world.hosp.cell; m.path=findPath(c.i,c.j,h.i,h.j); m.pi=0; m.phase='hosp'; toast(V.label+' 載著傷患送醫','',2200); Snd.blip('amb'); } return; }
+  if(inc.kind!=='fire')return; const t=V.type, tr=inc.trap;
   if(t==='ladder'){ V.ladOn=true; if(tr&&tr.state==='in'&&!tr.hidden){ V.ladTgt={x:tr.px,y:tr.py+1.2,z:tr.pz+1.4}; if(m.workT>7)rescueTrap(inc,V.label); return; } }
   if(V.M.cap<=0||t==='res')return;
   let n=m.tgt; if(!n||n.hp<=0){ const al=inc.nodes.filter(q=>q.hp>0); if(!al.length)return; n=m.tgt=(t==='ladder'&&al.find(q=>q.high))||(t==='chem'&&al.find(q=>q.chem))||al[Math.floor(Math.random()*al.length)]; }
@@ -1315,7 +1342,8 @@ function ladPose(v,dt){ const L=v.mesh.userData.lad; if(!L)return; const on=!!(v
 function ladderUp(V,inc){ const P=G.player; P.lad={veh:V,inc}; P.hose=null; V.ladOn=true; V.ladTgt={x:inc.x,y:inc.b?inc.b.h+2:4,z:inc.z+2.6}; Snd.door(); toast('雲梯升起！按住「出水」打火'+(inc.trap&&inc.trap.state==='in'&&!inc.trap.hidden?'，按「雲梯救人」接人':''),'good',2800); }
 function ladderDown(){ const P=G.player; if(!P.lad)return; const V=P.lad.veh; P.lad=null; V.ladOn=false; const p=exitSpot(V); P.x=p.x; P.z=p.z; Snd.door(); }
 function fireFrac(inc){ let a=0,b=0; inc.nodes.forEach(n=>{a+=Math.max(0,n.hp);b+=n.max}); return b?a/b:0; }
-function closeIncident(inc){ inc.objs.forEach(o=>{WG.remove(o)}); inc.nodes.forEach(n=>WG.remove(n.m)); if(inc.snake)bubs.delete(inc.snake); if(inc.cat)bubs.delete(inc.cat); if(inc.trap&&inc.trap.e)bubs.delete(inc.trap.e); const k=G.incidents.indexOf(inc); if(k>=0)G.incidents.splice(k,1); }
+function closeIncident(inc){ inc.objs.forEach(o=>{WG.remove(o)}); inc.nodes.forEach(n=>WG.remove(n.m)); if(inc.catPet)inc.catPet.mesh.visible=true; if(inc.blk){ const q=G.blockers.indexOf(inc.blk); if(q>=0)G.blockers.splice(q,1); }
+  if(inc.snake)bubs.delete(inc.snake); if(inc.cat)bubs.delete(inc.cat); if(inc.trap&&inc.trap.e)bubs.delete(inc.trap.e); const k=G.incidents.indexOf(inc); if(k>=0)G.incidents.splice(k,1); }
 function burn(b){ b.burnt=true; const c=new THREE.Color(0x3a3532); world.bodyMesh.setColorAt(b.idx,c); world.bodyMesh.instanceColor.needsUpdate=true;
   if(b.gable){world.gableMesh.setColorAt(b.gIdx,c);world.gableMesh.instanceColor.needsUpdate=true}else{world.roofMesh.setColorAt(b.rIdx,c);world.roofMesh.instanceColor.needsUpdate=true} }
 function finishIncident(inc,ok,crewList,byCaptain){
@@ -1352,16 +1380,17 @@ function openCard(inc){ if(G.mode!=='duty'||inc.state!=='pending'||G.talking)ret
   if(cs.unit){sel.cap=true;sel.veh=null} else { av.slice(0,inc.need).forEach(c=>sel.crew.add(c.id)); if(sel.crew.size<inc.need&&cs.ok&&avV.length){ sel.cap=true; } }
   if(sel.cap&&!cs.unit&&sel.crew.size+1>inc.need){ const lastId=[...sel.crew].pop(); sel.crew.delete(lastId); }
   if(inc.want){ const wv=G.vehicles.find(v=>v.state==='parked'&&v.type===inc.want&&v.id!==sel.veh&&supText(inc,v)); if(wv)sel.sup.add(wv.id); }
+  if(inc.mci){ const a2=G.vehicles.find(v=>v.state==='parked'&&v.type==='amb'&&v.id!==sel.veh); if(a2)sel.sup.add(a2.id); }
   Snd.bell(); renderCard(); show('ovCard'); }
 function renderCard(){ const inc=G.cardInc; if(!inc)return; const cs=capState(inc), k=inc.kind, fire=k!=='ems';
   const selV=G.vehicles.find(v=>v.id===sel.veh), seats=cs.unit||!selV?99:selV.M.seats; while(sel.crew.size+(sel.cap?1:0)>seats)sel.crew.delete([...sel.crew].pop());
   $('cHead').className='ph'+(k==='ems'?' ems':k==='svc'?' teal':''); $('cTitle').textContent=(k==='fire'?'火警：':k==='ems'?'緊急救護：':'為民服務：')+inc.sub; $('cTime').textContent='剩餘 '+fmtT(inc.left);
   const d=Math.hypot(inc.x-world.station.cx,inc.z-world.station.cz)/100;
-  $('cInfo').innerHTML='<div><small>地點</small>'+inc.addr+'</div><div><small>距離</small>'+d.toFixed(1)+' 公里</div><div><small>等級</small>'+(k==='fire'?LVL[inc.lvl]:k==='ems'?(inc.serious?'重大':'一般'):'一般')+'</div><div><small>需求人力</small>'+inc.need+' 人</div><div><small>建議車輛</small>'+(inc.want?VEH[inc.want].n+(hasVeh(inc.want)?'':'（分隊沒有）'):fire?'消防車':'救護車')+'</div>'+(inc.desc?'<div><small>狀況</small>'+inc.desc+'</div>':'');
+  $('cInfo').innerHTML='<div><small>地點</small>'+inc.addr+'</div><div><small>距離</small>'+d.toFixed(1)+' 公里</div><div><small>等級</small>'+(k==='fire'?LVL[inc.lvl]:k==='ems'?(inc.serious?'重大':'一般'):'一般')+'</div><div><small>需求人力</small>'+inc.need+' 人</div><div><small>建議車輛</small>'+(inc.mci?'救護車 2 台':inc.want?VEH[inc.want].n+(hasVeh(inc.want)?'':'（分隊沒有）'):fire?'消防車':'救護車')+'</div>'+(inc.desc?'<div><small>狀況</small>'+inc.desc+'</div>':'');
   const vs=G.vehicles.filter(v=>fitsVeh(inc,v));
   $('cVeh').innerHTML=vs.map(v=>{const mine=cs.unit&&G.unit.veh===v, free=v.state==='parked'&&!cs.unit;
     return '<button type="button" class="opt'+((sel.veh===v.id||(mine&&sel.cap))?' sel':'')+'" data-v="'+v.id+'"'+(free?'':' disabled')+'>'+v.label+'<small>'+(mine?'隊長使用中，可直接轉往':v.state==='parked'?'在隊待命':'出勤中')+'・座位 '+v.M.seats+(v.M.cap?'・水 '+v.M.cap:'')+'</small></button>'}).join('');
-  sel.sup.delete(sel.veh); const sups=k==='ems'?[]:G.vehicles.filter(v=>v.state==='parked'&&v.type!=='amb'&&v.id!==sel.veh&&!(cs.unit&&G.unit.veh===v)&&supText(inc,v)); [...sel.sup].forEach(id=>{if(!sups.some(v=>v.id===id))sel.sup.delete(id)});
+  sel.sup.delete(sel.veh); const sups=G.vehicles.filter(v=>v.state==='parked'&&v.id!==sel.veh&&!(cs.unit&&G.unit.veh===v)&&supText(inc,v)); [...sel.sup].forEach(id=>{if(!sups.some(v=>v.id===id))sel.sup.delete(id)});
   $('cSupLbl').hidden=$('cSup').hidden=!sups.length; $('cSup').innerHTML=sups.map(v=>'<button type="button" class="opt'+(sel.sup.has(v.id)?' sel':'')+'" data-s="'+v.id+'">'+v.label+'<small>'+supText(inc,v)+'</small></button>').join('');
   const stat=fire?'fire':'ems';
   let h='<button type="button" class="opt hav cap'+(sel.cap?' sel':'')+'" data-cap="1"'+(cs.ok?'':' disabled')+'>'+avHtml(8,'sm')+'<span>隊長親自出勤<small>'+(cs.ok?(cs.unit?'從現場直接轉往':'由你實際操作'):cs.why)+'</small></span></button>';
@@ -1375,6 +1404,7 @@ function renderCard(){ const inc=G.cardInc; if(!inc)return; const cs=capState(in
   else if(n===0){note.textContent='請至少選一名人員，或由隊長親自出勤。';note.classList.add('warn')}
   else if(n<inc.need){note.textContent=seats<inc.need?'這台車坐不下 '+inc.need+' 人，處置會比較慢。可以換座位多的車。':'人力不足，處置會比較慢。';note.classList.add('warn')}
   else note.textContent=sel.cap?'派遣後請跑到車庫上車，跟著黃色箭頭開往現場。':'隊員會自行出勤處理，結果依能力、疲勞、心情與距離而定。';
+  if(inc.mci)note.textContent+='　一台救護車只能載 2 人，記得加派第二台，不然要多跑一趟。';
   if(inc.want&&!hasVeh(inc.want))note.textContent+='　這種案件最好有'+VEH[inc.want].n+'，沒有會慢很多。';
   if(S.crew.some(c=>c.mood<30&&!isBusy(c)))note.textContent+='　有人在鬧脾氣，先去找他聊聊才派得動。';
   $('bSend').disabled=!hasV||n===0;
@@ -1389,13 +1419,13 @@ $('bSend').addEventListener('click',()=>{ const inc=G.cardInc; if(!inc)return;
   const crew=S.crew.filter(c=>sel.crew.has(c.id)); crew.forEach(c=>{const r=roleOf(c);c.fat=clamp(c.fat+8+(r===3?12:0),0,100);if(r===3)mood(c,-8);G.crewEnt[c.id].busy=true});
   inc.by=crew; const stat=inc.kind==='ems'?'ems':'fire';
   if(sel.cap){ const P=G.player; if(P.hose&&P.hose.reel)P.hose=null;
-    if(!G.unit){const v=G.vehicles.find(v=>v.id===sel.veh);v.state='player';G.unit={veh:v,mates:[],out:false}}
+    if(!G.unit){const v=G.vehicles.find(v=>v.id===sel.veh);v.state='player';v.load=0;G.unit={veh:v,mates:[],out:false}}
     G.unit.patrol=false; crew.forEach(c=>{G.unit.mates.push(c);G.crewEnt[c.id].mode='toVeh'}); inc.state='player'; G.mission={inc}; Snd.mode('go');
     toast(P.veh?'轉往下一件：'+inc.sub:'到車庫登上 '+G.unit.veh.label,'',2600); }
   else { const v=G.vehicles.find(v=>v.id===sel.veh); v.state='ai'; inc.state='ai';
     const m={inc,veh:v,crew,phase:'go',pi:0,workT:0}; const f=world.station.front; m.path=findPath(f.i,f.j,inc.road.i,inc.road.j);
     const drive=Math.max(...crew.map(c=>c.drive)); m.speed=12*(.7+drive/200);
-    m.workDur=(inc.kind==='fire'?(10+9*inc.lvl):inc.cut?16:13)/Math.max(.25,eff(crew,stat,inc,false));
+    m.workDur=(inc.kind==='fire'?(10+9*inc.lvl):inc.cut?16:inc.mci?30:13)/Math.max(.25,eff(crew,stat,inc,false));
     crew.forEach(c=>G.crewEnt[c.id].mode='hidden'); G.ai.push(m); Snd.blip(v.type==='amb'?'amb':'fire'); if(v.type!=='amb')Snd.horn();
     toast(v.label+' 出勤：'+crew.map(c=>c.name).join('、'),'',2200); }
   [...sel.sup].forEach((id,k)=>{ const v=G.vehicles.find(v=>v.id===id); if(v&&v.state==='parked')sendSup(inc,v,k) });
@@ -1406,14 +1436,14 @@ function moveAlong(V,m,dt){ const p=m.path[m.pi]; if(!p)return true; const dx=p.
   if(d<=stp){V.x=p.x;V.z=p.z;m.pi++;return m.pi>=m.path.length} V.x+=dx/d*stp; V.z+=dz/d*stp; V.h=angLerp(V.h,Math.atan2(dx,dz),Math.min(1,dt*8)); V.v=m.speed; return false; }
 function sendBack(m){ const c=roadCellNear(m.veh.x,m.veh.z), f=world.station.front; m.path=findPath(c.i,c.j,f.i,f.j); m.path.push({x:m.veh.bay.x,z:m.veh.bay.z}); m.pi=0; m.phase='back'; m.veh.lights=false; m.crew.forEach(c=>G.crewEnt[c.id].mode='hidden'); }
 function homeCrew(c){ const e=G.crewEnt[c.id], s0=world.station; e.busy=false; e.mode='idle'; e.x=s0.cx+R(-3,3); e.z=s0.cz+R(-7,-3); e.y=0; }
-function aiRate(inc){ const fx=inc.fx||{}; let r=1; if(inc.high&&!fx.ladder)r*=.55; if(inc.chem&&!fx.foam)r*=.55; if(inc.cut&&!fx.tool)r*=.5; if(fx.care)r*=1.2; return r; }
+function aiRate(inc){ const fx=inc.fx||{}; let r=1; if(inc.high&&!fx.ladder)r*=.55; if(inc.chem&&!fx.foam)r*=.55; if(inc.cut&&!fx.tool)r*=.5; if(inc.mci&&!fx.amb2)r*=.6; if(fx.care)r*=1.2; return r; }
 function updateAI(dt){
   for(let k=G.ai.length-1;k>=0;k--){ const m=G.ai[k], V=m.veh, inc=m.inc;
     if(m.sup&&m.phase!=='back'){ updateSup(m,dt); continue; }
     if((m.phase==='go'||m.phase==='work')&&inc.state==='done'){sendBack(m)}
     if(m.phase==='go'){ V.lights=true; if(moveAlong(V,m,dt)){ m.phase='work'; V.v=0; m.crew.forEach((c,i)=>{const e=G.crewEnt[c.id];e.mode='work';e.x=inc.x+(i-(m.crew.length-1)/2)*2.2;e.z=inc.z+(inc.kind==='fire'?6:1.8);e.h=Math.PI;e.y=0;e.tgt=inc}); if(inc.trap&&inc.trap.hidden){showTrap(inc);m.workDur*=1.2;Snd.radio();toast(inc.sub+'：現場回報有人受困，搜救中','bad',2600)} } }
     else if(m.phase==='work'){ m.workT+=dt*aiRate(inc); inc.lastHit=G.t; if(inc.trap&&inc.trap.state==='in'&&m.workT>m.workDur*.5)rescueTrap(inc,m.crew.map(c=>c.name).join('、'));
-      if(inc.kind==='fire'){ const f=1-m.workT/m.workDur; inc.nodes.forEach(n=>n.hp=Math.min(n.hp,n.max*Math.max(0,f))) } else if(inc.kind==='ems')inc.patient.treated=true;
+      if(inc.kind==='fire'){ const f=1-m.workT/m.workDur; inc.nodes.forEach(n=>n.hp=Math.min(n.hp,n.max*Math.max(0,f))) } else if(inc.kind==='ems'){ inc.patient.treated=true; if(inc.mci)inc.pts.forEach(q=>q.treated=true); }
       if(m.workT>=m.workDur){ finishIncident(inc,true,m.crew,false);
         if(inc.kind==='ems'){ const c=roadCellNear(V.x,V.z), h=world.hosp.cell; m.path=findPath(c.i,c.j,h.i,h.j); m.pi=0; m.phase='hosp'; m.crew.forEach(c=>G.crewEnt[c.id].mode='hidden') } else sendBack(m); } }
     else if(m.phase==='hosp'){ V.lights=true; if(moveAlong(V,m,dt))sendBack(m) }
@@ -1450,6 +1480,9 @@ function getUse(){ const P=G.player, U=G.unit, M=G.mission; if(G.mode!=='duty'||
   if(inc&&inc.trap&&inc.trap.state==='in'&&!inc.trap.hidden&&!inc.trap.high&&!P.carry&&dist(P,inc.trap.door)<2.8)return {label:'入室<br>搶救',fn(){enterIndoor(inc)}};
   if(U){ const V=U.veh, dV=dist(P,V);
     if(P.lad){ const li=P.lad.inc, tr=li.trap; if(tr&&tr.state==='in'&&!tr.hidden)return {label:'雲梯<br>救人',fn(){rescueTrap(li,'雲梯')}}; return {label:'收梯<br>下來',fn(){ladderDown()}}; }
+    if(P.carry&&inc&&inc.mci){ let amb=dV<5.2?V:null; if(!amb)G.ai.forEach(m=>{ if(m.sup&&m.inc===inc&&m.phase==='stay'&&m.veh.type==='amb'&&dist(P,m.veh)<5.2)amb=m.veh }); if(!amb)return null;
+      if((amb.load||0)>=2)return {label:'這台<br>滿了',fn(){toast('一台救護車只能載 2 人，送上另一台，或先送醫再回來','bad',2600)}};
+      return {label:'送上<br>救護車',fn(){ const pt=inc.patient; P.carry=false; pt.state='gone'; pt.mesh.visible=false; amb.load=(amb.load||0)+1; Snd.door(); toast(amb.label+' 已載 '+amb.load+'／2 人','good',1800); mciNext(inc); }}; }
     if(P.carry&&dV<5.2)return {label:'送上<br>救護車',fn(){P.carry=false;inc.patient.state='loaded';inc.patient.mesh.visible=false;Snd.door();toast('傷患已上車，開往急診','good',2200)}};
     if(P.carry)return null;
     if(inc&&inc.kind==='ems'&&inc.patient.state==='ground'&&inc.patient.treated&&dist(P,inc.patient)<3)return {label:'抬上<br>擔架',fn(){inc.patient.state='carried';P.carry=true;Snd.click()}};
@@ -1468,7 +1501,8 @@ function getUse(){ const P=G.player, U=G.unit, M=G.mission; if(G.mode!=='duty'||
     if(bv)return {label:'上車<br><small>巡邏</small>',fn(){bv.state='player';G.unit={veh:bv,mates:[],out:false,patrol:true};P.veh=bv;Snd.door()}}; }
   if(!(inc&&inc.kind==='fire')){ const h=nearestHyd(P,2.4); if(h&&h.fount<=0)return {label:'開<br>消防栓',fn(){h.fount=7;Snd.pop();toast('噴泉！…等等會被罵吧','fun',2000)}}; }
   let be=null,bed=2.8; for(const id in G.crewEnt){const e=G.crewEnt[id]; if(!e.mesh.visible||e.mode==='work'||e.mode==='scene'||e.mode==='toVeh'||G.t<e.talk)continue; const d=dist(P,e); if(d<bed){bed=d;be=e}} if(be)return {label:'聊天',fn(){crewTalk(be)}};
-  let ba=null,bad=2.4; G.animals.forEach(a=>{if(a.kind!=='dog'||G.t<a.cool)return;const d=dist(P,a);if(d<bad){bad=d;ba=a}}); if(ba)return {label:'摸摸',fn(){ba.cool=G.t+6;ba.follow=G.t+30;say(ba,'汪！',2);Snd.animal('dog');toast('牠決定跟著你','fun',1800)}};
+  let ba=null,bad=2.4; G.animals.forEach(a=>{if((a.kind!=='dog'&&a.kind!=='cat')||!a.mesh.visible||G.t<a.cool)return;const d=dist(P,a);if(d<bad){bad=d;ba=a}});
+  if(ba)return {label:'摸摸',fn(){ ba.cool=G.t+6; if(ba.kind==='dog'){ba.follow=G.t+30;say(ba,'汪！',2);Snd.animal('dog');toast((ba.name||'牠')+'決定跟著你','fun',1800)} else {say(ba,pick(['喵～','呼嚕呼嚕','喵？']),2);Snd.animal('cat');toast((ba.name||'貓咪')+pick(['蹭了你一下','翻肚子給你看','伸了個懶腰']),'fun',1800)} }};
   let bp=null,bpd=2.7; G.peds.forEach(p=>{if(p.state!=='walk'||G.t<p.cool)return;const d=dist(P,p);if(d<bpd){bpd=d;bp=p}}); if(bp)return {label:'搭話',fn(){pedTalk(bp)}};
   const ci=toCell(P.x), cj=toCell(P.z); for(const j of[cj,cj-1]){ const b=world.bAt[ci]&&world.bAt[ci][j]; if(b&&(b.type==='house'||b.type==='shop')&&!b.visited&&!b.burnt&&Math.hypot(b.doorX-P.x,b.maxZ+.6-P.z)<1.5)return {label:b.type==='shop'?'進店<br>宣導':'按門鈴',fn(){doorVisit(b)}}; }
   return null;
@@ -1485,7 +1519,7 @@ function whistle(){ const P=G.player; if(G.t<P.whis)return; P.whis=G.t+3; Snd.wh
 function getAct(){ const P=G.player, M=G.mission; if(G.mode!=='duty'||G.paused||P.sleep)return null;
   if(P.lad)return {label:'出水',kind:'lspray'};
   if(P.veh){ if(P.veh.type==='panther'&&M&&M.inc.kind==='fire'&&dist(P.veh,M.inc)<30)return {label:'水砲',kind:'cannon'}; return {label:'叭叭',tap:honk}; }
-  if(M){ const tr=M.inc.trap; if(tr&&tr.state==='in'&&!tr.hidden&&tr.high&&dist(P,tr.door)<2.7)return {label:'走樓梯<br>搜救',kind:'search'}; const ct=M.inc.cut; if(ct&&!ct.done&&dist(P,M.inc)<3.8)return {label:'破壞<br>車門',kind:'cut'}; }
+  if(M){ const tr=M.inc.trap; if(tr&&tr.state==='in'&&!tr.hidden&&tr.high&&dist(P,tr.door)<2.7)return {label:'走樓梯<br>搜救',kind:'search'}; const ct=M.inc.cut; if(ct&&!ct.done&&dist(P,M.inc)<3.8)return {label:'破壞<br>車門',kind:'cut'}; const jb=M.inc.job; if(jb&&dist(P,M.inc)<3.8)return {label:JOB[jb.k].l,kind:'job'}; }
   if(P.hose)return {label:'出水',kind:'spray'};
   if(M){ const pt=M.inc.patient; if(pt&&pt.state==='ground'&&!pt.treated&&dist(P,pt)<3)return {label:'急救',kind:'treat'};
     const cat=M.inc.cat; if(cat&&!cat.down&&dist(P,cat)<4.5)return {label:'安撫',kind:'coax'}; }
@@ -1694,7 +1728,7 @@ function updatePlayer(dt){ const P=G.player, j=Input.vec(), M=G.mission, inc=M&&
           if(aim){ V.water-=9*dt; hitNode(inc,aim,62*dt,{elev:true}); P.spray=true; const h=Math.atan2(aim.x-V.x,aim.z-V.z), tx=V.x-Math.sin(V.h)*.7+Math.sin(h)*2.4, tz=V.z-Math.cos(V.h)*.7+Math.cos(h)*2.4, kk=clamp(bd/10,.5,2.6); emitWater(tx,3.9,tz,h,false,kk); emitWater(tx,3.9,tz,h,false,kk); } }
         else if(!P.dryWarn||G.t-P.dryWarn>4){P.dryWarn=G.t;toast('水砲沒水了！下車接消防栓，或加派水庫車','bad',2600)} }
       V.turTgt=aim; }
-    if(inc&&inc.kind==='ems'&&inc.patient.state==='loaded'&&dist(P,world.hosp.drop)<6.5&&Math.abs(V.v)<8){ finishIncident(inc,true,U.mates,true); }
+    if(inc&&inc.kind==='ems'&&(inc.patient.state==='loaded'||(inc.mci&&V.load>0))&&dist(P,world.hosp.drop)<6.5&&Math.abs(V.v)<8){ if(inc.mci&&inc.pts.some(q=>q.state==='ground')){ V.load=0; inc.patient=inc.pts.find(q=>q.state==='ground'); mciNext(inc); Snd.ok(); toast('這趟送到了！現場還有傷患，再跑一趟','',3200); } else finishIncident(inc,true,U.mates,true); }
     const s0=world.station, inZone=Math.abs(P.x-s0.cx)<s0.W/2+2&&P.z>s0.cz-1&&P.z<s0.cz+12;
     if(!inZone)U.out=true;
     if(!G.mission&&U.out&&inZone){ V.water=V.cap; P.veh=null; P.x=V.bay.x+2.6; P.z=s0.cz+8; releaseUnit(); Snd.door(); toast('返隊完成，車輛恢復待命','good',2200); }
@@ -1706,6 +1740,8 @@ function updatePlayer(dt){ const P=G.player, j=Input.vec(), M=G.mission, inc=M&&
   if(act&&Input.act&&act.kind==='ev'){ sp=0; P.treat=true; const ev=act.ev; ev.prog+=dt/ev.dur; P.h=angLerp(P.h,Math.atan2(ev.x-P.x,ev.z-P.z),dt*10); if(ev.prog>=1)finishEvent(ev,true); }
   if(act&&Input.act&&act.kind==='search'){ sp=0; P.treat=true; const tr=inc.trap, fx=inc.fx||{}, n=G.unit?G.unit.mates.length:0; tr.prog+=dt*(1+.25*n)*(fx.tool?1.6:1)*(fx.care?1.25:1)/(tr.high?16:9); P.h=angLerp(P.h,Math.PI,dt*10);
     if(Math.random()<dt*7)emitSmoke(tr.door.x+R(-.5,.5),1.4,tr.door.z-.9,.6); if(tr.prog>=1)rescueTrap(inc,'入室搜救'); }
+  if(act&&Input.act&&act.kind==='job'){ sp=0; P.treat=true; const jb=inc.job, J=JOB[jb.k], n=G.unit?G.unit.mates.length:0; jb.prog+=dt*(1+.25*n)/J.d; P.h=angLerp(P.h,Math.atan2(inc.x-P.x,inc.z-P.z),dt*10);
+    if(G.t>jb.sfx){ jb.sfx=G.t+.45; if(jb.k==='tree'||jb.k==='lift')Snd.bonk(); else {Snd.pop();emitSmoke(inc.x,2.3,inc.z-.5,.4)} } if(jb.prog>=1){say(P,J.say,2.4);finishIncident(inc,true,G.unit?G.unit.mates:[],true);return} }
   if(act&&Input.act&&act.kind==='cut'){ sp=0; P.treat=true; const ct=inc.cut, fx=inc.fx||{}, n=G.unit?G.unit.mates.length:0; ct.prog+=dt*(1+.2*n)*(fx.care?1.25:1)/(fx.tool?7:20); P.h=angLerp(P.h,Math.atan2(inc.x-P.x,inc.z-P.z),dt*10);
     if(G.t>ct.sfx){ct.sfx=G.t+.4;Snd.bonk();emitSmoke(inc.x+R(-.6,.6),1.3,inc.z,.35)} if(ct.prog>=1){ct.done=true;say(P,'門開了，救出來了！',2.2);finishIncident(inc,true,G.unit?G.unit.mates:[],true);return} }
   if(j.mag>.15&&sp>0){ const h=Math.atan2(j.x,-j.y); P.h=angLerp(P.h,h,Math.min(1,dt*14)); P.x+=Math.sin(h)*sp*j.mag*dt; P.z+=Math.cos(h)*sp*j.mag*dt; P.walk+=dt*sp*1.5; P.moving=true; } else P.moving=false;
@@ -1764,7 +1800,7 @@ function updateAnimals(dt){ const P=G.player; G.animals.forEach(a=>{ hopY(a,dt);
   const flee=a.kind==='chicken'&&(dist(P,a)<(P.veh?9:4.5)||G.t<a.scare);
   if(flee){ const h=Math.atan2(a.x-P.x,a.z-P.z)+Math.sin(G.t*9+a.hx)*.8; tx=a.x+Math.sin(h)*4; tz=a.z+Math.cos(h)*4; sp=7; if(a.y<=0&&Math.random()<dt*4){a.vy=4;if(Math.random()<.3){say(a,'咕咕！',1.2);Snd.animal('chicken')}} }
   else if(a.kind==='dog'&&G.t<a.follow&&!P.veh){ tx=P.x-Math.sin(P.h)*1.6+1; tz=P.z-Math.cos(P.h)*1.6; sp=dist(P,a)<2.4?0:8; }
-  else { a.wait-=dt; if(a.wait<=0){a.wait=R(2,6); const rg=a.kind==='dog'?14:3.5; a.tx=a.hx+R(-rg,rg); a.tz=a.hz+R(-rg,rg)} tx=a.tx; tz=a.tz; }
+  else { a.wait-=dt; if(a.wait<=0){a.wait=R(2,6); const rg=a.kind==='dog'?14:a.kind==='cat'?7:3.5; a.tx=a.hx+R(-rg,rg); a.tz=a.hz+R(-rg,rg)} tx=a.tx; tz=a.tz; }
   const dx=tx-a.x,dz=tz-a.z,d=Math.hypot(dx,dz); if(d>.4&&sp>0){a.x+=dx/d*sp*dt;a.z+=dz/d*sp*dt;a.h=angLerp(a.h,Math.atan2(dx,dz),Math.min(1,dt*10));resolve(a,.4); if(a.y<=0&&sp>3)a.vy=2.2} }); }
 function knockCount(){ S.stats.knock++; quest('knock'); const n=S.stats.knock; if([10,30,60,100,200,400].includes(n)){gain(n,0);coin(n);Snd.ok();toast('胡鬧成就：撞飛 '+n+' 樣東西　+'+n+' XP　獎金 +'+n,'fun big',3200)} }
 function updateProps(dt){ const P=G.player, movers=[];
@@ -1789,10 +1825,10 @@ function updateProps(dt){ const P=G.player, movers=[];
   // 車子撞到路人和動物：飛起來、暈一下、再爬起來
   movers.forEach(m=>{ if(!m.veh)return; const s=Math.hypot(m.vx,m.vz); if(s<6)return;
     G.peds.forEach(p=>{ if(p.state!=='walk'&&p.state!=='dizzy')return; if(Math.hypot(p.x-m.x,p.z-m.z)<2.1){ p.state='fly'; p.vy=8+s*.25; p.vx=m.vx*.9+R(-2,2); p.vz=m.vz*.9+R(-2,2); Snd.bonk(); Snd.boing(); if(!m.ai&&G.t>(G.hitCool||0)){G.hitCool=G.t+5;gain(0,-1);toast('撞到路人了！小心駕駛　聲望 −1','bad',2000)} } });
-    G.animals.forEach(a=>{ if(a.y<=0&&Math.hypot(a.x-m.x,a.z-m.z)<2){ a.vy=10; a.x+=m.vx*.12; a.z+=m.vz*.12; a.scare=G.t+3; Snd.animal(a.kind); say(a,a.kind==='dog'?'該！':'咕！！',1.5) } }); });
+    G.animals.forEach(a=>{ if(a.y<=0&&Math.hypot(a.x-m.x,a.z-m.z)<2){ a.vy=10; a.x+=m.vx*.12; a.z+=m.vz*.12; a.scare=G.t+3; Snd.animal(a.kind); say(a,a.kind==='dog'?'該！':a.kind==='cat'?'喵嗚！':'咕！！',1.5) } }); });
 }
 function updateIncidents(dt){
-  for(let k=G.incidents.length-1;k>=0;k--){ const inc=G.incidents[k], P=G.player, tr=inc.trap; inc.age+=dt; inc.fx=fxOf(inc);
+  for(let k=G.incidents.length-1;k>=0;k--){ const inc=G.incidents[k], P=G.player, tr=inc.trap; inc.age+=dt; inc.fx=fxOf(inc); if(inc.mci&&inc.state==='player'&&inc.patient.state==='ground'&&!P.carry&&!P.treat)mciNext(inc); if(inc.job&&inc.job.k==='gas'&&Math.random()<dt*1.5)emitSmoke(inc.x,1.4,inc.z-1,.5);
     if(tr){ if(tr.hidden&&inc.state==='player'&&G.unit&&dist(G.unit.veh,inc)<24){ showTrap(inc); Snd.radio(); toast('現場回報：屋內有人受困！到門口按「入室搶救」進屋找人','bad big',3800); }
       if(tr.state==='in'&&!tr.hidden){ tr.t-=dt; tr.mk.position.y=tr.mkY+Math.sin(G.t*5)*.25; if(!(tr.e.bubT>0)&&Math.random()<dt*.6&&dist(P,inc)<45)say(tr.e,pick(['救命啊！','咳咳…這裡有人','快來救我']),2.2);
         if(tr.mesh){tr.mesh.userData.la.rotation.z=-2.4+Math.sin(G.t*9)*.4;tr.mesh.userData.ra.rotation.z=2.4-Math.sin(G.t*9)*.4} if(tr.t<=0&&!(inc.net&&CO&&!CO.host))hurtTrap(inc); } }
@@ -1831,7 +1867,7 @@ function update(dt){
   G.things.forEach(t=>{ if(t.type==='plant'){ const sc=t.top.scale.x; if(Math.abs(sc-t.g)>.01)t.top.scale.setScalar(lerp(sc,t.g,Math.min(1,dt*4))) } });
   if(G.clock>=DAY_LEN&&!G.incidents.length&&!G.dayDone){ G.dayDone=true; endDay(); return; }
   const P=G.player, M=G.mission, inc=M&&M.inc, V=P.veh;
-  let tgt=null; if(inc){ if(inc.kind==='ems'&&inc.patient.state==='loaded')tgt=world.hosp.drop; else tgt=inc; }
+  let tgt=null; if(inc){ if(toHosp(inc))tgt=world.hosp.drop; else tgt=inc; }
   const sirenOn=!!(V&&inc&&tgt&&dist(P,tgt)>13&&inc.kind!=='svc'); Snd.siren('amb',sirenOn&&V.type==='amb'); Snd.siren('fire',sirenOn&&V.type!=='amb'); if(V)V.lights=sirenOn;
   Snd.engine(V?Math.min(1,Math.abs(V.v)/18)+.01:0); Snd.level('water',P.spray?.16:0);
   let near=0; G.incidents.forEach(n=>{if(n.kind==='fire'){const d=dist(P,n);if(d<40)near=Math.max(near,(1-d/40)*fireFrac(n))}}); if(G.indoor)near=Math.max(near,.75); Snd.level('fire',near*.22); Snd.level('city',.03);
@@ -1850,10 +1886,10 @@ function syncMeshes(dt){
   G.incidents.forEach(i=>{ if(i.marker)i.marker.position.y+=Math.sin(G.t*3+i.id)*.012 });
   const U=G.unit; hoseLine.visible=!!P.hose&&!P.veh&&G.mode==='duty'; if(hoseLine.visible){const a=hoseLine.geometry.attributes.position,s=hoseSrc(P);a.setXYZ(0,s.x,1.3,s.z);a.setXYZ(1,(s.x+P.x)/2,.15,(s.z+P.z)/2);a.setXYZ(2,P.x,1.2,P.z);a.needsUpdate=true}
   hydLine.visible=!!(U&&U.veh.hyd); if(hydLine.visible){const a=hydLine.geometry.attributes.position,V=U.veh;a.setXYZ(0,V.hyd.x,.8,V.hyd.z);a.setXYZ(1,V.x,1.2,V.z);a.needsUpdate=true}
-  let tgt=null; if(G.mode==='duty'){ if(inc){ if(!P.veh&&U&&!P.hose&&!P.carry&&dist(U.veh,inc)>26)tgt=U.veh; else if(inc.kind==='ems'&&inc.patient.state==='loaded')tgt=P.veh?world.hosp.drop:U.veh; else if(inc.kind==='ems'&&P.carry)tgt=U.veh; else tgt=inc.snake||inc; }
+  let tgt=null; if(G.mode==='duty'){ if(inc){ if(!P.veh&&U&&!P.hose&&!P.carry&&dist(U.veh,inc)>26)tgt=U.veh; else if(toHosp(inc))tgt=P.veh?world.hosp.drop:U.veh; else if(inc.kind==='ems'&&P.carry)tgt=U.veh; else tgt=inc.snake||inc; }
     else if(U&&!U.patrol){ tgt=P.veh?{x:world.station.cx,z:world.station.cz+6}:U.veh; } }
   if(G.indoor)tgt=(G.indoor.person.follow||G.indoor.inc.trap.state!=='in')?G.indoor.entry:null;
-  if(world.dropRing){ world.dropRing.visible=!!(inc&&inc.kind==='ems'&&inc.patient.state==='loaded'); if(world.dropRing.visible)world.dropRing.scale.setScalar(1+Math.sin(G.t*4)*.08); }
+  if(world.dropRing){ world.dropRing.visible=!!(inc&&toHosp(inc)); if(world.dropRing.visible)world.dropRing.scale.setScalar(1+Math.sin(G.t*4)*.08); }
   if(tgt&&dist(P,tgt)>7){ const a=Math.atan2(tgt.x-P.x,tgt.z-P.z), r=P.veh?6:3.6; arrowG.visible=true; arrowG.position.set(P.x+Math.sin(a)*r,1.2+Math.sin(G.t*5)*.2,P.z+Math.cos(a)*r); arrowG.rotation.y=a; } else arrowG.visible=false;
   let fx,fz,zoom;
   if(G.mode==='duty'||G.mode==='menu'){fx=P.x;fz=P.z;zoom=P.veh?1.2:P.lad?1.2:G.indoor?.72:.84} else {const s0=world.station;fx=s0.cx+Math.sin(performance.now()/7000)*4;fz=s0.cz+2;zoom=1.15}
@@ -1876,7 +1912,7 @@ function updateHUD(){
   const M=G.mission, P=G.player, U=G.unit, bx=$('mission');
   if(M||U){ bx.hidden=false; const inc=M&&M.inc; let obj='';
     if(!inc){ $('mTitle').textContent=U.patrol?'轄區巡邏':'返隊'; obj=P.veh?(U.patrol?'到處逛逛，開回車庫就收隊':'把車開回分隊車庫'):'回到 '+U.veh.label+' 上車'; $('mLifeRow').hidden=$('mFireRow').hidden=$('mWaterRow').hidden=true; }
-    else { $('mTitle').textContent=inc.sub+'・'+inc.addr; $('mLifeRow').hidden=false; $('mLifeLbl').textContent=inc.kind==='ems'?'生命':'時間'; $('mLife').firstElementChild.style.width=clamp(inc.left/inc.total*100,0,100)+'%';
+    else { $('mTitle').textContent=inc.sub+'・'+inc.addr+(inc.mci?'（現場剩 '+inc.pts.filter(q=>q.state==='ground'||q.state==='carried').length+' 人）':''); $('mLifeRow').hidden=false; $('mLifeLbl').textContent=inc.kind==='ems'?'生命':'時間'; $('mLife').firstElementChild.style.width=clamp(inc.left/inc.total*100,0,100)+'%';
       const fire=inc.kind==='fire', dv=dist(U.veh,inc), wv=fire||!!(P.hose&&P.hose.veh); $('mFireRow').hidden=!fire; $('mWaterRow').hidden=!wv;
       if(wv)$('mWater').firstElementChild.style.width=clamp(U.veh.water/U.veh.cap*100,0,100)+'%';
       const drive=P.veh?(dist(P,inc)>18?'開往現場（'+Math.round(dist(P,inc)*10)+' 公尺）':'到了！按「下車」'):null;
@@ -1886,7 +1922,8 @@ function updateHUD(){
         else if(P.veh&&vt==='panther'&&dist(P,inc)<30)obj=U.veh.water<=0?'水砲沒水了，下車接消防栓':'按住「水砲」直接射水';
         else obj=drive||(vt==='ladder'?(dv>17?'把雲梯車開近一點':'到雲梯車旁按「升雲梯」'):!P.hose?(dv>26?'回消防車，開近現場':'到消防車旁「拿水帶」'):U.veh.water<=0?'沒水了，去接消防栓':'對準火焰，按住「出水」');
         if(trapOn&&!G.indoor&&!P.veh&&!P.lad&&!(tr.high&&vt==='ladder'))obj=tr.high?(tr.prog>0&&P.treat?'走樓梯搜救中 '+Math.round(tr.prog*100)+'%（剩 '+fmtT(tr.t)+'）':'頂樓有人受困！到門口按住「走樓梯搜救」（剩 '+fmtT(tr.t)+'）'):'有人受困！到門口按「入室搶救」（剩 '+fmtT(tr.t)+'）'; }
-      else if(inc.kind==='ems'){ const pt=inc.patient; obj=pt.state==='loaded'?(P.veh?'送往急診（綠色圓圈）':'回救護車上車'):pt.state==='carried'?'把傷患抬到救護車':drive||(pt.treated?'靠近傷患「抬上擔架」':dist(P,pt)<3?'按住「急救」'+Math.round(pt.prog*100)+'%':'跑到傷患身邊'); }
+      else if(inc.kind==='ems'){ const pt=inc.patient; obj=toHosp(inc)?(P.veh?'送往急診（綠色圓圈）':(inc.mci&&pt.state!=='loaded'?'這台滿了，先上車送急診':'回救護車上車')):pt.state==='carried'?'把傷患抬到救護車':drive||(pt.treated?'靠近傷患「抬上擔架」':dist(P,pt)<3?'按住「急救」'+Math.round(pt.prog*100)+'%':'跑到傷患身邊'); }
+      else if(inc.job)obj=drive||'到現場按住「'+JOB[inc.job.k].l.replace('<br>','')+'」 '+Math.round(inc.job.prog*100)+'%';
       else if(inc.cut)obj=drive||'到事故車旁，按住「破壞車門」 '+Math.round(inc.cut.prog*100)+'%';
       else if(inc.snake)obj=drive||'追上那條蛇，按「抓蛇」';
       else obj=drive||(inc.cat.down?'貓下來了':'站到樹下，按住「安撫」'+Math.round(inc.cat.prog*100)+'%');
