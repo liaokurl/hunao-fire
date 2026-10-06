@@ -149,6 +149,10 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
   #ovPromo .panel.art .ph{border-radius:0 16px 0 0!important} #ovPromo .panel.art .big{font-size:32px} }
 .pside{display:flex;flex-direction:column;min-width:0}
 #sLogo{width:34px;height:34px;border-radius:9px;flex:none}
+.cl{display:flex;align-items:center;gap:8px;font-weight:800;flex-wrap:wrap}
+.cl b{font-size:20px;letter-spacing:.12em;font-variant-numeric:tabular-nums;-webkit-user-select:text;user-select:text;background:#fff;border:1px solid var(--line);border-radius:8px;padding:3px 10px}
+.cl input{flex:1;min-width:150px;font:inherit;font-weight:800;font-size:16px;padding:9px 10px;border:2px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);text-transform:uppercase;-webkit-user-select:text;user-select:text}
+.b.sm{flex:none;min-width:0;padding:8px 14px;font-size:14px}
 .big{font-size:44px;font-weight:900;text-align:center;margin:4px 0;color:var(--red)}
 @media (max-height:430px){ #bAct{width:84px;height:84px;font-size:16px} #bUse{width:72px;height:72px;right:116px;font-size:14px} #mini{width:88px;height:88px} #ovTitle .how{display:none} }
 @media (orientation:portrait){ #mini{top:84px} #left{top:84px} #toast{top:200px} #stickZone{height:45%} #ovTitle{background-size:auto 62%;background-position:center top} }
@@ -194,6 +198,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
       <div class="btns">
         <button class="b go" id="bCont" type="button" hidden>繼續值勤</button>
         <button class="b go" id="bNew" type="button">開始遊戲</button>
+        <button class="b sm" id="bCode" type="button">接續碼</button>
       </div>
       <p class="how">左下搖桿移動與開車。綠色「互動」：靠近什麼就能做什麼（上下車、聊天、澆花、掃地、補眠）。紅色按住出水或急救，黃色是吹哨集合與按喇叭。桌機：WASD、E、空白鍵。</p>
     </div>
@@ -250,7 +255,11 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
       <label class="sl" for="vMus">音樂<input id="vMus" type="range" min="0" max="100" value="50"></label>
       <label class="sl" for="vSfx">音效<input id="vSfx" type="range" min="0" max="100" value="70"></label>
       <div class="btns"><button class="b" id="bMute" type="button">靜音：關</button><button class="b" id="bShadow" type="button">陰影：開</button><button class="b" id="bFull" type="button">全螢幕</button><button class="b teal" id="bResume" type="button">回到遊戲</button></div>
-      <p class="note">如果畫面會卡，把陰影關掉。進度會自動存在這台裝置的這個瀏覽器（每 15 秒、每件案件結束、關閉頁面時）。中途關掉，下次會從當天早上重新值勤，經驗與聲望保留。無痕視窗或清除瀏覽資料會讓存檔消失。</p>
+      <div class="sec">雲端存檔</div>
+      <div class="cl"><span>這份存檔的接續碼</span><b id="cCode">----</b><button class="b sm" id="bCopy" type="button">複製</button></div>
+      <div class="cl"><input id="iCode" type="text" placeholder="輸入另一台裝置的接續碼" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="9"><button class="b sm" id="bLoad" type="button">載入</button></div>
+      <p class="note" id="cStat">雲端：尚未連線</p>
+      <p class="note">如果畫面會卡，把陰影關掉。進度會自動存在這台裝置，並同步到雲端。換裝置時，在新裝置的設定輸入接續碼按「載入」就能接著玩。中途關掉，下次從當天早上重新值勤，經驗與聲望保留。</p>
       <div class="btns"><button class="b" id="bWipe" type="button">刪除存檔重新開始</button></div>
     </div>
   </div></div>
@@ -259,7 +268,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
 <script src="three.min.js"></script>
 <script>
 (()=>{'use strict';
-const VERSION='車干製V1.5';
+const VERSION='車干製V1.6';
 const $=id=>document.getElementById(id);
 (function cover(){ const t=$('ovTitle'), im=new Image(); im.onload=()=>{t.style.backgroundImage='url(cover.jpg)'}; im.onerror=()=>t.classList.add('nocover'); im.src='cover.jpg'; })();
 if(!window.THREE){ $('tSub').textContent='3D 元件載入失敗，請檢查網路後重新整理'; return; }
@@ -317,10 +326,35 @@ function newCrew(used){
 }
 function freshSave(){
   uid=1; const used=new Set(), crew=[]; for(let i=0;i<STAGES[0].crew;i++)crew.push(newCrew(used));
-  return {v:1,stage:0,xp:0,rep:50,day:1,seed:(Math.random()*1e9)|0,crew,sched:{},streak:0,done:false,uid,stats:{knock:0},vol:S?S.vol:{m:.5,s:.7,mute:false,shadow:true}};
+  return {v:1,code:newCode(),ts:0,rev:1,stage:0,xp:0,rep:50,day:1,seed:(Math.random()*1e9)|0,crew,sched:{},streak:0,done:false,uid,stats:{knock:0},vol:S?S.vol:{m:.5,s:.7,mute:false,shadow:true}};
 }
-function persist(){ if(!S)return; S.uid=uid; Save.save(S); }
-function fixSave(s){ s.stats=s.stats||{knock:0}; s.vol=s.vol||{m:.5,s:.7,mute:false}; if(s.vol.shadow==null)s.vol.shadow=true; s.crew.forEach(c=>{if(c.mood==null)c.mood=70;if(c.av==null)c.av=pickAv(c)}); return s; }
+function persist(force){ if(!S)return; S.uid=uid; S.ts=Date.now(); Save.save(S); Cloud.push(!!force); }
+function bump(){ if(S)S.rev=(S.rev||0)+1; } // 只有真的有進度時才加一，雲端用它判斷哪份存檔比較新
+function newCode(){ const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c=''; for(let i=0;i<8;i++)c+=A[Math.floor(Math.random()*A.length)]; return c; }
+const fmtCode=c=>c?c.slice(0,4)+'-'+c.slice(4):'';
+/* ============ 雲端存檔（Firebase：匿名登入 + Firestore，用接續碼辨識存檔） ============ */
+const FB={apiKey:'AIzaSyATjQ_gi-8aFJDUr4G8I_4fBWcTtO9vkbo',projectId:'hunao-fire'};
+const Cloud=(()=>{ let tok=null,exp=0,busy=false,dirty=false,lastPush=0,synced=false,pushedRev=-1; const st={ok:null,msg:'尚未連線'}, AK='ff_auth';
+  const alone=(()=>{try{return window.top===window.self}catch(e){return false}})();
+  const set=(ok,msg)=>{st.ok=ok;st.msg=msg;const el=document.getElementById('cStat');if(el){el.textContent='雲端：'+msg;el.className='note'+(ok===false?' warn':'')}};
+  const why=e=>e&&e.status===403?'權限被拒（請檢查 Firestore 規則）':e&&e.status?'伺服器回應 '+e.status:alone?'連不上網路，先存在這台裝置':'這個頁面不能連雲端，請改開獨立網址';
+  const fail=(r,what)=>{const e=new Error(what+' '+r.status);e.status=r.status;return e};
+  async function token(){ if(tok&&Date.now()<exp-60000)return tok; let rt=null; try{rt=localStorage.getItem(AK)}catch(e){}
+    if(rt){ const r=await fetch('https://securetoken.googleapis.com/v1/token?key='+FB.apiKey,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'grant_type=refresh_token&refresh_token='+encodeURIComponent(rt)});
+      if(r.ok){const j=await r.json();tok=j.id_token;exp=Date.now()+(+j.expires_in)*1000;try{localStorage.setItem(AK,j.refresh_token)}catch(e){}return tok} }
+    const r=await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+FB.apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:'{"returnSecureToken":true}'});
+    if(!r.ok)throw fail(r,'auth'); const j=await r.json(); tok=j.idToken; exp=Date.now()+(+j.expiresIn)*1000; try{localStorage.setItem(AK,j.refreshToken)}catch(e){} return tok; }
+  const url=c=>'https://firestore.googleapis.com/v1/projects/'+FB.projectId+'/databases/(default)/documents/saves/'+c;
+  const hm=()=>{const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+  async function pull(code){ try{ const t=await token(), r=await fetch(url(code),{headers:{Authorization:'Bearer '+t}}); if(r.status===404){set(true,'已連線');return null} if(!r.ok)throw fail(r,'get');
+      const j=await r.json(); set(true,'已連線'); return JSON.parse(j.fields.data.stringValue); }catch(e){ set(false,why(e)); throw e; } }
+  async function push(force){ if(!S||!S.code||(S.rev||0)===pushedRev)return; if(busy)return; if(!force&&Date.now()-lastPush<30000)return; busy=true; lastPush=Date.now(); const rev=S.rev||0;
+    try{ if(!synced){ const c=await pull(S.code); if(c&&(c.rev||0)>rev){ set(false,'雲端有比較新的進度，回到標題重新整理就會取得'); busy=false; return; } synced=true; }
+      const t=await token(), r=await fetch(url(S.code),{method:'PATCH',keepalive:true,headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},
+        body:JSON.stringify({fields:{data:{stringValue:JSON.stringify(S)},t:{integerValue:String(S.ts||Date.now())},v:{integerValue:'1'}}})}); if(!r.ok)throw fail(r,'put'); pushedRev=rev; set(true,'已同步 '+hm()); }
+    catch(e){ set(false,why(e)); } busy=false; }
+  return {st,pull,push,set,mark(sy,rv){synced=sy;pushedRev=rv}}; })();
+function fixSave(s){ if(!s.code)s.code=newCode(); if(!s.rev)s.rev=1; s.stats=s.stats||{knock:0}; s.vol=s.vol||{m:.5,s:.7,mute:false}; if(s.vol.shadow==null)s.vol.shadow=true; s.crew.forEach(c=>{if(c.mood==null)c.mood=70;if(c.av==null)c.av=pickAv(c)}); return s; }
 
 /* ============ 音效（全部用 Web Audio 合成） ============ */
 const Snd=(()=>{
@@ -912,7 +946,7 @@ function endDay(){
   $('eList').innerHTML=G.log.length?G.log.map(l=>'<div class="li '+(l.ok?'':'bad')+'"><span>'+l.sub+'・'+l.by+'</span><span>'+(l.ok?'<span class="stars">'+stars(l.stars)+'</span> +'+l.xp:'失敗 '+l.rep+' 聲望')+'</span></div>').join(''):'<p class="note">今天平安無事。</p>';
   S.crew.forEach(c=>c.fat=clamp(c.fat-35,0,100));
   $('eCrew').innerHTML=S.crew.map(c=>'<div class="li"><span>'+avHtml(c.av,'sm')+' '+c.name+' Lv'+c.lv+'</span><span>疲勞 '+c.fat+'・心情 '+c.mood+'</span></div>').join('');
-  S.day++; S.uid=uid; Save.save(S); show('ovSettle'); Snd.mode('calm');
+  S.day++; bump(); persist(true); show('ovSettle'); Snd.mode('calm');
 }
 $('bNext').addEventListener('click',()=>{ Snd.click(); const st=STAGES[S.stage];
   if(S.xp>=st.xp){ if(S.rep<40){ toast('經驗已達標，但聲望不足 40，升遷延後','bad',3200); openSched(); return; }
@@ -921,7 +955,7 @@ $('bNext').addEventListener('click',()=>{ Snd.click(); const st=STAGES[S.stage];
   openSched(); });
 function promoArt(f){ const im=$('pImg'); const pn=im.parentElement; im.onerror=()=>{im.hidden=true;pn.classList.remove('art');$('pHead').style.borderRadius=''}; im.onload=()=>{im.hidden=false;pn.classList.add('art');$('pHead').style.borderRadius='0'}; im.src=f; }
 function promote(){ const old=STAGES[S.stage]; S.stage++; const st=STAGES[S.stage]; S.seed=(Math.random()*1e9)|0; uid=S.uid||uid;
-  const used=new Set(S.crew.map(c=>c.name)); while(S.crew.length<st.crew)S.crew.push(newCrew(used)); S.uid=uid; S.sched={}; autoSched(); Save.save(S);
+  const used=new Set(S.crew.map(c=>c.name)); while(S.crew.length<st.crew)S.crew.push(newCrew(used)); S.uid=uid; S.sched={}; autoSched(); bump(); persist(true);
   buildWorld(); G.mode='promo'; $('pTitle').textContent='升遷命令'; $('pBig').textContent=st.name+'長'; $('bPromo').textContent='到新分隊報到';
   $('pText').textContent='恭喜！你在'+old.station+'表現優異，即日起調任'+st.station+'分隊長。轄區是全新的街道與建築，隊員 '+st.crew+' 人、消防車 '+st.fire+' 台、救護車 '+st.amb+' 台'+(st.tank?'、水箱車 1 台':'')+'，案件也會更密集。';
   promoArt(S.stage===1?'promo1.jpg':'promo2.jpg'); show('ovPromo'); Snd.promo(); }
@@ -982,7 +1016,7 @@ function finishIncident(inc,ok,crewList,byCaptain){
   G.log.push({sub:inc.sub,ok,stars:st_,xp,rep,by:byCaptain?'隊長出勤':crewList&&crewList.length?crewList.map(c=>c.name).join('、'):'無人處理'});
   if(G.mission&&G.mission.inc===inc){ G.mission=null; const P=G.player; P.hose=null; P.carry=false; if(G.unit){G.unit.veh.hyd=null} }
   if(G.cardInc===inc)closeCard();
-  closeIncident(inc); persist();
+  closeIncident(inc); bump(); persist();
 }
 function eff(list,stat,inc,withCap){ if(!list.length)return withCap?.9:.3; let a=0,f=0,rb=0,md=0; const want=inc.kind==='ems'?1:2;
   list.forEach(c=>{a+=c[stat];f+=c.fat;md+=c.mood;rb+=roleOf(c)===want?1.12:.92}); const n=list.length, head=n+(withCap?1:0);
@@ -1188,7 +1222,7 @@ function spawnEvent(force){ if(G.events.length>=2||!world)return null; const P=G
   ev.mk=add(textSprite('！','#ffb81f','#1c2836',3.8,3.8,true)); ev.mk.position.set(evPos(ev).x,7,evPos(ev).z);
   G.events.push(ev); toast('突發：'+EV[type].n+'（小地圖黃點）','fun',3000); Snd.radio(); return ev; }
 function finishEvent(ev,ok){ const k=G.events.indexOf(ev); if(k<0)return; G.events.splice(k,1); ev.objs.forEach(o=>WG.remove(o)); [ev.pig,ev.kid,ev.mom].forEach(e=>{if(e)bubs.delete(e)}); const b=G.blockers.indexOf(ev); if(b>=0)G.blockers.splice(b,1);
-  const T=EV[ev.type]; if(ok){ gain(T.xp,T.rep); S.stats.ev=(S.stats.ev||0)+1; G.evDone=(G.evDone||0)+1; toast('突發排除：'+T.n+'　+'+T.xp+' XP　聲望 +'+T.rep,'good',2800); Snd.ok(); persist(); }
+  const T=EV[ev.type]; if(ok){ gain(T.xp,T.rep); S.stats.ev=(S.stats.ev||0)+1; G.evDone=(G.evDone||0)+1; toast('突發排除：'+T.n+'　+'+T.xp+' XP　聲望 +'+T.rep,'good',2800); Snd.ok(); bump(); persist(); }
   else { if(T.pen)gain(0,T.pen); toast(T.fail,T.pen?'bad':'',2600); } }
 function useEvent(ev){ const P=G.player;
   if(ev.type==='fire'){ ev.hp--; for(let k=0;k<5;k++)emitSmoke(ev.x,1.6,ev.z,.5); Snd.pop(); if(ev.hp<=0)finishEvent(ev,true); }
@@ -1447,15 +1481,21 @@ $('pending').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!
 
 /* ============ 設定 ============ */
 let menuFrom=null, wipeArm=false;
-function openMenu(){ if(G.mode==='menu')return; menuFrom={mode:G.mode}; G.mode='menu'; $('vMus').value=Snd.st.m*100; $('vSfx').value=Snd.st.s*100; $('bMute').textContent='靜音：'+(Snd.st.mute?'開':'關'); $('bShadow').textContent='陰影：'+(sun.castShadow?'開':'關'); $('bWipe').textContent='刪除存檔重新開始'; wipeArm=false; show('ovMenu'); }
+function openMenu(){ if(G.mode==='menu')return; menuFrom={mode:G.mode}; G.mode='menu'; $('vMus').value=Snd.st.m*100; $('vSfx').value=Snd.st.s*100; $('bMute').textContent='靜音：'+(Snd.st.mute?'開':'關'); $('bShadow').textContent='陰影：'+(sun.castShadow?'開':'關'); $('bWipe').textContent='刪除存檔重新開始'; wipeArm=false; $('cCode').textContent=fmtCode(S.code); Cloud.set(Cloud.st.ok,Cloud.st.msg); show('ovMenu'); }
 function saveVol(){ if(S){S.vol.m=Snd.st.m;S.vol.s=Snd.st.s;S.vol.mute=Snd.st.mute;Save.save(S)} }
 $('bMenu').addEventListener('click',()=>{Snd.init();openMenu()});
 $('vMus').addEventListener('input',e=>{Snd.set('m',e.target.value/100);saveVol()});
 $('vSfx').addEventListener('input',e=>{Snd.set('s',e.target.value/100);saveVol();Snd.click()});
 $('bMute').addEventListener('click',()=>{Snd.set('mute',!Snd.st.mute);$('bMute').textContent='靜音：'+(Snd.st.mute?'開':'關');saveVol()});
 $('bShadow').addEventListener('click',()=>{fpsDone=true;setShadow(!sun.castShadow)});
-$('bResume').addEventListener('click',()=>{ G.mode=menuFrom.mode; show(G.cardInc?'ovCard':G.talking?'ovTalk':null); });
-$('bWipe').addEventListener('click',()=>{ if(!wipeArm){wipeArm=true;$('bWipe').textContent='再按一次確認刪除';return} Save.clear(); const vol=S.vol; S=freshSave(); S.vol=vol; Save.save(S); stopLoops(); openSched(); buildWorld(); });
+$('bResume').addEventListener('click',()=>{ G.mode=menuFrom.mode; const back={title:'ovTitle',sched:'ovSched',settle:'ovSettle',promo:'ovPromo'}[G.mode]; show(back||(G.cardInc?'ovCard':G.talking?'ovTalk':null)); });
+$('bCode').addEventListener('click',()=>{Snd.init();openMenu()});
+$('bCopy').addEventListener('click',()=>{ const t=fmtCode(S.code), done=()=>{$('bCopy').textContent='已複製';setTimeout(()=>$('bCopy').textContent='複製',1500)}; try{navigator.clipboard.writeText(t).then(done).catch(()=>{const r=document.createRange();r.selectNodeContents($('cCode'));const s=getSelection();s.removeAllRanges();s.addRange(r)})}catch(e){} });
+$('bLoad').addEventListener('click',()=>{ const code=$('iCode').value.toUpperCase().replace(/[^A-Z0-9]/g,''); if(code.length!==8){Cloud.set(false,'接續碼是 8 個英數字');return} Cloud.set(null,'讀取中…'); $('bLoad').disabled=true;
+  Cloud.pull(code).then(c=>{ $('bLoad').disabled=false; if(!c||c.v!==1||!c.crew){Cloud.set(false,'找不到這組接續碼的存檔');return}
+    const vol=S.vol; S=fixSave(c); S.code=code; S.vol=vol; uid=S.uid||100; Save.save(S); Cloud.mark(true,S.rev); stopLoops(); $('iCode').value=''; $('bCont').hidden=false; openSched(); buildWorld(); Cloud.set(true,'已載入：第 '+S.day+' 天・'+STAGES[S.stage].name); })
+  .catch(()=>{ $('bLoad').disabled=false; }); });
+$('bWipe').addEventListener('click',()=>{ if(!wipeArm){wipeArm=true;$('bWipe').textContent='再按一次確認刪除';return} Save.clear(); const vol=S.vol; S=freshSave(); S.vol=vol; Cloud.mark(true,-1); persist(true); stopLoops(); openSched(); buildWorld(); });
 
 /* ============ 全螢幕（獨立網址才會自動進入；嵌在別的頁面裡時只能手動試） ============ */
 const standalone=(()=>{try{return window.top===window.self}catch(e){return false}})();
@@ -1473,7 +1513,7 @@ function frame(now){ requestAnimationFrame(frame); const raw=(now-last)/1000, dt
     if(!fpsDone&&!G.paused&&raw<.5){ fpsN++; fpsT+=raw; if(fpsT>6){ fpsDone=true; if(fpsN/fpsT<22&&sun.castShadow)setShadow(false,true); } } }
   else if(world){ updateFX(dt); }
   if(world){ syncMeshes(dt); renderer.render(scene,camera); } }
-document.addEventListener('visibilitychange',()=>{ if(document.hidden)persist(); Snd.suspend(document.hidden); last=performance.now(); });
+document.addEventListener('visibilitychange',()=>{ if(document.hidden)persist(true); Snd.suspend(document.hidden); last=performance.now(); });
 addEventListener('pagehide',persist);
 
 /* ============ 啟動 ============ */
@@ -1483,9 +1523,13 @@ function boot(){
     $('tSub').textContent=VERSION+'　第 '+S.day+' 天・'+STAGES[S.stage].name+'・經驗 '+S.xp; }
   else { S=freshSave(); $('tSub').textContent=VERSION+'　從地方小分隊開始歷練'; }
   sun.castShadow=S.vol.shadow!==false; resize(); buildWorld(); requestAnimationFrame(frame);
+  // 開機時問一次雲端：雲端比較新就用雲端的（例如在另一台裝置玩過）
+  if(sv)Cloud.pull(S.code).then(c=>{ if(c&&c.v===1&&c.crew&&(c.rev||0)>(S.rev||0)&&G.mode==='title'){ const vol=S.vol, code=S.code; S=fixSave(c); S.code=code; S.vol=vol; uid=S.uid||100; Save.save(S); buildWorld();
+      $('tSub').textContent=VERSION+'　已取得雲端較新的進度：第 '+S.day+' 天・'+STAGES[S.stage].name+'・經驗 '+S.xp; }
+    if(c&&(c.rev||0)>(S.rev||0))return; Cloud.mark(true,c?(c.rev||0):-1); Cloud.push(true); }).catch(()=>{});
 }
 $('bCont').addEventListener('click',()=>{Snd.init();Snd.click();autoFull();openSched()});
-$('bNew').addEventListener('click',()=>{Snd.init();Snd.click();autoFull(); const vol=S.vol; S=freshSave(); S.vol=vol; openSched(); buildWorld(); persist(); });
+$('bNew').addEventListener('click',()=>{Snd.init();Snd.click();autoFull(); const vol=S.vol; S=freshSave(); S.vol=vol; Cloud.mark(true,-1); openSched(); buildWorld(); persist(true); });
 window.__ff={spawnEvent,finishEvent,useEvent,buildWorld,G,findPath,roadCellNear,getUse,getAct,doUse,dist,get S(){return S},get world(){return world},spawnIncident,openCard,Input,STAGES,endDay,finishIncident,Save,say,jinx,crewTalk,pedTalk,whistle,honk,sun,useThing};
 boot();
 })();
