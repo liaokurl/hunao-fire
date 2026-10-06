@@ -7,34 +7,41 @@
 
 ## 檔案
 
-- `index.html`：整個遊戲，唯一的原始碼（HTML + CSS + 一段 JS，約兩千行）。直接改這個檔。
+- `index.html`：整個遊戲，唯一的原始碼（HTML + CSS + 一段 JS，約一千八百行，很多行很長）。直接改這個檔。
 - `three.min.js`：Three.js r128，本機檔，不走 CDN。
-- `sw.js`：離線快取。**每次改版要把 `const C="hunao-vX.Y"` 改成新版本號**，不然玩家拿到舊檔。
+- `sw.js`：離線快取。**每次改版要把 `const C="hunao-vX.Y"` 改成新版本號**，不然玩家拿到舊檔。新增圖片檔也要加進 `F` 清單。
 - `manifest.webmanifest`、`icon-*.png`：加到主畫面用。
-- `cover.jpg` 封面、`avatars.jpg` 3×3 頭像表（第 9 格白頭盔是隊長）、`promo1.jpg`／`promo2.jpg` 升遷圖。圖片由使用者用別的工具產生後提供；需要新圖時寫提示詞給他。
+- `cover.jpg` 封面、`avatars.jpg` 3×3 頭像表（第 9 格白頭盔是隊長）、`promo1.jpg`／`promo2.jpg` 升遷圖、`vehicles.jpg` 車庫卡片用的 4×2 車輛圖（順序同 `VORDER`）。圖片由使用者用別的工具產生後提供；需要新圖時寫提示詞給他。3D 模型（車、人、消防衣）全部用程式拼，不需要圖。
 
 ## 版本
 
-- JS 開頭 `const VERSION='車干製V1.9'`，畫面左下角會顯示。格式固定為「車干製V主.次」。
-- 目前 V1.9。
+- JS 開頭 `const VERSION='車干製V2.0'`，畫面左下角會顯示。格式固定為「車干製V主.次」。
+- 目前 V2.0。
 
 ## 程式結構（index.html 內，依序）
 
-資料表 `STAGES`（三個分隊階段，大隊長／局長尚未製作）→ 存檔 `Save`、`persist()`、`bump()` → 雲端 `Cloud` → 音效 `Snd`（全部 Web Audio 合成）→ Three 基礎與 `merge()`（把小零件合成一個模型）→ 地圖 `genMap()` → 模型 → `buildWorld()` → 輸入 → 對話 → 排班 → 值勤開始／結束 → 案件 → 派遣卡 → 隊員自動出勤 → 玩家互動 `getUse()`／`getAct()` → 車流 → 突發狀況 → 日夜與天氣 → 每幀更新 → HUD → 設定 → 主迴圈。
+資料表 `STAGES`、`FIRE_T`／`EMS_T`／`SVC_T`（案件）、`VEH`（車輛）、`NOZ`（瞄子）→ 存檔 `Save`、`persist()`、`bump()`、`fixSave()`（舊存檔補欄位都放這裡）→ 雲端 `Cloud` → 音效 `Snd`（全部 Web Audio 合成）→ Three 基礎與 `merge()` → 地圖 `genMap()` → 模型：`SKINS`／`PAINT`／`RAR`、`makePerson()`、`makeVehicle()` → `buildWorld()` → 輸入 → 對話 → 排班 → 分隊倉庫（`renderShop()`／`shopClick()`、皮膚箱 `rollBox()`、今日任務 `quest()`）→ 值勤開始／結束 → 案件（`spawnIncident()`、受困者 `showTrap()`／`rescueTrap()`、現場效果 `fxOf()`／`hitNode()`、支援車 `sendSup()`／`updateSup()`、雲梯 `ladPose()`）→ 派遣卡 → 隊員自動出勤 `updateAI()` → 玩家互動 `getUse()`／`getAct()` → 入室搶救（`enterIndoor()`／`updateIndoor()`／`exitIndoor()`）→ 車流 → 突發狀況 → 日夜與天氣 → 每幀更新 → HUD → 設定 → 主迴圈。
 
 要點：
 - 座標：一格 10 單位；前進方向 `(sin h, cos h)`；鏡頭固定從 +z 往 -z 斜俯視。
 - 地圖規則：東西向道路固定每 3 格一條，確保每棟房子至少一面臨路。改生成邏輯後要驗證這點。
 - 存檔：localStorage `ffcaptain_v1`，並同步到 Firebase（專案 `hunao-fire`，匿名登入 + Firestore `saves/{接續碼}`，用 REST 直接呼叫，沒有載 SDK）。`S.rev` 只在有實際進度時加一，雲端用它判斷新舊。
-- 測試用入口：`window.__ff` 暴露了 G、S、spawnIncident、spawnEvent 等。
+- 經濟：`S.coin` 獎金（`coin()`）。`S.own` 記擁有的車、瞄子、消防衣、塗裝；`S.bays` 是這個階段的車位編成（`fixBays()` 會修正），`buildWorld()` 依它擺車。車輛實體有 `v.type`（`amb` 或 `VEH` 的鍵）和 `v.M`（規格）。
+- 案件旗標：`inc.high`（高處火點，要雲梯）、`inc.chem`（化學火，要泡沫）、`inc.cut`（車禍受困）、`inc.trap`（受困者，`hidden` 表示到場才揭露）、`inc.want`（建議車種）。傷害一律走 `hitNode()`，它會套用這些規則。`inc.fx` 每幀由 `fxOf()` 算出現場有哪些車在幫忙。
+- 支援車是 `G.ai` 裡 `sup:true` 的項目，階段 `go → stay → back`，不占隊員。
+- 入室搶救的屋內場景搭在地圖外（z = 地圖半徑 + 140），`G.indoor` 存在時 `resolve()` 改用屋內碰撞，`hoseSrc()` 改從屋內門口算。
+- 消防衣只是外觀；性能差異只來自車和瞄子（之後做連線時要維持這個原則）。
+- 測試用入口：`window.__ff` 暴露了 G、S、spawnIncident(kind, sub)、update(dt)、openCard、enterIndoor 等。
 
 ## 測試方式
 
-用 Playwright 開無頭 Chromium（`/opt/pw-browsers`，加 `--use-gl=swiftshader --enable-unsafe-swiftshader`），手機橫向 844×390，起一個本機靜態伺服器載入 index.html，透過 `window.__ff` 觸發案件並檢查 console 錯誤與截圖。雲端環境連不到 Google，Firebase 只能用攔截請求的假伺服器測，真連線要請使用者在平板上確認設定頁的「雲端：已同步」。無頭瀏覽器聽不到聲音、量不到實機流暢度，回報時要講明。
+用 Playwright 開無頭 Chromium（`/opt/pw-browsers`，加 `--use-gl=swiftshader --enable-unsafe-swiftshader`），手機橫向 844×390，起一個本機靜態伺服器載入 index.html，攔掉 `googleapis` 請求，用 `localStorage` 塞存檔，透過 `window.__ff` 觸發案件，並用 `__ff.update(0.05)` 迴圈快轉（比等真實時間快很多；快轉前把 `G.spawnT`、`G.evT` 設很大，免得隨機案件打斷）。檢查 console 錯誤與截圖。建議每次改完跑一輪「自動派遣連玩三天」的煙霧測試。雲端環境連不到 Google，Firebase 只能用攔截請求的假伺服器測，真連線要請使用者在平板上確認設定頁的「雲端：已同步」。無頭瀏覽器聽不到聲音、量不到實機流暢度，回報時要講明。
 
 ## 還沒做／已知問題
 
-- 平衡未調：任務太容易拿五星；蛇常常一下車就抓到。
+- 平衡仍是估的：獎金收入（小型分隊一天約 200、大型約 1000）、車價、火勢血量都沒有實機驗證過。
 - 中途關掉遊戲會從當天早上重來（經驗聲望保留）。
 - 隊員頭像只有 8 個，大型分隊 14 人會重複。
-- 使用者想要的方向：隊員養成做深（專長）、節慶事件、更多車種（雲梯車）、排行榜、馬路再熱鬧一點。
+- 鏡頭固定斜俯視，路南側的高建築會擋住現場。
+- 屋內格局只有一種（左右鏡射），商店也用住宅格局。
+- 規劃中：連線版（建議用 Firebase Realtime Database、關卡制、房主當主機，先做「大型火災」單一關卡）、宣導模式、音效精進、隊員專長、節慶事件、排行榜、大隊長階段。

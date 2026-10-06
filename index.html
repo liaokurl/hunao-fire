@@ -327,7 +327,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
 <script src="three.min.js"></script>
 <script>
 (()=>{'use strict';
-const VERSION='車干製V1.9';
+const VERSION='車干製V2.0';
 const $=id=>document.getElementById(id);
 (function cover(){ const t=$('ovTitle'), im=new Image(); im.onload=()=>{t.style.backgroundImage='url(cover.jpg)'}; im.onerror=()=>t.classList.add('nocover'); im.src='cover.jpg'; })();
 if(!window.THREE){ $('tSub').textContent='3D 元件載入失敗，請檢查網路後重新整理'; return; }
@@ -635,6 +635,7 @@ function genMap(st,seed){
   throw new Error('地圖生成失敗');
 }
 function resolve(p,r){
+  if(G.indoor&&p.in)return resolveIn(p,r);
   let hit=false; const N=world.N, ci=toCell(p.x), cj=toCell(p.z);
   const test=b=>{const nx=clamp(p.x,b.minX,b.maxX),nz=clamp(p.z,b.minZ,b.maxZ),dx=p.x-nx,dz=p.z-nz,d2=dx*dx+dz*dz;
     if(d2>=r*r)return; hit=true;
@@ -828,6 +829,7 @@ function addProp(type,x,z,ry){ const m=new THREE.Mesh(propGeo(type),VC); m.castS
 
 function buildWorld(){
   const st=STAGES[S?S.stage:0], seed=S?S.seed:12345;
+  if(G.indoor){ scene.remove(G.indoor.g); G.indoor=null; }
   scene.remove(WG); disposeGroup(WG); bubs.clear(); WG=new THREE.Group(); scene.add(WG);
   const w=genMap(st,seed), N=w.N, size=N*CS, g=w.g;
   const ground=new THREE.Mesh(new THREE.PlaneGeometry(size+160,size+160),lam(0x9ccf8a)); ground.rotation.x=-Math.PI/2; ground.position.y=-.05; ground.receiveShadow=true; WG.add(ground);
@@ -1254,7 +1256,7 @@ function supText(inc,v){ const t=v.type, f=inc.kind==='fire';
   if(t==='res')return f?'供水：現場的水用不完':null;
   if(t==='ladder')return f?(inc.high||(inc.trap&&!inc.trap.hidden)?'雲梯：打高處火點、救頂樓受困':'多一支水線'):null;
   if(t==='chem')return f?(inc.chem?'泡沫：專剋油料和化學火':'多一支水線'):null;
-  if(t==='rescue')return inc.cut?'破壞器材：很快救出駕駛':f?'搜救器材：入室搜救更快':null;
+  if(t==='rescue')return inc.cut?'破壞器材：很快救出駕駛':f&&inc.trap&&!inc.trap.hidden&&inc.trap.high?'搜救器材：走樓梯搜救更快':null;
   if(t==='support')return f||inc.cut?'照護：隊員不累、動作更快':null;
   return f?'多一支水線':null; }
 function supSpot(inc,k){ const r=inc.road, g=world.g, N=world.N, ok=(i,j)=>i>=0&&j>=0&&i<N&&j<N&&g[i][j]===1, side=k%2?-1:1, n=1+Math.floor(k/2);
@@ -1283,7 +1285,7 @@ function closeIncident(inc){ inc.objs.forEach(o=>{WG.remove(o)}); inc.nodes.forE
 function burn(b){ b.burnt=true; const c=new THREE.Color(0x3a3532); world.bodyMesh.setColorAt(b.idx,c); world.bodyMesh.instanceColor.needsUpdate=true;
   if(b.gable){world.gableMesh.setColorAt(b.gIdx,c);world.gableMesh.instanceColor.needsUpdate=true}else{world.roofMesh.setColorAt(b.rIdx,c);world.roofMesh.instanceColor.needsUpdate=true} }
 function finishIncident(inc,ok,crewList,byCaptain){
-  if(inc.state==='done')return; inc.state='done';
+  if(inc.state==='done')return; inc.state='done'; if(G.indoor&&G.indoor.inc===inc)exitIndoor(true);
   const frac=1-inc.left/inc.total; let st_=frac<.2?5:frac<.34?4:frac<.5?3:frac<.7?2:1; if(inc.spread||inc.rough)st_=Math.max(1,st_-1);
   let xp=0,rep=0,cn=0; const stat=inc.kind==='ems'?'ems':'fire';
   if(ok){ S.streak++; xp=Math.round(inc.xp*(.5+.1*st_)*(1+Math.min(S.streak-1,5)*.1)*(byCaptain?1.2:1)); rep=st_-2; cn=Math.round(inc.xp*.4*(.6+.1*st_)*(byCaptain?1.25:1)*(inc.rescued?1.3:1)); if(inc.rescued)xp=Math.round(xp*1.3); coin(cn); if(inc.fx&&inc.fx.care)(crewList||[]).forEach(c=>c.fat=clamp(c.fat-10,0,100));
@@ -1409,6 +1411,9 @@ function getUse(){ const P=G.player, U=G.unit, M=G.mission; if(G.mode!=='duty'||
   if(P.sleep)return {label:'起床',fn(){wake(false)}};
   if(P.veh){ if(Math.abs(P.veh.v)>4)return null; return {label:'下車',fn(){const V=P.veh,p=exitSpot(V);P.x=p.x;P.z=p.z;V.v=0;P.veh=null;Snd.door(); if(!G.mission&&!U.out)releaseUnit()}} }
   const inc=M&&M.inc;
+  if(G.indoor){ const I=G.indoor, Q=I.person, tr=I.inc.trap; if(Q.mesh.visible&&!Q.follow&&tr.state==='in'&&dist(P,Q)<2.5)return {label:'帶他<br>出去',fn(){Q.follow=true;Snd.ok();say(Q,'謝謝…',2);toast('帶他走回門口的綠色圈，按「離開屋內」','good',3200)}};
+    if(dist(P,I.entry)<2.4)return {label:'離開<br>屋內',fn(){exitIndoor()}}; return null; }
+  if(inc&&inc.trap&&inc.trap.state==='in'&&!inc.trap.hidden&&!inc.trap.high&&!P.carry&&dist(P,inc.trap.door)<2.8)return {label:'入室<br>搶救',fn(){enterIndoor(inc)}};
   if(U){ const V=U.veh, dV=dist(P,V);
     if(P.lad){ const li=P.lad.inc, tr=li.trap; if(tr&&tr.state==='in'&&!tr.hidden)return {label:'雲梯<br>救人',fn(){rescueTrap(li,'雲梯')}}; return {label:'收梯<br>下來',fn(){ladderDown()}}; }
     if(P.carry&&dV<5.2)return {label:'送上<br>救護車',fn(){P.carry=false;inc.patient.state='loaded';inc.patient.mesh.visible=false;Snd.door();toast('傷患已上車，開往急診','good',2200)}};
@@ -1446,7 +1451,7 @@ function whistle(){ const P=G.player; if(G.t<P.whis)return; P.whis=G.t+3; Snd.wh
 function getAct(){ const P=G.player, M=G.mission; if(G.mode!=='duty'||G.paused||P.sleep)return null;
   if(P.lad)return {label:'出水',kind:'lspray'};
   if(P.veh){ if(P.veh.type==='panther'&&M&&M.inc.kind==='fire'&&dist(P.veh,M.inc)<30)return {label:'水砲',kind:'cannon'}; return {label:'叭叭',tap:honk}; }
-  if(M){ const tr=M.inc.trap; if(tr&&tr.state==='in'&&!tr.hidden&&dist(P,tr.door)<2.7)return {label:'入室<br>搜救',kind:'search'}; const ct=M.inc.cut; if(ct&&!ct.done&&dist(P,M.inc)<3.8)return {label:'破壞<br>車門',kind:'cut'}; }
+  if(M){ const tr=M.inc.trap; if(tr&&tr.state==='in'&&!tr.hidden&&tr.high&&dist(P,tr.door)<2.7)return {label:'走樓梯<br>搜救',kind:'search'}; const ct=M.inc.cut; if(ct&&!ct.done&&dist(P,M.inc)<3.8)return {label:'破壞<br>車門',kind:'cut'}; }
   if(P.hose)return {label:'出水',kind:'spray'};
   if(M){ const pt=M.inc.patient; if(pt&&pt.state==='ground'&&!pt.treated&&dist(P,pt)<3)return {label:'急救',kind:'treat'};
     const cat=M.inc.cat; if(cat&&!cat.down&&dist(P,cat)<4.5)return {label:'安撫',kind:'coax'}; }
@@ -1459,6 +1464,68 @@ function updateButtons(){ const u=getUse(), a=getAct(), bu=$('bUse'), ba=$('bAct
   const ul=u?u.label:''; if(ul!==useLbl){useLbl=ul;bu.hidden=!u;if(u)bu.innerHTML=ul}
   const al=a?a.label:''; if(al!==actLbl){actLbl=al;ba.hidden=!a;if(a){ba.innerHTML=al+(a.tap?'':'<br><small>按住</small>');ba.classList.toggle('tap',!!a.tap)} if(!a||a.tap){Input.act=false;ba.classList.remove('on')}}
 }
+
+/* ============ 入室搶救：屋內是另外搭在地圖外面的一個小場景，玩家進屋時被搬過去，出來再搬回門口 ============
+   格局（單位同外面，x 可左右鏡射）：下排 客廳｜廚房，上排 臥室｜浴廁｜房間。沒進去過的房間是暗的，裡面的東西看不到。 */
+function resolveIn(p,r){ const I=G.indoor; let hit=false;
+  const test=b=>{const nx=clamp(p.x,b.minX,b.maxX),nz=clamp(p.z,b.minZ,b.maxZ),dx=p.x-nx,dz=p.z-nz,d2=dx*dx+dz*dz; if(d2>=r*r)return; hit=true;
+    if(d2>1e-6){const d=Math.sqrt(d2);p.x=nx+dx/d*r;p.z=nz+dz/d*r} else {const l=p.x-b.minX,rr_=b.maxX-p.x,t=p.z-b.minZ,bb=b.maxZ-p.z,m=Math.min(l,rr_,t,bb); if(m===l)p.x=b.minX-r;else if(m===rr_)p.x=b.maxX+r;else if(m===t)p.z=b.minZ-r;else p.z=b.maxZ+r}};
+  I.boxes.forEach(test);
+  I.fires.forEach(n=>{ if(n.hp<=0)return; const dx=p.x-n.x,dz=p.z-n.z,d=Math.hypot(dx,dz),rr_=r+.75; if(d<rr_&&d>.01){p.x=n.x+dx/d*rr_;p.z=n.z+dz/d*rr_;hit=true; if(p===G.player&&G.t>(I.hot||0)){I.hot=G.t+2.5;say(p,pick(['好燙！','火擋住了','先滅火！']),1.6)}} });
+  return hit; }
+function enterIndoor(inc){ const P=G.player, U=G.unit, tr=inc.trap; if(G.indoor||!tr)return;
+  const mx=Math.random()<.5?-1:1, ox=0, oz=world.N*CS/2+140, g=new THREE.Group(); scene.add(g);
+  const X=x=>ox+x*mx, Z=z=>oz+z, boxes=[], addBox=(x0,x1,z0,z1)=>{const a=X(x0),b=X(x1);boxes.push({minX:Math.min(a,b),maxX:Math.max(a,b),minZ:Z(z0),maxZ:Z(z1)})};
+  const base=new THREE.Mesh(new THREE.PlaneGeometry(90,70),lam(0x1c1d22)); base.rotation.x=-Math.PI/2; base.position.set(ox,-.03,oz); g.add(base);
+  const wp=[], wall=(x0,z0,x1,z1,h)=>{ const v=x0===x1, w=v?.4:Math.abs(x1-x0), d=v?Math.abs(z1-z0):.4, cxw=X((x0+x1)/2), czw=Z((z0+z1)/2); wp.push(B(0xe9e4d6,w,h,d,cxw,h/2,czw),B(0xb9b2a0,w+.08,.1,d+.08,cxw,h+.05,czw));
+    addBox(Math.min(x0,x1)-(v?.2:0),Math.max(x0,x1)+(v?.2:0),Math.min(z0,z1)-(v?0:.2),Math.max(z0,z1)+(v?0:.2)); };
+  wall(-11,-8,11,-8,2.6); wall(-11,-8,-11,8,2); wall(11,-8,11,8,2); wall(-11,8,-3,8,1); wall(-.6,8,11,8,1);
+  wall(-11,-1,-8.5,-1,1.3); wall(-6.3,-1,-1.9,-1,1.3); wall(.3,-1,6,-1,1.3); wall(8.2,-1,11,-1,1.3);
+  wall(-3.5,-8,-3.5,-1,2); wall(2,-8,2,-1,2); wall(5,-1,5,2,2); wall(5,4.5,5,8,2);
+  addBox(-3,-.6,8,8.6);
+  const wm=vmesh(wp); wm.receiveShadow=true; g.add(wm);
+  const RD=[['客廳',-11,5,-1,8,0xe2c79c],['廚房',5,11,-1,8,0xd9dde2],['臥室',-11,-3.5,-8,-1,0xd8c7a8],['浴廁',-3.5,2,-8,-1,0xbfe0ea],['房間',2,11,-8,-1,0xcfd8c0]];
+  const rooms=RD.map(([name,x0,x1,z0,z1,col],k)=>{ const a=X(x0),b=X(x1), r={name,col,minX:Math.min(a,b),maxX:Math.max(a,b),minZ:Z(z0),maxZ:Z(z1),seen:k===0,grp:new THREE.Group()};
+    r.floor=new THREE.Mesh(new THREE.PlaneGeometry(Math.abs(x1-x0),z1-z0),lam(k===0?col:0x2b2d35)); r.floor.rotation.x=-Math.PI/2; r.floor.position.set((a+b)/2,.02,Z((z0+z1)/2)); r.floor.receiveShadow=true; g.add(r.floor);
+    r.grp.visible=r.seen; g.add(r.grp); const lb=textSprite(name,'#1c2836','#ffffff',2.8,.7); lb.position.set((a+b)/2,3.4,Z(z0+1.2)); g.add(lb); return r; });
+  const fur=(k,parts,rect)=>{ parts.forEach(pt=>{pt.p[0]=X(pt.p[0]);pt.p[2]=Z(pt.p[2])}); const m=vmesh(parts); rooms[k].grp.add(m); if(rect)addBox(rect[0],rect[1],rect[2],rect[3]); };
+  fur(0,[B(0x6b8fb5,3.4,.7,1.3,-7.8,.45,6.6),B(0x587aa0,3.4,.8,.4,-7.8,.9,7.2),B(0x587aa0,.4,.5,1.3,-9.4,.85,6.6),B(0x587aa0,.4,.5,1.3,-6.2,.85,6.6)],[-9.6,-6,5.9,7.5]);
+  fur(0,[B(0x7a5236,.7,.8,3,-10.4,.4,2.2),B(0x22252b,.12,1.1,2,-10.3,1.4,2.2),B(0x6cc4ff,.04,.9,1.7,-10.2,1.4,2.2)],[-10.8,-10,.7,3.7]);
+  fur(0,[B(0xb98a5a,2,.12,1.2,-6.5,.6,3.6),B(0x8a6a44,.14,.6,.14,-7.3,.3,3.2),B(0x8a6a44,.14,.6,.14,-5.7,.3,3.2),B(0x8a6a44,.14,.6,.14,-7.3,.3,4),B(0x8a6a44,.14,.6,.14,-5.7,.3,4),B(0xe63946,.4,.14,.3,-6.5,.73,3.6)],[-7.5,-5.5,3,4.2]);
+  fur(1,[B(0xcfd3d8,1.1,1,5,10.25,.5,4),B(0x8a8f96,1.16,.08,5.06,10.25,1.04,4),B(0x22252b,.7,.06,.7,10.2,1.1,5.4),B(0x9aa3ad,.6,.3,.6,10.2,1.2,2.6)],[9.7,10.8,1.5,6.5]);
+  fur(1,[B(0xf4f4f0,1.1,2,1,6.3,1,7.2),B(0xd9dde2,.06,.7,.06,6.7,1.3,6.68)],[5.7,6.9,6.7,7.7]);
+  fur(2,[B(0x8a5a3a,2.6,.4,3.6,-9.2,.3,-5.8),B(0x6fa8dc,2.5,.3,2.6,-9.2,.6,-5.4),B(0xffffff,1.9,.22,.8,-9.2,.66,-7.1),B(0x8a5a3a,2.6,1,.14,-9.2,.7,-7.6)],[-10.6,-7.9,-7.7,-4]);
+  fur(2,[B(0x9a7a55,1.2,2.1,2.4,-4.4,1.05,-6.4),B(0x7a5a3a,.06,1.9,.08,-5.02,1.05,-6.4)],[-5,-3.8,-7.6,-5.2]);
+  fur(3,[B(0xf4f6f8,1.6,.7,3.2,-2.4,.35,-6.1),B(0x9cd6ea,1.3,.1,2.8,-2.4,.68,-6.1),Cy(0xd9dde2,.1,.6,-2.4,1,-7.5)],[-3.3,-1.6,-7.7,-4.5]);
+  fur(3,[B(0xffffff,.7,.5,.9,1.3,.25,-6.9),B(0xffffff,.7,.9,.3,1.3,.6,-7.5),B(0xffffff,1,.12,.6,1.2,.9,-3),Cy(0xd9dde2,.5,.1,1.2,.98,-3)],[.9,1.7,-7.7,-6.4]);
+  fur(4,[B(0x8a5a3a,2.6,.4,3.6,9.2,.3,-5.8),B(0xf2a3b3,2.5,.3,2.6,9.2,.6,-5.4),B(0xffffff,1.9,.22,.8,9.2,.66,-7.1),B(0x8a5a3a,2.6,1,.14,9.2,.7,-7.6)],[7.9,10.6,-7.7,-4]);
+  fur(4,[B(0xb98a5a,2.2,.12,1,3.6,.9,-7.2),B(0x8a6a44,.14,.9,.9,2.7,.45,-7.2),B(0x8a6a44,.14,.9,.9,4.5,.45,-7.2),B(0x22303f,.8,.6,.08,3.6,1.3,-7.5),B(0x2a3340,.6,.6,.6,3.6,.3,-6)],[2.4,4.8,-7.7,-6.6]);
+  // 火點：客廳、廚房各一，受困者那間的門口一個擋路，另一個隨機
+  const hideAt=[[2,-6.4,-5.2,-7.4],[3,-.2,-5,-.8],[4,5.6,-4.6,7.1]], hd=pick(hideAt), fires=[];
+  const fire=(x,z,hp,room)=>{ const m=makeFlame(); m.position.set(X(x),.2,Z(z)); g.add(m); fires.push({x:X(x),y:.2,z:Z(z),hp,max:hp,m,room:room||null}); };
+  fire(1.2,3.6,130); fire(8.2,5.6,130,rooms[1]); fire(hd[3],-1,150); { const o=pick(hideAt.filter(h=>h!==hd)); fire(o[1]+1.2,o[2]-.4,110,rooms[o[0]]); }
+  const pm=makePerson(Object.assign(randomCiv(),{scale:.95})); pm.visible=false; g.add(pm);
+  const person={mesh:pm,x:X(hd[1]),z:Z(hd[2]),h:0,walk:0,moving:false,follow:false,room:rooms[hd[0]],bubY:4.2};
+  const ring=new THREE.Mesh(new THREE.RingGeometry(1.1,1.5,24),new THREE.MeshBasicMaterial({color:0x2ee6a6,transparent:true,opacity:.9,side:THREE.DoubleSide})); ring.rotation.x=-Math.PI/2; ring.position.set(X(-1.8),.06,Z(7)); g.add(ring);
+  const I=G.indoor={inc,g,boxes,rooms,fires,person,ring,entry:{x:X(-1.8),z:Z(6.9)},ret:{x:tr.door.x,z:tr.door.z+.9},crumbs:[],mates:[],cleared:false,hot:0};
+  P.in=true; P.x=I.entry.x; P.z=I.entry.z-.6; P.h=Math.PI; P.vx=P.vz=0; if(!P.hose&&U&&U.veh.cap>0&&U.veh.type!=='ladder')P.hose={veh:U.veh};
+  if(U){ const sc=U.mates.filter(c=>G.crewEnt[c.id].mode==='scene'), n=sc.length>1?Math.min(2,sc.length-1):sc.length; sc.slice(0,n).forEach((c,i)=>{ const e=G.crewEnt[c.id]; e.mode='inside'; e.x=I.entry.x+(i?1:-1); e.z=I.entry.z+.4; e.y=0; I.mates.push(e); }); }
+  G.camT.x=P.x; G.camT.z=P.z; Snd.door(); toast('進入屋內！沒進去過的房間是暗的，一間一間搜'+(I.mates.length?'。隊友會跟著你射水掩護':''),'',3600); }
+function exitIndoor(silent){ const I=G.indoor; if(!I)return; const P=G.player, inc=I.inc, tr=inc.trap; G.indoor=null; P.in=false; P.x=I.ret.x; P.z=I.ret.z; P.vx=P.vz=0;
+  I.mates.forEach((e,i)=>{ e.mode='scene'; e.x=I.ret.x+(i?2:-2); e.z=I.ret.z+1.5; }); bubs.delete(I.person); scene.remove(I.g); disposeGroup(I.g); G.camT.x=P.x; G.camT.z=P.z;
+  if(!silent){ Snd.door(); if(I.person.follow&&tr.state==='in')rescueTrap(inc,'入室搶救'); } }
+function updateIndoor(dt){ const I=G.indoor, P=G.player, inc=I.inc, tr=inc.trap, Q=I.person;
+  I.rooms.forEach(r=>{ if(r.seen||P.x<r.minX+.4||P.x>r.maxX-.4||P.z<r.minZ+.4||P.z>r.maxZ-.4)return; r.seen=true; r.grp.visible=true; r.floor.material.color.setHex(r.col); Snd.pop();
+    if(Q.room===r&&tr.state==='in'){ Q.mesh.visible=true; say(Q,'我在這裡…咳咳',3); toast('找到受困者了！靠近按「帶他出去」','good',3200); Snd.ok(); } else toast(r.name+'：沒有人','',1500); });
+  let alive=0; I.fires.forEach(n=>{ const on=n.hp>0; if(on)alive++; n.m.visible=on&&(!n.room||n.room.seen); if(!on)return; const s=.75+.6*n.hp/n.max+Math.sin(G.t*11+n.m.userData.ph)*.1; n.m.scale.set(s,s*1.15,s); n.m.rotation.y+=dt*3; if(Math.random()<dt*3.5)emitSmoke(n.x,2,n.z,.8); });
+  if(!alive&&!I.cleared){ I.cleared=true; inc.nodes.forEach(n=>{n.hp=Math.min(n.hp,n.max*.5)}); toast('屋內火點全部撲滅，外面火勢大減','good',2800); Snd.ok(); }
+  const c=I.crumbs, last=c[c.length-1]; if(!last||Math.hypot(P.x-last.x,P.z-last.z)>.7){ c.push({x:P.x,z:P.z}); if(c.length>80)c.shift(); }
+  const trail=(e,back,sp)=>{ const t=c[Math.max(0,c.length-1-back)]; e.moving=false; if(!t)return; const dx=t.x-e.x, dz=t.z-e.z, d=Math.hypot(dx,dz); if(d>.25){ const st=Math.min(d,sp*dt); e.x+=dx/d*st; e.z+=dz/d*st; e.h=angLerp(e.h,Math.atan2(dx,dz),Math.min(1,dt*10)); e.walk+=dt*9; e.moving=true; } };
+  if(tr.state!=='in'){ Q.follow=false; if(tr.state==='hurt')Q.mesh.visible=false; }
+  if(Q.follow)trail(Q,3,8); Q.mesh.position.set(Q.x,0,Q.z); Q.mesh.rotation.y=Q.h; animPerson(Q.mesh,Q.walk,Q.moving); if(Q.mesh.visible&&!Q.follow&&tr.state==='in'&&!(Q.bubT>0)&&Math.random()<dt*.5)say(Q,pick(['救我…','咳咳咳','在這裡！']),2);
+  I.mates.forEach((e,i)=>{ trail(e,(Q.follow?6:3)+i*3,7.4); let best=null,bd=7.5; I.fires.forEach(n=>{ if(n.hp<=0||(n.room&&!n.room.seen))return; const d=Math.hypot(n.x-e.x,n.z-e.z); if(d<bd){bd=d;best=n} });
+    if(best&&!e.moving){ e.h=angLerp(e.h,Math.atan2(best.x-e.x,best.z-e.z),Math.min(1,dt*8)); best.hp-=12*(e.c.fire/60)*dt; if(Math.random()<.5)emitWater(e.x+Math.sin(e.h)*.8,1.5,e.z+Math.cos(e.h)*.8,e.h,false,clamp(bd/11,.3,1)); } });
+  I.ring.visible=Q.follow||tr.state!=='in'; if(I.ring.visible)I.ring.scale.setScalar(1+Math.sin(G.t*4)*.1); }
 
 /* ============ 車流 ============ */
 const CARG={};
@@ -1545,10 +1612,11 @@ const SKY={day:new THREE.Color(0xa6dcea),dusk:new THREE.Color(0xf2a36b),night:ne
 const rainPts=(()=>{ const n=420, a=new Float32Array(n*3); for(let i=0;i<n;i++){a[i*3]=R(-45,45);a[i*3+1]=R(0,40);a[i*3+2]=R(-40,30)} const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(a,3));
   const p=new THREE.Points(g,new THREE.PointsMaterial({color:0xd7e8ff,size:.32,transparent:true,opacity:.75,depthWrite:false})); p.frustumCulled=false; p.visible=false; scene.add(p); return p; })();
 function updateSky(dt){ const duty=G.mode==='duty'||G.mode==='menu', hr=duty?(8+G.clock/DAY_LEN*24)%24:12;
-  const n=(hr>=19||hr<5)?1:hr>=17?(hr-17)/2:hr<7?1-(hr-5)/2:0, dk=1-Math.abs(2*n-1), rain=duty&&G.rain;
+  const n=(hr>=19||hr<5)?1:hr>=17?(hr-17)/2:hr<7?1-(hr-5)/2:0, dk=1-Math.abs(2*n-1), rain=duty&&G.rain&&!G.indoor;
   SKY.t.copy(SKY.day).lerp(SKY.night,n).lerp(SKY.dusk,dk*.55); if(rain)SKY.t.lerp(SKY.rain,.55*(1-n*.6));
   scene.background.copy(SKY.t); scene.fog.color.copy(SKY.t);
   hemi.intensity=(.86-.34*n)*(rain?.88:1); sun.intensity=(.8-.6*n)*(rain?.6:1); sun.color.copy(SKY.sunD).lerp(SKY.sunN,n);
+  if(G.indoor){ scene.background.setHex(0x1c1d22); scene.fog.color.setHex(0x1c1d22); hemi.intensity=.8; sun.intensity=.42; }
   if(world&&world.glassMat){ world.glassMat.color.copy(SKY.gl).lerp(SKY.warm,n); world.glassMat.emissive.setRGB(1,.72,.3).multiplyScalar(n*.75); world.lampMat.emissive.setRGB(1,.9,.55).multiplyScalar(n); }
   rainPts.visible=!!rain; if(rain){ const a=rainPts.geometry.attributes.position; for(let i=0;i<a.count;i++){let y=a.getY(i)-42*dt; if(y<0)y+=40; a.setY(i,y)} a.needsUpdate=true; rainPts.position.set(G.camT.x,0,G.camT.z); } }
 
@@ -1557,7 +1625,7 @@ function driveVehicle(V,j,dt){ const max=V.M.max;
   if(j.mag>.15){ const want=Math.atan2(j.x,-j.y), d=angDiff(V.h,want); const tr=V.M.turn*(G.rain?.74:1); V.h+=clamp(d,-tr*dt,tr*dt); V.lean=lerp(V.lean,clamp(d,-1,1)*.13*Math.min(1,V.v/max+.2),dt*6);
     V.v=lerp(V.v,max*j.mag*Math.max(.3,Math.cos(d)),dt*(G.rain?1.15:1.7)); } else { V.v=lerp(V.v,0,dt*3.2); V.lean=lerp(V.lean,0,dt*6); }
   V.x+=Math.sin(V.h)*V.v*dt; V.z+=Math.cos(V.h)*V.v*dt; if(resolve(V,1.5)){ if(V.v>7)Snd.bump(); V.v*=.55; V.bounce=.25; } }
-function hoseSrc(P){ const hs=P.hose; if(hs.reel)return {x:hs.reel.x,z:hs.reel.z,max:26}; const V=hs.veh, r=V.M.L/2-.1; return {x:V.x-Math.sin(V.h)*r,z:V.z-Math.cos(V.h)*r,max:30}; }
+function hoseSrc(P){ const hs=P.hose; if(G.indoor)return {x:G.indoor.entry.x,z:G.indoor.entry.z+1,max:60}; if(hs.reel)return {x:hs.reel.x,z:hs.reel.z,max:26}; const V=hs.veh, r=V.M.L/2-.1; return {x:V.x-Math.sin(V.h)*r,z:V.z-Math.cos(V.h)*r,max:30}; }
 function inCone(P,x,z,range){ const d=Math.hypot(x-P.x,z-P.z); return d<range&&d>.3&&Math.abs(angDiff(P.h,Math.atan2(x-P.x,z-P.z)))<.42; }
 function sprayWorld(P,dt){ // 水柱噴到的東西各有反應
   const sx=Math.sin(P.h), sz=Math.cos(P.h), rg=NOZ[S.noz].range*.77;
@@ -1611,9 +1679,9 @@ function updatePlayer(dt){ const P=G.player, j=Input.vec(), M=G.mission, inc=M&&
   if(P.hose){ const s=hoseSrc(P), dx=P.x-s.x, dz=P.z-s.z, d=Math.hypot(dx,dz); if(d>s.max){P.x=s.x+dx/d*s.max;P.z=s.z+dz/d*s.max; if(!P.hoseWarn||G.t-P.hoseWarn>4){P.hoseWarn=G.t;toast(P.hose.veh?'水帶不夠長，把消防車開近一點':'水帶只有這麼長','',2000)}}
     const V=P.hose.veh, NZ=NOZ[S.noz], sup=!!(inc&&inc.fx&&inc.fx.supply), foam=!!(V&&V.type==='chem'); if(V&&(V.hyd||sup))V.water=Math.min(V.cap,V.water+22*dt);
     if(Input.act){ if(!V||V.water>0){ P.spray=true; if(V&&!V.hyd&&!sup)V.water-=5*dt;
-        if(inc&&inc.kind==='fire'){ let best=null,bd=NZ.range+2; inc.nodes.forEach(n=>{if(n.hp<=0)return;const d=Math.hypot(n.x-P.x,n.z-P.z);if(d<bd){bd=d;best=n}});
+        if(inc&&inc.kind==='fire'){ const nodes=G.indoor?G.indoor.fires:inc.nodes; let best=null,bd=NZ.range+2; nodes.forEach(n=>{if(n.hp<=0)return;const d=Math.hypot(n.x-P.x,n.z-P.z);if(d<bd){bd=d;best=n}});
           if(best&&j.mag<.15)P.h=angLerp(P.h,Math.atan2(best.x-P.x,best.z-P.z),Math.min(1,dt*9));
-          let hitN=null,hd=NZ.range; inc.nodes.forEach(n=>{if(n.hp<=0)return;const d=Math.hypot(n.x-P.x,n.z-P.z);if(d<hd&&Math.abs(angDiff(P.h,Math.atan2(n.x-P.x,n.z-P.z)))<.5){hd=d;hitN=n}}); if(hitN){ const kk=hitNode(inc,hitN,NZ.dmg*dt,{foam}); if(kk<.5&&(!P.weakWarn||G.t-P.weakWarn>7)){P.weakWarn=G.t;toast(hitN.chem&&!foam&&!inc.fx.foam?'綠色的是化學火，水沒什麼用，要化學車的泡沫':'水柱打不到高處，要雲梯車幫忙','bad',3000)} } }
+          let hitN=null,hd=NZ.range; nodes.forEach(n=>{if(n.hp<=0)return;const d=Math.hypot(n.x-P.x,n.z-P.z);if(d<hd&&Math.abs(angDiff(P.h,Math.atan2(n.x-P.x,n.z-P.z)))<.5){hd=d;hitN=n}}); if(hitN){ const kk=hitNode(inc,hitN,NZ.dmg*dt,{foam}); if(kk<.5&&(!P.weakWarn||G.t-P.weakWarn>7)){P.weakWarn=G.t;toast(hitN.chem&&!foam&&!inc.fx.foam?'綠色的是化學火，水沒什麼用，要化學車的泡沫':'水柱打不到高處，要雲梯車幫忙','bad',3000)} } }
         const ex=P.x+Math.sin(P.h)*.8, ez=P.z+Math.cos(P.h)*.8; emitWater(ex,1.5,ez,P.h,false,NZ.range/13,foam); if(Math.random()<.6)emitWater(ex,1.5,ez,P.h,false,NZ.range/13,foam);
         sprayWorld(P,dt);
       } else if(!P.dryWarn||G.t-P.dryWarn>4){P.dryWarn=G.t;toast('水箱沒水了！去接消防栓','bad',2200)} } }
@@ -1622,7 +1690,7 @@ function updatePlayer(dt){ const P=G.player, j=Input.vec(), M=G.mission, inc=M&&
 }
 function updateMates(dt){ const P=G.player, U=G.unit; if(!U)return; const V=U.veh, inc=G.mission&&G.mission.inc;
   if(!G.mission&&!P.veh&&!U.out&&dist(V,V.bay)<1){ releaseUnit(); return; }
-  U.mates.forEach((c,i)=>{ const e=G.crewEnt[c.id]; e.moving=false;
+  U.mates.forEach((c,i)=>{ const e=G.crewEnt[c.id]; if(e.mode==='inside')return; e.moving=false;
     if(e.mode==='hidden'){ if(!P.veh&&inc&&dist(V,inc)<26){ e.mode='scene'; e.y=0; const a=V.h-Math.PI/2; e.x=V.x+Math.sin(a)*(2.4+i*.9); e.z=V.z+Math.cos(a)*(2.4+i*.9); } return; }
     let tx=V.x,tz=V.z,stop=2.6,then='hide';
     if(e.mode==='scene'&&inc){ then=null;
@@ -1691,7 +1759,7 @@ function updateProps(dt){ const P=G.player, movers=[];
 }
 function updateIncidents(dt){
   for(let k=G.incidents.length-1;k>=0;k--){ const inc=G.incidents[k], P=G.player, tr=inc.trap; inc.age+=dt; inc.fx=fxOf(inc);
-    if(tr){ if(tr.hidden&&inc.state==='player'&&G.unit&&dist(G.unit.veh,inc)<24){ showTrap(inc); Snd.radio(); toast('現場回報：屋內有人受困！到門口按住「入室搜救」','bad big',3800); }
+    if(tr){ if(tr.hidden&&inc.state==='player'&&G.unit&&dist(G.unit.veh,inc)<24){ showTrap(inc); Snd.radio(); toast('現場回報：屋內有人受困！到門口按「入室搶救」進屋找人','bad big',3800); }
       if(tr.state==='in'&&!tr.hidden){ tr.t-=dt; tr.mk.position.y=tr.mkY+Math.sin(G.t*5)*.25; if(!(tr.e.bubT>0)&&Math.random()<dt*.6&&dist(P,inc)<45)say(tr.e,pick(['救命啊！','咳咳…這裡有人','快來救我']),2.2);
         if(tr.mesh){tr.mesh.userData.la.rotation.z=-2.4+Math.sin(G.t*9)*.4;tr.mesh.userData.ra.rotation.z=2.4-Math.sin(G.t*9)*.4} if(tr.t<=0)hurtTrap(inc); } }
     let drain=1; if(inc.kind==='ems'&&inc.patient.treated)drain=.4; inc.left-=dt*drain;
@@ -1723,7 +1791,7 @@ function update(dt){
       G.spawnT=(Math.random()<st.burst?R(6,12):DAY_LEN/st.perDay*R(.65,1.35)); if(G.jinx>0){G.jinx--;G.spawnT*=.4} } }
   if(G.paused)return;
   G.evT-=dt; if(G.evT<=0){ G.evT=R(26,46); if(!G.mission&&G.clock<DAY_LEN-40)spawnEvent(); }
-  updateIncidents(dt); updateAI(dt); updatePlayer(dt); updateMates(dt); updateCrewIdle(dt); updatePeds(dt); updateAnimals(dt); updateCars(dt); updateEvents(dt); updateProps(dt); updateFX(dt);
+  updateIncidents(dt); updateAI(dt); updatePlayer(dt); updateMates(dt); if(G.indoor)updateIndoor(dt); updateCrewIdle(dt); updatePeds(dt); updateAnimals(dt); updateCars(dt); updateEvents(dt); updateProps(dt); updateFX(dt);
   world.hyd.forEach(h=>{ if(h.fount>0){ h.fount-=dt; emitWater(h.x,1,h.z,0,true); if(Math.random()<.5)emitWater(h.x,1,h.z,0,true);
     G.peds.forEach(p=>{if(p.state==='walk'&&Math.hypot(p.x-h.x,p.z-h.z)<4){p.state='hop';p.vy=6;p.vx=(p.x-h.x)*1.5;p.vz=(p.z-h.z)*1.5;say(p,pick(['下雨了？','哇！好涼','誰開的啦']),2)}}) } });
   G.things.forEach(t=>{ if(t.type==='plant'){ const sc=t.top.scale.x; if(Math.abs(sc-t.g)>.01)t.top.scale.setScalar(lerp(sc,t.g,Math.min(1,dt*4))) } });
@@ -1732,7 +1800,7 @@ function update(dt){
   let tgt=null; if(inc){ if(inc.kind==='ems'&&inc.patient.state==='loaded')tgt=world.hosp.drop; else tgt=inc; }
   const sirenOn=!!(V&&inc&&tgt&&dist(P,tgt)>13&&inc.kind!=='svc'); Snd.siren('amb',sirenOn&&V.type==='amb'); Snd.siren('fire',sirenOn&&V.type!=='amb'); if(V)V.lights=sirenOn;
   Snd.engine(V?Math.min(1,Math.abs(V.v)/18)+.01:0); Snd.level('water',P.spray?.16:0);
-  let near=0; G.incidents.forEach(n=>{if(n.kind==='fire'){const d=dist(P,n);if(d<40)near=Math.max(near,(1-d/40)*fireFrac(n))}}); Snd.level('fire',near*.22); Snd.level('city',.03);
+  let near=0; G.incidents.forEach(n=>{if(n.kind==='fire'){const d=dist(P,n);if(d<40)near=Math.max(near,(1-d/40)*fireFrac(n))}}); if(G.indoor)near=Math.max(near,.75); Snd.level('fire',near*.22); Snd.level('city',.03);
   radioT-=dt; if(radioT<=0){radioT=R(14,26); if(!G.unit)Snd.radio()}
 }
 function syncMeshes(dt){
@@ -1750,10 +1818,11 @@ function syncMeshes(dt){
   hydLine.visible=!!(U&&U.veh.hyd); if(hydLine.visible){const a=hydLine.geometry.attributes.position,V=U.veh;a.setXYZ(0,V.hyd.x,.8,V.hyd.z);a.setXYZ(1,V.x,1.2,V.z);a.needsUpdate=true}
   let tgt=null; if(G.mode==='duty'){ if(inc){ if(!P.veh&&U&&!P.hose&&!P.carry&&dist(U.veh,inc)>26)tgt=U.veh; else if(inc.kind==='ems'&&inc.patient.state==='loaded')tgt=P.veh?world.hosp.drop:U.veh; else if(inc.kind==='ems'&&P.carry)tgt=U.veh; else tgt=inc.snake||inc; }
     else if(U&&!U.patrol){ tgt=P.veh?{x:world.station.cx,z:world.station.cz+6}:U.veh; } }
+  if(G.indoor)tgt=(G.indoor.person.follow||G.indoor.inc.trap.state!=='in')?G.indoor.entry:null;
   if(world.dropRing){ world.dropRing.visible=!!(inc&&inc.kind==='ems'&&inc.patient.state==='loaded'); if(world.dropRing.visible)world.dropRing.scale.setScalar(1+Math.sin(G.t*4)*.08); }
   if(tgt&&dist(P,tgt)>7){ const a=Math.atan2(tgt.x-P.x,tgt.z-P.z), r=P.veh?6:3.6; arrowG.visible=true; arrowG.position.set(P.x+Math.sin(a)*r,1.2+Math.sin(G.t*5)*.2,P.z+Math.cos(a)*r); arrowG.rotation.y=a; } else arrowG.visible=false;
   let fx,fz,zoom;
-  if(G.mode==='duty'||G.mode==='menu'){fx=P.x;fz=P.z;zoom=P.veh?1.2:P.lad?1.2:.84} else {const s0=world.station;fx=s0.cx+Math.sin(performance.now()/7000)*4;fz=s0.cz+2;zoom=1.15}
+  if(G.mode==='duty'||G.mode==='menu'){fx=P.x;fz=P.z;zoom=P.veh?1.2:P.lad?1.2:G.indoor?.72:.84} else {const s0=world.station;fx=s0.cx+Math.sin(performance.now()/7000)*4;fz=s0.cz+2;zoom=1.15}
   if(camera.aspect<1)zoom*=1.7;
   G.camT.x=lerp(G.camT.x,fx,Math.min(1,dt*5)); G.camT.z=lerp(G.camT.z,fz,Math.min(1,dt*5)); G.zoom=lerp(G.zoom||zoom,zoom,Math.min(1,dt*2.5));
   camera.position.set(G.camT.x,31*G.zoom,G.camT.z+24*G.zoom); camera.lookAt(G.camT.x,0,G.camT.z-1.5);
@@ -1778,10 +1847,11 @@ function updateHUD(){
       if(wv)$('mWater').firstElementChild.style.width=clamp(U.veh.water/U.veh.cap*100,0,100)+'%';
       const drive=P.veh?(dist(P,inc)>18?'開往現場（'+Math.round(dist(P,inc)*10)+' 公尺）':'到了！按「下車」'):null;
       if(fire){ $('mFire').firstElementChild.style.width=fireFrac(inc)*100+'%'; const tr=inc.trap, trapOn=tr&&tr.state==='in'&&!tr.hidden, vt=U.veh.type;
-        if(P.lad)obj=trapOn?'按「雲梯救人」把人接下來（剩 '+fmtT(tr.t)+'）':U.veh.water<=0?'沒水了！收梯下來接消防栓':'按住「出水」，從雲梯上打火';
+        if(G.indoor){ const Q=G.indoor.person; obj=tr.state!=='in'?'回到門口，按「離開屋內」':Q.follow?'帶他走回門口的綠色圈（剩 '+fmtT(tr.t)+'）':Q.mesh.visible?'靠近受困者，按「帶他出去」':'一間一間搜，找出受困者（剩 '+fmtT(tr.t)+'）'; }
+        else if(P.lad)obj=trapOn?'按「雲梯救人」把人接下來（剩 '+fmtT(tr.t)+'）':U.veh.water<=0?'沒水了！收梯下來接消防栓':'按住「出水」，從雲梯上打火';
         else if(P.veh&&vt==='panther'&&dist(P,inc)<30)obj=U.veh.water<=0?'水砲沒水了，下車接消防栓':'按住「水砲」直接射水';
         else obj=drive||(vt==='ladder'?(dv>17?'把雲梯車開近一點':'到雲梯車旁按「升雲梯」'):!P.hose?(dv>26?'回消防車，開近現場':'到消防車旁「拿水帶」'):U.veh.water<=0?'沒水了，去接消防栓':'對準火焰，按住「出水」');
-        if(trapOn&&!P.veh&&!P.lad&&vt!=='ladder')obj=tr.prog>0&&P.treat?'入室搜救中 '+Math.round(tr.prog*100)+'%（剩 '+fmtT(tr.t)+'）':'有人受困！到門口按住「入室搜救」（剩 '+fmtT(tr.t)+'）'; }
+        if(trapOn&&!G.indoor&&!P.veh&&!P.lad&&!(tr.high&&vt==='ladder'))obj=tr.high?(tr.prog>0&&P.treat?'走樓梯搜救中 '+Math.round(tr.prog*100)+'%（剩 '+fmtT(tr.t)+'）':'頂樓有人受困！到門口按住「走樓梯搜救」（剩 '+fmtT(tr.t)+'）'):'有人受困！到門口按「入室搶救」（剩 '+fmtT(tr.t)+'）'; }
       else if(inc.kind==='ems'){ const pt=inc.patient; obj=pt.state==='loaded'?(P.veh?'送往急診（綠色圓圈）':'回救護車上車'):pt.state==='carried'?'把傷患抬到救護車':drive||(pt.treated?'靠近傷患「抬上擔架」':dist(P,pt)<3?'按住「急救」'+Math.round(pt.prog*100)+'%':'跑到傷患身邊'); }
       else if(inc.cut)obj=drive||'到事故車旁，按住「破壞車門」 '+Math.round(inc.cut.prog*100)+'%';
       else if(inc.snake)obj=drive||'追上那條蛇，按「抓蛇」';
@@ -1852,7 +1922,7 @@ function boot(){
 }
 $('bCont').addEventListener('click',()=>{Snd.init();Snd.click();autoFull();openSched()});
 $('bNew').addEventListener('click',()=>{Snd.init();Snd.click();autoFull(); const vol=S.vol; S=freshSave(); S.vol=vol; Cloud.mark(true,-1); openSched(); buildWorld(); persist(true); });
-window.__ff={spawnEvent,finishEvent,useEvent,buildWorld,G,findPath,roadCellNear,getUse,getAct,doUse,dist,get S(){return S},get world(){return world},spawnIncident,openCard,Input,STAGES,endDay,finishIncident,Save,say,jinx,crewTalk,pedTalk,whistle,honk,sun,useThing,VEH,NOZ,coin,openShop,closeShop,makeVehicle,fixBays,scene,camera,renderer,persist,startDuty,openSched,update:dt=>update(dt),SKINS,rollBox,openBox,skinThumb,quest,makePerson,rescueTrap,fxOf,ladderUp,ladderDown,sendSup,updateHUD:()=>updateHUD(),closeCard:()=>closeCard(),FX};
+window.__ff={spawnEvent,finishEvent,useEvent,buildWorld,G,findPath,roadCellNear,getUse,getAct,doUse,dist,get S(){return S},get world(){return world},spawnIncident,openCard,Input,STAGES,endDay,finishIncident,Save,say,jinx,crewTalk,pedTalk,whistle,honk,sun,useThing,VEH,NOZ,coin,openShop,closeShop,makeVehicle,fixBays,scene,camera,renderer,persist,startDuty,openSched,update:dt=>update(dt),enterIndoor,exitIndoor,SKINS,rollBox,openBox,skinThumb,quest,makePerson,rescueTrap,fxOf,ladderUp,ladderDown,sendSup,updateHUD:()=>updateHUD(),closeCard:()=>closeCard(),FX};
 boot();
 })();
 </script>
