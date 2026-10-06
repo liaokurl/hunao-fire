@@ -263,7 +263,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
       <div class="sec" id="sQLbl">今日任務（三個都完成送皮膚箱）</div><div class="lst" id="sQuest"></div>
       <p class="note">點格子切換勤務。每時段至少 1 人值班；救護車需 2 人、消防車需 3 人。人力不夠的時段，由隊長親自補上。休息可消除疲勞。</p>
       <div class="tw"><table class="sch" id="sTable"></table></div>
-      <div class="btns stick"><button class="b teal" id="bShop" type="button">分隊倉庫</button><button class="b" id="bMap" type="button">換地圖</button><button class="b" id="bAuto" type="button">自動排班</button><button class="b go" id="bDuty" type="button">開始值勤</button></div>
+      <div class="btns stick"><button class="b" id="bSchedHome" type="button">回主畫面</button><button class="b teal" id="bShop" type="button">分隊倉庫</button><button class="b" id="bMap" type="button">換地圖</button><button class="b" id="bAuto" type="button">自動排班</button><button class="b go" id="bDuty" type="button">開始值勤</button></div>
     </div>
   </div></div>
 
@@ -272,7 +272,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
     <div class="pb">
       <div class="tabs" id="shTabs"><button type="button" class="tab sel" data-t="veh">車庫</button><button type="button" class="tab" data-t="noz">瞄子</button><button type="button" class="tab" data-t="skin">消防衣</button></div>
       <div class="pb" id="shBody" style="padding:0"></div>
-      <div class="btns stick"><button class="b go" id="bShopX" type="button">回到排班</button></div>
+      <div class="btns stick"><button class="b" id="bShopHome" type="button">回主畫面</button><button class="b go" id="bShopX" type="button">回到排班</button></div>
     </div>
   </div>
   <div id="boxPop" hidden><div id="bxBox"></div><div id="bxRes" hidden><div id="bxRar"></div><img id="bxImg" alt=""><b id="bxName"></b><p id="bxMsg"></p><div class="btns"><button class="b" id="bxWear" type="button">馬上穿</button><button class="b go" id="bxOk" type="button">收下</button></div></div></div>
@@ -283,7 +283,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
     <div class="pb">
       <p class="note">每個國家都有小型、中型、大型三個分隊，經驗各自累計。獎金、車、消防衣全部共用。台灣的圳頂分隊是基礎關，通過後其他國家才會開放。</p>
       <div class="pb" id="mapBody" style="padding:0"></div>
-      <div class="btns stick"><button class="b go" id="bMapX" type="button">回到排班</button></div>
+      <div class="btns stick"><button class="b" id="bMapHome" type="button">回主畫面</button><button class="b go" id="bMapX" type="button">回到排班</button></div>
     </div>
   </div></div>
 
@@ -367,7 +367,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
 <script src="three.min.js"></script>
 <script>
 (()=>{'use strict';
-const VERSION='車干製V2.4';
+const VERSION='車干製V2.5';
 const $=id=>document.getElementById(id);
 (function cover(){ const t=$('ovTitle'), im=new Image(); im.onload=()=>{t.style.backgroundImage='url(cover.jpg)'}; im.onerror=()=>t.classList.add('nocover'); im.src='cover.jpg'; })();
 if(!window.THREE){ $('tSub').textContent='3D 元件載入失敗，請檢查網路後重新整理'; return; }
@@ -2011,6 +2011,7 @@ $('bMSched').addEventListener('click',()=>{ Snd.click(); inDuty=true; stopLoops(
 $('bMShop').addEventListener('click',()=>{ Snd.click(); G.mode='duty'; openShop(); });
 $('bAutoFull').addEventListener('click',()=>{ S.vol.full=!S.vol.full; Save.save(S); $('bAutoFull').textContent='自動全螢幕：'+(S.vol.full?'開':'關'); Snd.click(); });
 $('bHome').addEventListener('click',()=>{ Snd.click(); if(CO)netLeave(); else goHome(); });
+['bSchedHome','bShopHome','bMapHome'].forEach(id=>$(id).addEventListener('click',()=>{ Snd.click(); shopDirty=false; if(CO)netLeave(); else goHome(); }));
 function goHome(){ persist(true); stopLoops(); inDuty=false; G.paused=false; G.talking=false; G.cardInc=null; G.sleep=false; $('sleepV').hidden=true; $('hud').hidden=true; try{ if(document.fullscreenElement||document.webkitFullscreenElement)(document.exitFullscreen||document.webkitExitFullscreen).call(document) }catch(e){}
   buildWorld(); G.mode='title'; $('bCont').hidden=false; $('bNew').textContent='重新開始'; $('bNew').className='b'; $('tSub').textContent=VERSION+'　第 '+S.day+' 天・'+ST().name+'・獎金 '+S.coin; show('ovTitle'); Snd.mode('calm'); }
 $('bCopy').addEventListener('click',()=>{ const t=fmtCode(S.code), done=()=>{$('bCopy').textContent='已複製';setTimeout(()=>$('bCopy').textContent='複製',1500)}; try{navigator.clipboard.writeText(t).then(done).catch(()=>{const r=document.createRange();r.selectNodeContents($('cCode'));const s=getSelection();s.removeAllRanges();s.addRange(r)})}catch(e){} });
