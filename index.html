@@ -178,7 +178,24 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
 .row .rn b{font-size:15px;font-weight:900} .row .rn small{font-size:11.5px;color:var(--mute);font-weight:700}
 .dot{width:22px;height:22px;border-radius:50%;flex:none;border:2px solid #fff;box-shadow:0 0 0 2px var(--line)}
 .opt.bay{min-width:86px}
-#sNews{background:#fff1cc;border-radius:10px;padding:8px 10px;color:var(--ink)}
+#sNews{background:#fff1cc;border-radius:10px;padding:8px 10px;color:var(--ink);white-space:pre-line}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
+.sc{background:#fff;border:3px solid var(--rc,#ccc);border-radius:12px;padding:6px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center}
+.sc img{width:96px;height:122px;background:linear-gradient(180deg,#eef3f7,#dfe7ee);border-radius:8px}
+.sc.no{background:#f3f1ea}
+.sc b{font-size:13.5px;font-weight:900} .sc small{font-size:11px;font-weight:900;color:var(--rc,#888)}
+.sc .b{width:100%;padding:6px 4px;font-size:13px}
+.boxi{flex:none;width:40px;height:36px;border-radius:8px;background:linear-gradient(90deg,transparent 40%,var(--amber) 40% 60%,transparent 60%),linear-gradient(0deg,transparent 38%,var(--amber) 38% 62%,transparent 62%),var(--red);box-shadow:0 3px 0 rgba(0,0,0,.25)}
+#boxPop{position:absolute;inset:0;background:rgba(20,30,45,.86);display:flex;align-items:center;justify-content:center;z-index:4}
+#bxBox{width:120px;height:108px;border-radius:16px;background:linear-gradient(90deg,transparent 42%,var(--amber) 42% 58%,transparent 58%),linear-gradient(0deg,transparent 40%,var(--amber) 40% 60%,transparent 60%),var(--red);box-shadow:0 8px 0 rgba(0,0,0,.3);animation:shake .95s both}
+@keyframes shake{0%{transform:rotate(0)}15%{transform:rotate(-9deg) scale(1.05)}30%{transform:rotate(9deg) scale(1.1)}45%{transform:rotate(-12deg) scale(1.15)}60%{transform:rotate(12deg) scale(1.2)}80%{transform:rotate(-6deg) scale(1.3)}100%{transform:scale(1.5);opacity:.2}}
+#bxRes{background:var(--paper);border-radius:18px;padding:12px 18px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;border:6px solid var(--rc,#888);min-width:240px;animation:pop .3s}
+#bxRes img{width:114px;height:144px}
+#bxRar{font-weight:900;color:#fff;background:var(--rc,#888);border-radius:8px;padding:2px 12px;font-size:14px;letter-spacing:.1em}
+#bxName{font-size:22px;font-weight:900} #bxMsg{margin:0 0 4px;font-weight:800;color:var(--mute)}
+#bxRes .btns{width:100%}
+.chip.q{background:var(--ink)}
+.sw{width:18px;height:18px;border-radius:50%;display:inline-block;vertical-align:-3px;margin-right:6px;border:2px solid #fff;box-shadow:0 0 0 1px var(--line)}
 @media (max-height:430px){ #bAct{width:84px;height:84px;font-size:16px} #bUse{width:72px;height:72px;right:116px;font-size:14px} #mini{width:88px;height:88px} #ovTitle .how{display:none} }
 @media (orientation:portrait){ #mini{top:84px} #left{top:84px} #toast{top:200px} #stickZone{height:45%} #ovTitle{background-size:auto 62%;background-position:center top} }
 @media (prefers-reduced-motion:reduce){ .tst,.chip.wait{animation:none} }
@@ -201,6 +218,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
       <button class="pill" id="bMenu" type="button">設定</button>
     </div>
     <div id="left">
+      <button type="button" class="chip q" id="hQuest">今日任務</button>
       <div id="pending"></div>
       <div id="mission" hidden>
         <div id="mTitle"></div>
@@ -234,6 +252,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
     <div class="ph ink"><img id="sLogo" src="icon.jpg" alt=""><h2 id="sTitle" style="flex:1">勤務排班</h2><span id="sInfo"></span></div>
     <div class="pb">
       <p class="note" id="sNews" hidden></p>
+      <div class="sec" id="sQLbl">今日任務（三個都完成送皮膚箱）</div><div class="lst" id="sQuest"></div>
       <p class="note">點格子切換勤務。每時段至少 1 人值班；救護車需 2 人、消防車需 3 人。人力不夠的時段，由隊長親自補上。休息可消除疲勞。</p>
       <div class="tw"><table class="sch" id="sTable"></table></div>
       <div class="btns stick"><button class="b teal" id="bShop" type="button">分隊倉庫</button><button class="b" id="bAuto" type="button">自動排班</button><button class="b go" id="bDuty" type="button">開始值勤</button></div>
@@ -243,11 +262,13 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
   <div class="ov" id="ovShop" hidden><div class="panel wide">
     <div class="ph ink"><h2>分隊倉庫</h2><span id="shCoin"></span></div>
     <div class="pb">
-      <div class="tabs" id="shTabs"><button type="button" class="tab sel" data-t="veh">車庫</button><button type="button" class="tab" data-t="noz">瞄子</button></div>
+      <div class="tabs" id="shTabs"><button type="button" class="tab sel" data-t="veh">車庫</button><button type="button" class="tab" data-t="noz">瞄子</button><button type="button" class="tab" data-t="skin">消防衣</button></div>
       <div class="pb" id="shBody" style="padding:0"></div>
       <div class="btns stick"><button class="b go" id="bShopX" type="button">回到排班</button></div>
     </div>
-  </div></div>
+  </div>
+  <div id="boxPop" hidden><div id="bxBox"></div><div id="bxRes" hidden><div id="bxRar"></div><img id="bxImg" alt=""><b id="bxName"></b><p id="bxMsg"></p><div class="btns"><button class="b" id="bxWear" type="button">馬上穿</button><button class="b go" id="bxOk" type="button">收下</button></div></div></div>
+  </div>
 
   <div class="ov" id="ovCard" hidden><div class="panel">
     <div class="ph" id="cHead"><h2 id="cTitle"></h2><span id="cTime"></span></div>
@@ -271,6 +292,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
     <div class="pb">
       <div class="kv" id="eInfo"></div>
       <div class="sec">案件紀錄</div><div class="lst" id="eList"></div>
+      <div class="sec">今日任務</div><div class="lst" id="eQuest"></div>
       <div class="sec">隊員狀況</div><div class="lst" id="eCrew"></div>
       <div class="btns stick"><button class="b go" id="bNext" type="button">下一天</button></div>
     </div>
@@ -305,7 +327,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
 <script src="three.min.js"></script>
 <script>
 (()=>{'use strict';
-const VERSION='車干製V1.8';
+const VERSION='車干製V1.9';
 const $=id=>document.getElementById(id);
 (function cover(){ const t=$('ovTitle'), im=new Image(); im.onload=()=>{t.style.backgroundImage='url(cover.jpg)'}; im.onerror=()=>t.classList.add('nocover'); im.src='cover.jpg'; })();
 if(!window.THREE){ $('tSub').textContent='3D 元件載入失敗，請檢查網路後重新整理'; return; }
@@ -381,7 +403,7 @@ function newCrew(used){
 }
 function freshSave(){
   uid=1; const used=new Set(), crew=[]; for(let i=0;i<STAGES[0].crew;i++)crew.push(newCrew(used));
-  return {v:1,code:newCode(),ts:0,rev:1,stage:0,xp:0,rep:50,day:1,seed:(Math.random()*1e9)|0,crew,sched:{},streak:0,done:false,uid,stats:{knock:0},coin:0,own:{veh:{},noz:[0],skin:['std']},noz:0,skin:'std',bays:null,vol:S?S.vol:{m:.5,s:.7,mute:false,shadow:true}};
+  return {v:1,code:newCode(),ts:0,rev:1,stage:0,xp:0,rep:50,day:1,seed:(Math.random()*1e9)|0,crew,sched:{},streak:0,done:false,uid,stats:{knock:0},coin:0,own:{veh:{},noz:[0],skin:['std'],paint:['red']},noz:0,skin:'std',paint:'red',box:1,bays:null,vol:S?S.vol:{m:.5,s:.7,mute:false,shadow:true}};
 }
 function persist(force){ if(!S)return; S.uid=uid; S.ts=Date.now(); Save.save(S); Cloud.push(!!force); }
 function bump(){ if(S)S.rev=(S.rev||0)+1; } // 只有真的有進度時才加一，雲端用它判斷哪份存檔比較新
@@ -410,7 +432,8 @@ const Cloud=(()=>{ let tok=null,exp=0,busy=false,dirty=false,lastPush=0,synced=f
     catch(e){ set(false,why(e)); } busy=false; }
   return {st,pull,push,set,mark(sy,rv){synced=sy;pushedRev=rv}}; })();
 function fixSave(s){ if(!s.code)s.code=newCode(); if(!s.rev)s.rev=1; s.stats=s.stats||{knock:0}; s.vol=s.vol||{m:.5,s:.7,mute:false}; if(s.vol.shadow==null)s.vol.shadow=true; s.crew.forEach(c=>{if(c.mood==null)c.mood=70;if(c.av==null)c.av=pickAv(c)});
-  if(s.coin==null){ s.gift=s.coin=200+(s.stage||0)*400+(s.done?600:0); } s.own=s.own||{}; s.own.veh=s.own.veh||{}; s.own.noz=s.own.noz||[0]; s.own.skin=s.own.skin||['std']; if(s.noz==null||!NOZ[s.noz])s.noz=0; s.skin=s.skin||'std'; return s; }
+  if(s.coin==null){ s.gift=s.coin=200+(s.stage||0)*400+(s.done?600:0); } s.own=s.own||{}; s.own.veh=s.own.veh||{}; s.own.noz=s.own.noz||[0]; s.own.skin=s.own.skin||['std']; if(s.noz==null||!NOZ[s.noz])s.noz=0; s.skin=SKINS[s.skin]?s.skin:'std'; s.own.paint=s.own.paint||['red']; s.paint=PAINT[s.paint]?s.paint:'red';
+  if(s.box==null){ s.box=1; s.news=(s.news||[]).concat(['新功能：消防衣皮膚箱。送你 1 個免費的箱子，到「分隊倉庫 → 消防衣」開箱。每天完成三個今日任務可以再拿一個，出勤存獎金也能抽。']); } return s; }
 
 /* ============ 音效（全部用 Web Audio 合成） ============ */
 const Snd=(()=>{
@@ -634,24 +657,63 @@ function roadCellNear(x,z){ let i=clamp(toCell(x),0,world.N-1), j=clamp(toCell(z
   let best=null,bd=1e9; world.roads.forEach(r=>{const d=Math.hypot(r.x-x,r.z-z);if(d<bd){bd=d;best=r}}); return {i:best.i,j:best.j}; }
 
 /* ============ 模型 ============ */
+/* ============ 消防衣（外觀，不影響能力）。r 是稀有度：0 普通、1 稀有、2 史詩、3 傳說。x() 可以加耳朵、尾巴之類的零件 ============ */
+const RAR=[{n:'普通',c:'#8a94a3',back:100,price:500,p:45},{n:'稀有',c:'#2f6fd0',back:120,price:1000,p:30},{n:'罕見',c:'#8e44d6',back:160,price:2000,p:20},{n:'SR',c:'#f29a1f',back:300,price:5000,p:5}];
+const PAINT={red:{n:'經典紅',c:0xd8322a,price:0},blue:{n:'海洋藍',c:0x2f6fd0,price:1500},black:{n:'消光黑',c:0x2b2f38,price:1500},pink:{n:'櫻花粉',c:0xff8fb3,price:1500},lime:{n:'螢光黃綠',c:0xb7e03a,price:1500},gold:{n:'黃金塗裝',c:0xf2b600,price:6000}};
+const BOXP=200;
+const SK0={b1:0xe9f354,b2:0xd9dde2,collar:0x2a3340,pants:0x2a3340,boots:0x1a1a1e,badge:0xd8322a};
+const SKINS={
+ std:   {n:'經典卡其',r:0,coat:0xc8962c},
+ navy:  {n:'海軍藍',r:0,coat:0x27477a,helmet:0xffffff},
+ night: {n:'夜行黑',r:0,coat:0x2b2f38,helmet:0x2b2f38,b1:0xff7a1a,badge:0xff7a1a},
+ orange:{n:'搜救橘',r:0,coat:0xff7a1a,helmet:0xffffff,pants:0x1f3a5f},
+ pink:  {n:'草莓粉',r:0,coat:0xff8fb3,helmet:0xffd1e0,b1:0xffffff,pants:0x7a3b5a,badge:0xff5d8f},
+ green: {n:'森林綠',r:0,coat:0x3f8f52,helmet:0xffd23f},
+ school:{n:'學院風',r:1,coat:0x1f2f55,helmet:0x1f2f55,b1:0xd9a441,b2:0xd9a441,collar:0xffffff,pants:0x8a2f3a,boots:0x5a3a22,badge:0xd9a441,
+   x(p){p.push(B(0xffffff,.36,.3,.06,0,1.44,.4),B(0xc0392b,.13,.52,.07,0,1.3,.45),B(0xd9a441,.16,.16,.05,.24,1.36,.43),Cy(0xd9a441,1.0,.07,0,2.2,0),B(0x5a1f28,.04,.44,.5,-.2,.42,.02),B(0x5a1f28,.04,.44,.5,.2,.42,.02))}},
+ camo:  {n:'叢林迷彩',r:1,coat:0x6b7a4a,helmet:0x55653a,b1:0x3d4a2a,b2:0x3d4a2a,pants:0x4a5632,boots:0x2e3320,badge:0x2e3320,
+   x(p){[[.3,1.25,.3,.34],[-.28,.95,.36,.3],[-.1,1.4,-.34,.3],[.34,.85,-.2,.32],[-.36,1.3,.05,.26],[.1,1,.42,.22]].forEach(([x,y,z,d],k)=>p.push(Sp(k%2?0x3d4a2a:0x8a8f5a,d,x,y,z,[1,1,.5])));p.push(Sp(0x3d4a2a,.4,.2,2.42,.1,[1,.5,1]),Sp(0x8a8f5a,.34,-.22,2.36,-.12,[1,.5,1]))}},
+ duck:  {n:'小鴨雨衣',r:1,coat:0xffd23f,helmet:0xffd23f,b1:0xfff3b0,b2:0xfff3b0,collar:0xff8c1a,pants:0xff8c1a,boots:0xff8c1a,badge:0xff8c1a,
+   x(p){p.push(B(0xff8c1a,.4,.1,.34,0,2.14,.6),Sp(0xffffff,.2,-.2,2.42,.34),Sp(0xffffff,.2,.2,2.42,.34),Sp(0x1d1d1d,.1,-.2,2.43,.42),Sp(0x1d1d1d,.1,.2,2.43,.42),Sp(0xffd23f,.36,0,.9,-.48,[1,.8,1.2]))}},
+ candy: {n:'糖果條紋',r:1,coat:0xffffff,helmet:0xe63946,b1:0xe63946,b2:0xe63946,collar:0xe63946,pants:0xe63946,boots:0xffffff,badge:0xffffff,
+   x(p){p.push(Cy(0xe63946,.93,.09,0,1.02,0),Cy(0xe63946,.8,.09,0,1.44,0),Cy(0xffffff,1.0,.08,0,2.2,0),Sp(0xffffff,.22,0,2.62,0))}},
+ bunny: {n:'兔子裝',r:2,coat:0xfafafa,helmet:0xfafafa,b1:0xffb3cf,b2:0xffb3cf,collar:0xffb3cf,pants:0xffb3cf,boots:0xffffff,badge:0xff7aa8,
+   x(p){[-1,1].forEach(s=>p.push(B(0xfafafa,.22,1.0,.14,s*.24,3.04,-.04,[0,0,-s*.14]),B(0xffb3cf,.11,.72,.15,s*.24,3.02,-.03,[0,0,-s*.14])));p.push(Sp(0xffffff,.36,0,.86,-.5),Sp(0xff7aa8,.1,0,1.9,.42))}},
+ dino:  {n:'恐龍裝',r:2,coat:0x4caf50,helmet:0x4caf50,b1:0xcfe86a,b2:0xcfe86a,collar:0x2f7d3a,pants:0x2f7d3a,boots:0x2f7d3a,badge:0xff8c1a,
+   x(p){[[2.74,.2],[2.78,-.06],[2.66,-.32]].forEach(([y,z])=>p.push(Ko(0xff8c1a,.24,.36,0,y,z)));p.push(Ko(0xff8c1a,.22,.3,0,1.62,-.44,[-.9,0,0]),Ko(0xff8c1a,.22,.3,0,1.24,-.5,[-1.1,0,0]),Ko(0x4caf50,.44,1.0,0,.72,-.78,[-1.75,0,0]),Sp(0xcfe86a,.62,0,1.08,.22,[1,1.3,.5]),Ko(0xffffff,.1,.14,-.14,1.78,.42,[3.14,0,0]),Ko(0xffffff,.1,.14,.14,1.78,.42,[3.14,0,0]))}},
+ panda: {n:'熊貓裝',r:2,coat:0xfafafa,arm:0x1d1d1d,helmet:0xfafafa,b1:0x1d1d1d,b2:0x1d1d1d,collar:0x1d1d1d,pants:0x1d1d1d,boots:0x1d1d1d,badge:0x3f9b52,
+   x(p){p.push(Sp(0x1d1d1d,.36,-.38,2.62,-.02),Sp(0x1d1d1d,.36,.38,2.62,-.02),Sp(0x1d1d1d,.26,-.17,2.02,.33,[1,1.25,.5]),Sp(0x1d1d1d,.26,.17,2.02,.33,[1,1.25,.5]),Sp(0xffffff,.08,-.17,2.05,.41),Sp(0xffffff,.08,.17,2.05,.41),Cy(0x3f9b52,.08,.9,.5,1.3,.3,[0,0,.5]))}},
+ cat:   {n:'橘貓裝',r:2,coat:0xf0a04b,helmet:0xf0a04b,b1:0xffffff,b2:0xffffff,collar:0xd98a35,pants:0xd98a35,boots:0xffffff,badge:0xff8fab,
+   x(p){[-1,1].forEach(s=>p.push(Ko(0xf0a04b,.34,.4,s*.28,2.74,.02),Ko(0xff8fab,.18,.24,s*.28,2.7,.1),B(0xffffff,.34,.025,.025,s*.34,1.9,.38,[0,0,s*.12]),B(0xffffff,.34,.025,.025,s*.34,1.82,.38,[0,0,-s*.12])));p.push(B(0xf0a04b,.13,.13,.9,0,1.0,-.72,[1.0,0,0]),Sp(0xff8fab,.09,0,1.92,.42))}},
+ samurai:{n:'武士鎧甲',r:3,coat:0x8a1f1f,arm:0x1c1c20,helmet:0x1c1c20,b1:0xd9a441,b2:0xd9a441,collar:0x1c1c20,pants:0x1c1c20,boots:0x1c1c20,badge:0xd9a441,
+   x(p){[-1,1].forEach(s=>p.push(B(0x1c1c20,.52,.14,.66,s*.62,1.64,0,[0,0,-s*.32]),B(0xd9a441,.54,.04,.68,s*.64,1.57,0,[0,0,-s*.32]),B(0xd9a441,.1,.78,.08,s*.27,2.9,.3,[0,0,-s*.62])));
+     p.push(B(0x1c1c20,.74,.56,.1,0,1.28,.42),B(0xd9a441,.74,.05,.11,0,1.16,.43),B(0xd9a441,.74,.05,.11,0,1.4,.43),Cy(0x1c1c20,1.34,.1,0,2.04,-.16,[.3,0,0]),Sp(0xd9a441,.16,0,2.5,.4),B(0x444b55,.08,1.5,.08,.34,1.32,-.52,[0,0,.5]),B(0xd9a441,.12,.34,.12,-.02,1.95,-.52,[0,0,.5]))}},
+ astro: {n:'太空人',r:3,coat:0xf4f6f8,helmet:0xf4f6f8,noHelmet:true,b1:0x2f6fd0,b2:0xff7a1a,collar:0x9aa3ad,pants:0xf4f6f8,boots:0x9aa3ad,badge:0x2f6fd0,
+   x(p){p.push(Sp(0xf4f6f8,1.16,0,2.04,-.04),Sp(0x22344f,.9,0,2.04,.2,[1,.86,.7]),Sp(0x9be8ff,.2,-.16,2.18,.5,[1,.6,.3]),B(0xdfe3e6,.74,.84,.32,0,1.26,-.5),B(0x2f6fd0,.5,.1,.34,0,1.5,-.5),Cy(0x9aa3ad,.04,.5,.34,2.78,-.1),Sp(0xe63946,.12,.34,3.04,-.1),B(0xe63946,.2,.12,.05,-.2,1.38,.44),B(0x2f6fd0,.2,.12,.05,.06,1.38,.44))}},
+ gold:  {n:'黃金消防衣',r:3,coat:0xffc928,helmet:0xffd84d,b1:0xfff3b0,b2:0xfff3b0,collar:0xd9a016,pants:0xd9a016,boots:0xb8860b,badge:0xffffff,
+   x(p){[[.3,1.3,.34],[-.26,1.0,.4],[.1,.8,.46],[-.34,1.45,.2],[.36,2.4,.2],[-.2,2.5,.3]].forEach(([x,y,z])=>p.push(Sp(0xffffff,.09,x,y,z)));p.push(Ko(0xfff3b0,.22,.46,0,2.86,0),Cy(0xfff3b0,1.0,.07,0,2.2,0))}},
+ hero:  {n:'超級英雄',r:3,coat:0x2f6fd0,helmet:0xd8322a,b1:0xffd23f,b2:0xffd23f,collar:0xd8322a,pants:0x1f3a7a,boots:0xd8322a,badge:0xffd23f,
+   x(p){p.push(B(0xd8322a,.96,1.3,.06,0,1.02,-.52,[.2,0,0]),B(0xd8322a,.7,.12,.3,0,1.6,-.36),B(0xffd23f,.32,.32,.05,0,1.36,.43,[0,0,Math.PI/4]),B(0xd8322a,.14,.14,.06,0,1.36,.45,[0,0,Math.PI/4]),B(0x1c1c20,.72,.16,.06,0,2.03,.39))}},
+};
 const LIMB={};
 function limb(kind,c1,c2){ const k=kind+c1+'_'+c2; if(LIMB[k])return LIMB[k];
   const g=kind==='arm'?merge([Cy(c1,.24,.62,0,-.3,0),Sp(c2,.27,0,-.67,0)]):merge([Cy(c1,.3,.5,0,-.25,0),B(c2,.31,.2,.48,0,-.52,.07)]); KEEP.add(g); return LIMB[k]=g; }
 const SKIN=[0xf2c9a0,0xe8b88a,0xd9a577,0xc68642];
 function makePerson(o){
-  const g=new THREE.Group(), skin=o.skin||pick(SKIN), parts=[];
+  const g=new THREE.Group(), skin=o.skin||pick(SKIN), parts=[], K=Object.assign({},SK0,SKINS[o.sk]||SKINS.std);
   if(o.civ){ const shirt=o.suit; parts.push({g:GT,c:shirt,p:[0,1.1,0]});
     if(o.skirt)parts.push({g:GT,c:o.pants,p:[0,.78,0],s:[1.25,.5,1.25]});
     parts.push(Sp(skin,.84,0,1.98,0),Sp(0x1d1d1d,.11,-.17,2.02,.37),Sp(0x1d1d1d,.11,.17,2.02,.37));
     const hair=o.hair==null?0x2a2220:o.hair;
     if(o.hat){parts.push({g:GH,c:o.hat,p:[0,2.08,0],s:.94},B(o.hat,.6,.06,.42,0,2.1,.5))}
     else{parts.push({g:GH,c:hair,p:[0,2.04,-.04],s:.92,r:[-.22,0,0]}); if(o.long)parts.push(Sp(hair,.74,0,1.86,-.2,[1,1.15,.8])); if(o.bun)parts.push(Sp(hair,.34,0,2.5,-.1))}
-  } else { const coat=0xc8962c;
-    parts.push({g:GT,c:coat,p:[0,1.1,0]},Cy(0xe9f354,.98,.11,0,.8,0),Cy(0xd9dde2,.99,.04,0,.8,0),Cy(0xe9f354,.87,.1,0,1.24,0),Cy(0x2a3340,.6,.14,0,1.62,0),
-      Sp(skin,.84,0,1.98,0),Sp(0x1d1d1d,.11,-.17,2.02,.37),Sp(0x1d1d1d,.11,.17,2.02,.37),
-      {g:GH,c:o.helmet,p:[0,2.08,0],s:.98},Cy(o.helmet,1.14,.06,0,2.1,0),B(darken(o.helmet,.8),.12,.12,.74,0,2.56,0),B(0xd8322a,.24,.2,.06,0,2.3,.45)); }
+  } else { const hel=K.helmet||o.helmet;
+    parts.push({g:GT,c:K.coat,p:[0,1.1,0]},Cy(K.b1,.98,.11,0,.8,0),Cy(K.b2,.99,.04,0,.8,0),Cy(K.b1,.87,.1,0,1.24,0),Cy(K.collar,.6,.14,0,1.62,0),
+      Sp(skin,.84,0,1.98,0),Sp(0x1d1d1d,.11,-.17,2.02,.37),Sp(0x1d1d1d,.11,.17,2.02,.37));
+    if(!K.noHelmet)parts.push({g:GH,c:hel,p:[0,2.08,0],s:.98},Cy(hel,1.14,.06,0,2.1,0),B(darken(hel,.8),.12,.12,.74,0,2.56,0),B(K.badge,.24,.2,.06,0,2.3,.45));
+    if(K.x)K.x(parts); }
   const core=vmesh(parts); g.add(core);
-  const ac=o.civ?o.suit:0xc8962c, pc=o.civ?(o.skirt?skin:o.pants):0x2a3340, sh=o.civ?0x3a3a42:0x1a1a1e;
+  const ac=o.civ?o.suit:(K.arm||K.coat), pc=o.civ?(o.skirt?skin:o.pants):K.pants, sh=o.civ?0x3a3a42:K.boots;
   const la=new THREE.Mesh(limb('arm',ac,skin),VC), ra=new THREE.Mesh(limb('arm',ac,skin),VC); la.position.set(-.56,1.42,0); ra.position.set(.56,1.42,0);
   const ll=new THREE.Mesh(limb('leg',pc,sh),VC), rl=new THREE.Mesh(limb('leg',pc,sh),VC); ll.position.set(-.2,.62,0); rl.position.set(.2,.62,0);
   [la,ra,ll,rl].forEach(m=>{m.castShadow=true;g.add(m)}); g.add(blob(.6)); g.scale.setScalar(o.scale||1.15); g.userData={b:core,la,ra,ll,rl}; return g;
@@ -666,7 +728,7 @@ function randomCiv(){ const r=Math.random(), shirts=[0xe76f51,0x2a9d8f,0x457b9d,
 }
 let decal119=null;
 function makeVehicle(type){
-  const M=VEH[type], g=new THREE.Group(), b=new THREE.Group(), fire=type!=='amb', L=M.L, W=M.W, red=0xd8322a, wh=0xf6f6f2, gl=0x2b3d57, sv=0xc9ccd1, dk=0x22252b, yl=0xffd23f, p=[], HP=Math.PI/2;
+  const M=VEH[type], g=new THREE.Group(), b=new THREE.Group(), fire=type!=='amb', L=M.L, W=M.W, pt=fire&&S&&PAINT[S.paint]?S.paint:'red', red=PAINT[pt].c, wh=0xf6f6f2, gl=0x2b3d57, sv=0xc9ccd1, dk=0x22252b, yl=pt==='gold'||pt==='lime'?0xffffff:0xffd23f, p=[], HP=Math.PI/2;
   let ly=3.16, lz=L*.33, lx=.5, dy=2.55, dz=-L*.3, dx=W/2+.05, ax=[L*.3,-L*.3], wd=1.02, decal=true, lad=null, tur=null;
   p.push(B(dk,W*.92,.4,L*.96,0,.72,0));
   if(type==='amb'){ ly=2.86; lz=L*.26;
@@ -887,7 +949,7 @@ function buildWorld(){
   const crew=S?S.crew:[]; crew.forEach(c=>{const mesh=makePerson({helmet:0xffc400}); WG.add(mesh);
     const e={c,mesh,x:s0.cx+R(-hw+2,hw-2),z:s0.cz+R(-8,-2),h:R(0,6),mode:'idle',tx:0,tz:0,wait:R(0,3),walk:0,moving:false,busy:false,think:R(3,12),y:0,vy:0,wet:0,talk:0,sulk:null};
     e.tag=makeLabel(256,64,3.5,.875,3.05); mesh.add(e.tag.sp); G.crewEnt[c.id]=e; tagCrew(e); });
-  const pm=makePerson({helmet:0xffffff}); WG.add(pm);
+  const pm=makePerson({helmet:0xffffff,sk:S.skin}); WG.add(pm);
   G.player={mesh:pm,x:s0.cx,z:s0.cz+8,h:0,veh:null,hose:null,carry:false,walk:0,moving:false,vx:0,vz:0,boost:0,slow:0,sleep:false,whis:0,honk:0,name:'隊長'};
   const ptag=makeLabel(256,64,3.5,.875,3.05); pm.add(ptag.sp); drawTag(ptag,'隊長','#1c2836');
   for(let k=0;k<14+(S?S.stage:0)*8;k++){const r=pick(w.roads), o=randomCiv(), mesh=makePerson(o); WG.add(mesh);
@@ -949,7 +1011,7 @@ function jinx(why){ G.spawnT=Math.min(G.spawnT,R(2.5,4.5)); G.jinx=2; toast(why,
 /* ============ 對話 ============ */
 let talkCb=null, talkAv=null;
 function openTalk(name,text,a,b){ G.paused=true; G.talking=true; Input.act=false; $('tkName').textContent=name; $('tkText').textContent=text; const ta=$('tkAv'); ta.hidden=talkAv==null; if(talkAv!=null)ta.style.cssText=avPos(talkAv); talkAv=null; $('tkA').textContent=a[0]; $('tkB').textContent=b[0]; talkCb=[a[1],b[1]]; $('ovTalk').hidden=false; Snd.pop(); }
-function endTalk(k){ const f=talkCb&&talkCb[k]; talkCb=null; $('ovTalk').hidden=true; G.talking=false; G.paused=!!G.cardInc; Snd.click(); if(f)f(); }
+function endTalk(k){ const f=talkCb&&talkCb[k]; talkCb=null; $('ovTalk').hidden=true; G.talking=false; G.paused=!!G.cardInc; Snd.click(); if(f)f(); quest('talk'); }
 $('tkA').addEventListener('click',()=>endTalk(0)); $('tkB').addEventListener('click',()=>endTalk(1));
 function crewTalk(e){ const c=e.c, P=G.player; talkAv=c.av; e.talk=G.t+10; e.h=Math.atan2(P.x-e.x,P.z-e.z);
   if(c.mood<30){ openTalk(c.name,'哼，我今天不想出勤。',['怎麼了？說來聽聽',()=>{mood(c,65-c.mood);say(e,'…謝謝隊長',3);toast(c.name+' 心情好多了，願意出勤','good')}],
@@ -1007,6 +1069,8 @@ $('bAuto').addEventListener('click',()=>{autoSched();Snd.click();renderSched()})
 $('bDuty').addEventListener('click',()=>{Snd.init();autoFull();startDuty()});
 function openSched(){ S.crew.forEach(c=>{if(!S.sched[c.id]||S.sched[c.id].length!==6)S.sched={}}); if(!Object.keys(S.sched).length)autoSched(); G.mode='sched'; $('hud').hidden=true;
   if(S.gift){ G.news='新功能：分隊倉庫開張了。出勤可以賺獎金，拿來買新消防車和更厲害的瞄子。先補發 '+S.gift+' 獎金給你，按下面的「分隊倉庫」去看看。'; S.gift=0; Save.save(S); }
+  if(S.news&&S.news.length){ G.news=(G.news?G.news+'\n':'')+S.news.join('\n'); S.news=[]; Save.save(S); }
+  if(!S.quest||S.quest.day!==S.day){ newQuests(); Save.save(S); } $('sQuest').innerHTML=questHtml();
   $('sNews').hidden=!G.news; $('sNews').textContent=G.news||''; renderSched(); show('ovSched'); Snd.mode('calm'); }
 
 /* ============ 分隊倉庫：獎金、車庫、瞄子 ============ */
@@ -1035,6 +1099,11 @@ function renderShop(){ $('shCoin').textContent='獎金 '+S.coin; [...$('shTabs')
         '<div class="vs">水量 '+(M.cap||'不載水')+'　座位 '+M.seats+'<br>速度 '+lv5(M.max,14,19)+'　靈活 '+lv5(M.turn,2,3.1)+'</div><div class="vg"><i class="g">長處</i>'+M.good+'</div><div class="vg"><i class="bd">短處</i>'+M.bad+'</div><div class="vbtn">'+btn+'</div></div></div>'; }).join('')+'</div>'; }
   else if(shopTab==='noz'){ h+='<p class="note">瞄子就是水帶前端的噴嘴。等級越高，水噴得越遠、滅火越快。隊長拿水帶時使用。</p><div class="lst">'+NOZ.map((z,k)=>{ const own=S.own.noz.includes(k), eq=S.noz===k;
       return '<div class="row"><i class="dot" style="background:#'+z.col.toString(16).padStart(6,'0')+'"></i><span class="rn"><b>'+z.n+'</b><small>射程 '+z.range+' 公尺　威力 '+z.dmg+'　'+z.d+'</small></span>'+(eq?'<span class="tagc ok">使用中</span>':own?'<button type="button" class="b sm" data-eq="'+k+'">裝備</button>':'<button type="button" class="b sm go" data-nz="'+k+'"'+(S.coin<z.price?' disabled':'')+'>'+(shopArm==='n'+k?'再按一次確認':'購買　'+z.price)+'</button>')+'</div>'; }).join('')+'</div>'; }
+  else if(shopTab==='skin'){ h+='<div class="row"><i class="boxi"></i><span class="rn"><b>皮膚箱'+(S.box?'　免費 × '+S.box:'')+'</b><small>隨機開出一件消防衣：普通 45%、稀有 30%、罕見 20%、SR 5%。重複的會換回獎金。每天完成三個今日任務送一箱。</small></span><button type="button" class="b sm go" data-box="1"'+(S.box>0||S.coin>=BOXP?'':' disabled')+'>'+(S.box>0?'免費開箱':'開箱　'+BOXP)+'</button></div>';
+    h+='<p class="note">消防衣只改變外觀，隊長穿。也可以直接買，但比抽箱貴。</p><div class="sgrid">'+SKORDER.map(id=>{ const K=SKINS[id], own=S.own.skin.includes(id), on=S.skin===id, Q=RAR[K.r];
+      return '<div class="sc'+(own?'':' no')+'" style="--rc:'+Q.c+'"><img src="'+skinThumb(id)+'" alt=""><b>'+K.n+'</b><small>'+Q.n+'</small>'+(on?'<span class="tagc ok">穿著中</span>':own?'<button type="button" class="b sm" data-wear="'+id+'">穿上</button>':'<button type="button" class="b sm" data-sk="'+id+'"'+(S.coin<Q.price?' disabled':'')+'>'+(shopArm==='s'+id?'確認購買':'買　'+Q.price)+'</button>')+'</div>'; }).join('')+'</div>'; }
+  if(shopTab==='veh'){ h+='<div class="sec">車身塗裝（全分隊的消防車一起換）</div><div class="opts">'+Object.keys(PAINT).map(id=>{ const T=PAINT[id], own=S.own.paint.includes(id), on=S.paint===id;
+      return '<button type="button" class="opt'+(on?' sel':'')+'" data-pt="'+id+'"'+(!own&&S.coin<T.price?' disabled':'')+'><i class="sw" style="background:#'+T.c.toString(16).padStart(6,'0')+'"></i>'+T.n+'<small>'+(on?'使用中':own?'已擁有，點一下換上':shopArm==='p'+id?'再點一次確認購買':'購買 '+T.price)+'</small></button>'; }).join('')+'</div>'; }
   $('shBody').innerHTML=h; }
 function shopClick(e){ const b=e.target.closest('button'); if(!b||b.disabled)return false; const d=b.dataset;
   if(d.bay!=null){ const a=S.bays.a, k=+d.bay, cur=a[k]; a[k]=null; const left=bayLeft(a), opts=VORDER.filter(id=>left[id]>0||id===cur).concat([null]); let nx=opts[(opts.indexOf(cur)+1)%opts.length];
@@ -1044,9 +1113,38 @@ function shopClick(e){ const b=e.target.closest('button'); if(!b||b.disabled)ret
     toast('新車入庫：<b>'+M.n+'</b>'+(k>=0?'，已停進車位 '+(k+1):'。車位滿了，點上面的車位換車'),'good big',3600); }
   else if(d.nz){ const k=+d.nz, z=NOZ[k]; if(S.coin<z.price)return false; if(shopArm!=='n'+k){shopArm='n'+k;Snd.click();renderShop();return true} shopArm=null; coin(-z.price); S.own.noz.push(k); S.noz=k; bump(); persist(true); Snd.done(); toast('買了 <b>'+z.n+'</b>，已經裝上','good big',3000); }
   else if(d.eq){ S.noz=+d.eq; Snd.click(); persist(); }
+  else if(d.box){ openBox(); }
+  else if(d.wear){ S.skin=d.wear; shopDirty=true; Snd.click(); persist(); }
+  else if(d.sk){ const id=d.sk, Q=RAR[SKINS[id].r]; if(S.coin<Q.price||S.own.skin.includes(id))return false; if(shopArm!=='s'+id){shopArm='s'+id;Snd.click();renderShop();return true} shopArm=null; coin(-Q.price); S.own.skin.push(id); S.skin=id; shopDirty=true; bump(); persist(true); Snd.done(); toast('買了 <b>'+SKINS[id].n+'</b>，已經穿上','good big',3000); }
+  else if(d.pt){ const id=d.pt, T=PAINT[id]; if(!S.own.paint.includes(id)){ if(S.coin<T.price)return false; if(shopArm!=='p'+id){shopArm='p'+id;Snd.click();renderShop();return true} shopArm=null; coin(-T.price); S.own.paint.push(id); bump(); Snd.promo(); toast('消防車換上 <b>'+T.n+'</b>！','good big',3000); } else Snd.click(); S.paint=id; shopDirty=true; persist(true); }
   else return false;
   renderShop(); return true; }
 $('shBody').addEventListener('click',shopClick);
+const SKORDER=Object.keys(SKINS);
+const thumbs={};
+function skinThumb(id){ if(thumbs[id])return thumbs[id]; try{ const W=150,H=190, rt=new THREE.WebGLRenderTarget(W,H), sc=new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xffffff,0x9aa690,.95)); const dl=new THREE.DirectionalLight(0xffffff,.55); dl.position.set(3,5,6); sc.add(dl);
+    const m=makePerson({helmet:0xffffff,sk:id,scale:1}); m.rotation.y=.55; sc.add(m); const cam=new THREE.PerspectiveCamera(30,W/H,.1,50); cam.position.set(0,2.6,6.9); cam.lookAt(0,1.78,0);
+    const oc=renderer.getClearColor(new THREE.Color()).getHex(), oa=renderer.getClearAlpha(); renderer.setRenderTarget(rt); renderer.setClearColor(0x000000,0); renderer.clear(); renderer.render(sc,cam);
+    const buf=new Uint8Array(W*H*4); renderer.readRenderTargetPixels(rt,0,0,W,H,buf); renderer.setRenderTarget(null); renderer.setClearColor(oc,oa);
+    const cv=document.createElement('canvas'); cv.width=W; cv.height=H; const x=cv.getContext('2d'), im=x.createImageData(W,H); for(let r=0;r<H;r++)im.data.set(buf.subarray((H-1-r)*W*4,(H-r)*W*4),r*W*4); x.putImageData(im,0,0);
+    rt.dispose(); disposeGroup(m); return thumbs[id]=cv.toDataURL(); }catch(e){ return thumbs[id]=''; } }
+function rollBox(){ S.boxN=(S.boxN||0)+1; const r=Math.random()*100; let tier=r<5?3:r<25?2:r<55?1:0; if(S.boxN-(S.boxHi||0)>=10&&tier<2)tier=Math.random()<.25?3:2; if(tier>=2)S.boxHi=S.boxN;
+  const pool=SKORDER.filter(id=>SKINS[id].r===tier), fresh=pool.filter(id=>!S.own.skin.includes(id)), id=fresh.length?pick(fresh):pick(pool), dup=S.own.skin.includes(id);
+  if(dup)coin(RAR[tier].back); else S.own.skin.push(id); return {id,dup}; }
+let boxRes=null;
+function openBox(){ if(!(S.box>0)&&S.coin<BOXP)return; if(S.box>0)S.box--; else coin(-BOXP); boxRes=rollBox(); bump(); persist(true);
+  const K=SKINS[boxRes.id], R_=RAR[K.r], pop=$('boxPop'), bx=$('bxBox'), res=$('bxRes'); pop.hidden=false; res.hidden=true; bx.hidden=false; bx.style.animation='none'; void bx.offsetWidth; bx.style.animation=''; Snd.radio(); Snd.bonk();
+  setTimeout(()=>{ if(pop.hidden)return; bx.hidden=true; res.hidden=false; res.style.setProperty('--rc',R_.c); $('bxImg').src=skinThumb(boxRes.id); $('bxRar').textContent=R_.n; $('bxName').textContent=K.n;
+    $('bxMsg').textContent=boxRes.dup?'已經有這件了，換成獎金 +'+R_.back:'新的消防衣！'; $('bxWear').hidden=boxRes.dup; if(K.r>=2)Snd.promo(); else Snd.done(); },950); }
+$('bxOk').addEventListener('click',()=>{ $('boxPop').hidden=true; Snd.click(); renderShop(); });
+$('bxWear').addEventListener('click',()=>{ if(boxRes){S.skin=boxRes.id;shopDirty=true;persist()} $('boxPop').hidden=true; Snd.click(); renderShop(); });
+/* ============ 今日任務：每天三個小目標，全部完成送皮膚箱 ============ */
+const QDEF={fire:{t:n=>'處理 '+n+' 件火警',n:[1,2,3]},ems:{t:n=>'處理 '+n+' 件救護',n:[2,3,4]},svc:{t:n=>'完成 '+n+' 件為民服務',n:[1,1,2]},star5:{t:n=>'拿到 '+n+' 次五星評價',n:[1,2,3]},cap:{t:n=>'隊長親自出勤 '+n+' 次',n:[2,3,3]},
+  ev:{t:n=>'排除 '+n+' 件突發狀況',n:[1,2,2]},knock:{t:n=>'開車撞飛 '+n+' 樣東西',n:[5,8,10]},chore:{t:n=>'在分隊做 '+n+' 件雜事（澆花、掃地、洗車）',n:[2,3,3]},talk:{t:n=>'跟 '+n+' 個人聊天',n:[2,3,3]}};
+function newQuests(){ const rnd=mulberry32((S.seed|0)+S.day*977), ks=Object.keys(QDEF), q=[]; while(q.length<3){ const k=ks[Math.floor(rnd()*ks.length)]; if(!q.some(x=>x.k===k))q.push({k,need:QDEF[k].n[S.stage],n:0}) } S.quest={day:S.day,q,box:false}; }
+function quest(k,d){ const Q=S&&S.quest; if(!Q||G.mode!=='duty')return; Q.q.forEach(x=>{ if(x.k!==k||x.n>=x.need)return; x.n=Math.min(x.need,x.n+(d||1)); if(x.n<x.need)return; coin(40); toast('今日任務完成：'+QDEF[k].t(x.need)+'　獎金 +40','good',2800);
+    if(!Q.box&&Q.q.every(y=>y.n>=y.need)){ Q.box=true; S.box=(S.box||0)+1; setTimeout(()=>{toast('三個今日任務全部完成！獲得<b>皮膚箱</b> 1 個','fun big',4000);Snd.promo()},1000); } }); }
+const questHtml=()=>S.quest?S.quest.q.map(x=>'<div class="li'+(x.n>=x.need?'':' bad')+'"><span>'+QDEF[x.k].t(x.need)+'</span><span>'+(x.n>=x.need?'完成':x.n+'／'+x.need)+'</span></div>').join(''):'';
 $('shTabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;shopTab=b.dataset.t;shopArm=null;Snd.click();renderShop()});
 $('bShop').addEventListener('click',()=>{Snd.init();Snd.click();openShop()});
 $('bShopX').addEventListener('click',()=>{Snd.click();closeShop()});
@@ -1070,7 +1168,7 @@ function endDay(){
   $('eTitle').textContent='第 '+S.day+' 天 勤務結算'; $('eSum').textContent=ok+'／'+G.log.length+' 件成功';
   $('eInfo').innerHTML='<div><small>案件經驗</small>+'+xp+' XP</div><div><small>案件聲望</small>'+(rep>=0?'+':'')+rep+'</div><div><small>累積經驗</small>'+S.xp+'／'+STAGES[S.stage].xp+'</div><div><small>目前聲望</small>'+S.rep+'</div><div><small>今日獎金</small>+'+(G.dayCoin||0)+'（共 '+S.coin+'）</div><div><small>撞飛東西</small>'+S.stats.knock+' 樣</div><div><small>突發狀況</small>排除 '+(G.evDone||0)+' 件</div>';
   $('eList').innerHTML=G.log.length?G.log.map(l=>'<div class="li '+(l.ok?'':'bad')+'"><span>'+l.sub+'・'+l.by+'</span><span>'+(l.ok?'<span class="stars">'+stars(l.stars)+'</span> +'+l.xp:'失敗 '+l.rep+' 聲望')+'</span></div>').join(''):'<p class="note">今天平安無事。</p>';
-  S.crew.forEach(c=>c.fat=clamp(c.fat-35,0,100));
+  S.crew.forEach(c=>c.fat=clamp(c.fat-35,0,100)); $('eQuest').innerHTML=questHtml();
   $('eCrew').innerHTML=S.crew.map(c=>'<div class="li"><span>'+avHtml(c.av,'sm')+' '+c.name+' Lv'+c.lv+'</span><span>疲勞 '+c.fat+'・心情 '+c.mood+'</span></div>').join('');
   S.day++; bump(); persist(true); show('ovSettle'); Snd.mode('calm');
 }
@@ -1081,9 +1179,9 @@ $('bNext').addEventListener('click',()=>{ Snd.click(); const st=STAGES[S.stage];
   openSched(); });
 function promoArt(f){ const im=$('pImg'); const pn=im.parentElement; im.onerror=()=>{im.hidden=true;pn.classList.remove('art');$('pHead').style.borderRadius=''}; im.onload=()=>{im.hidden=false;pn.classList.add('art');$('pHead').style.borderRadius='0'}; im.src=f; }
 function promote(){ const old=STAGES[S.stage]; S.stage++; const st=STAGES[S.stage]; S.seed=(Math.random()*1e9)|0; uid=S.uid||uid;
-  const used=new Set(S.crew.map(c=>c.name)); while(S.crew.length<st.crew)S.crew.push(newCrew(used)); S.uid=uid; S.sched={}; autoSched(); S.bays=null; coin(500); bump(); persist(true);
+  const used=new Set(S.crew.map(c=>c.name)); while(S.crew.length<st.crew)S.crew.push(newCrew(used)); S.uid=uid; S.sched={}; autoSched(); S.bays=null; coin(500); S.box=(S.box||0)+1; bump(); persist(true);
   buildWorld(); G.mode='promo'; $('pTitle').textContent='升遷命令'; $('pBig').textContent=st.name+'長'; $('bPromo').textContent='到新分隊報到';
-  $('pText').textContent='恭喜！你在'+old.station+'表現優異，即日起調任'+st.station+'分隊長。轄區是全新的街道與建築，隊員 '+st.crew+' 人、消防車 '+st.fire+' 台、救護車 '+st.amb+' 台'+(st.tank?'、水庫車 1 台':'')+'，案件也會更密集。另發升遷獎金 500，消防車位增加為 '+st.slots+' 個。';
+  $('pText').textContent='恭喜！你在'+old.station+'表現優異，即日起調任'+st.station+'分隊長。轄區是全新的街道與建築，隊員 '+st.crew+' 人、消防車 '+st.fire+' 台、救護車 '+st.amb+' 台'+(st.tank?'、水庫車 1 台':'')+'，案件也會更密集。另發升遷獎金 500 和皮膚箱 1 個，消防車位增加為 '+st.slots+' 個。';
   promoArt(S.stage===1?'promo1.jpg':'promo2.jpg'); show('ovPromo'); Snd.promo(); }
 $('bPromo').addEventListener('click',()=>{Snd.click();openSched()});
 
@@ -1194,6 +1292,7 @@ function finishIncident(inc,ok,crewList,byCaptain){
   else { S.streak=0; rep=-8; (crewList||[]).forEach(c=>mood(c,-6)); if(inc.kind==='fire'&&inc.where!=='road')burn(inc.b);
     toast(inc.sub+' 處置失敗　聲望 −8','bad big',3400); Snd.fail(); }
   S.xp+=xp; S.rep=clamp(S.rep+rep,0,100);
+  if(ok){ quest(inc.kind); if(st_===5)quest('star5'); if(byCaptain)quest('cap'); }
   G.log.push({sub:inc.sub,ok,stars:st_,xp,rep,coin:cn,by:byCaptain?'隊長出勤':crewList&&crewList.length?crewList.map(c=>c.name).join('、'):'無人處理'});
   if(G.mission&&G.mission.inc===inc){ G.mission=null; const P=G.player; P.hose=null; P.carry=false; if(P.lad)ladderDown(); if(G.unit){G.unit.veh.hyd=null;stowVeh(G.unit.veh)} }
   if(G.cardInc===inc)closeCard();
@@ -1292,8 +1391,8 @@ function exitSpot(V){ for(const s of[1,-1,2,-2]){const a=V.h+Math.PI/2*Math.sign
 function releaseUnit(){ const U=G.unit; if(!U)return; const V=U.veh; V.x=V.bay.x;V.z=V.bay.z;V.h=0;V.v=0;V.state='parked';V.hyd=null;V.lights=false; U.mates.forEach(homeCrew); G.unit=null; Snd.mode('calm'); }
 function wake(byBell){ const P=G.player; if(!P.sleep)return; P.sleep=false; G.sleep=false; $('sleepV').hidden=true; P.mesh.rotation.set(0,0,0); P.x=P.sleepAt.x-1.6; P.z=P.sleepAt.z+2.2; if(byBell){say(P,'嚇！警鈴！',2.5);Snd.boing()} }
 function useThing(t){ const P=G.player;
-  if(t.type==='plant'){ t.g=Math.min(1,t.g+.3); Snd.pop(); for(let k=0;k<6;k++)emitWater(t.px,1.6,t.pz,0,true); if(t.g>=1&&!t.done){t.done=true;gain(5,0);moodAll(2);toast('花開了！全隊心情 +2','good')} else toast('澆花中，花長高了一點','',1500); }
-  else if(t.type==='dust'){ WG.remove(t.mesh); G.things.splice(G.things.indexOf(t),1); for(let k=0;k<4;k++)emitSmoke(t.x,.4,t.z,.5); Snd.pop(); gain(3,0);
+  if(t.type==='plant'){ t.g=Math.min(1,t.g+.3); Snd.pop(); for(let k=0;k<6;k++)emitWater(t.px,1.6,t.pz,0,true); if(t.g>=1&&!t.done){t.done=true;gain(5,0);moodAll(2);quest('chore');toast('花開了！全隊心情 +2','good')} else toast('澆花中，花長高了一點','',1500); }
+  else if(t.type==='dust'){ WG.remove(t.mesh); G.things.splice(G.things.indexOf(t),1); for(let k=0;k<4;k++)emitSmoke(t.x,.4,t.z,.5); Snd.pop(); gain(3,0); quest('chore');
     if(!G.things.some(q=>q.type==='dust')){gain(0,1);moodAll(3);toast('廳舍掃乾淨了！聲望 +1、全隊心情 +3','good')} else toast('掃掉一堆灰塵 +3 XP','',1400); }
   else if(t.type==='bed'){ P.sleep=true; G.sleep=true; P.sleepAt={x:t.bx,z:t.bz}; P.x=t.bx; P.z=t.bz; P.h=0; P.moving=false; $('sleepV').hidden=false; Snd.click(); }
   else if(t.type==='fridge'){ if(G.t<t.cool){toast('冰箱剛開過，等一下','',1400);return} t.cool=G.t+20; Snd.door(); const r=Math.random();
@@ -1417,7 +1516,7 @@ function spawnEvent(force){ if(G.events.length>=2||!world)return null; const P=G
   ev.mk=add(textSprite('！','#ffb81f','#1c2836',3.8,3.8,true)); ev.mk.position.set(evPos(ev).x,7,evPos(ev).z);
   G.events.push(ev); toast('突發：'+EV[type].n+'（小地圖黃點）','fun',3000); Snd.radio(); return ev; }
 function finishEvent(ev,ok){ const k=G.events.indexOf(ev); if(k<0)return; G.events.splice(k,1); ev.objs.forEach(o=>WG.remove(o)); [ev.pig,ev.kid,ev.mom].forEach(e=>{if(e)bubs.delete(e)}); const b=G.blockers.indexOf(ev); if(b>=0)G.blockers.splice(b,1);
-  const T=EV[ev.type]; if(ok){ gain(T.xp,T.rep); coin(Math.round(T.xp*.4)); S.stats.ev=(S.stats.ev||0)+1; G.evDone=(G.evDone||0)+1; toast('突發排除：'+T.n+'　+'+T.xp+' XP　獎金 +'+Math.round(T.xp*.4),'good',2800); Snd.ok(); bump(); persist(); }
+  const T=EV[ev.type]; if(ok){ gain(T.xp,T.rep); coin(Math.round(T.xp*.4)); quest('ev'); S.stats.ev=(S.stats.ev||0)+1; G.evDone=(G.evDone||0)+1; toast('突發排除：'+T.n+'　+'+T.xp+' XP　獎金 +'+Math.round(T.xp*.4),'good',2800); Snd.ok(); bump(); persist(); }
   else { if(T.pen)gain(0,T.pen); toast(T.fail,T.pen?'bad':'',2600); } }
 function useEvent(ev){ const P=G.player;
   if(ev.type==='fire'){ ev.hp--; for(let k=0;k<5;k++)emitSmoke(ev.x,1.6,ev.z,.5); Snd.pop(); if(ev.hp<=0)finishEvent(ev,true); }
@@ -1466,10 +1565,10 @@ function sprayWorld(P,dt){ // 水柱噴到的東西各有反應
   for(const id in G.crewEnt){ const e=G.crewEnt[id]; if(!e.mesh.visible||e.mode==='work'||e.mode==='scene')continue; if(inCone(P,e.x,e.z,rg)){ e.x+=sx*4*dt; e.z+=sz*4*dt; if(G.t>e.wet){e.wet=G.t+4;mood(e.c,-3);e.vy=5;say(e,pick(['隊長！！','衣服濕了啦','很幼稚耶','我要報復']),2.4)} } }
   G.props.forEach(p=>{ if(inCone(P,p.x,p.z,rg)){ p.vx+=sx*26*dt; p.vz+=sz*26*dt; p.active=true; if(p.y<=0&&Math.random()<dt*2)p.vy=3 } });
   let dead=false;
-  G.things.forEach(t=>{ if(t.type==='plant'&&inCone(P,t.px,t.pz,rg)){ t.g=Math.min(2.6,t.g+dt*.5); if(t.g>=1&&!t.done){t.done=true;gain(5,0);moodAll(2);toast('花開了！全隊心情 +2','good')} if(t.g>=2.5&&!t.big){t.big=true;toast('澆太多，長成樹了啦！','fun')} }
-    else if(t.type==='dust'&&inCone(P,t.x,t.z,9)){ t.wash=(t.wash||0)+dt; if(t.wash>.5){WG.remove(t.mesh);t.dead=dead=true;gain(2,0)} } });
+  G.things.forEach(t=>{ if(t.type==='plant'&&inCone(P,t.px,t.pz,rg)){ t.g=Math.min(2.6,t.g+dt*.5); if(t.g>=1&&!t.done){t.done=true;gain(5,0);moodAll(2);quest('chore');toast('花開了！全隊心情 +2','good')} if(t.g>=2.5&&!t.big){t.big=true;toast('澆太多，長成樹了啦！','fun')} }
+    else if(t.type==='dust'&&inCone(P,t.x,t.z,9)){ t.wash=(t.wash||0)+dt; if(t.wash>.5){WG.remove(t.mesh);t.dead=dead=true;gain(2,0);quest('chore')} } });
   if(dead){ G.things=G.things.filter(t=>!t.dead); if(!G.things.some(q=>q.type==='dust')){gain(0,1);moodAll(3);toast('用水柱把地板沖乾淨了！聲望 +1','good')} }
-  G.vehicles.forEach(v=>{ if(v.state!=='parked'||v.clean)return; if(inCone(P,v.x,v.z,rg)){ v.wash+=dt; if(v.wash>2.2){v.clean=true;gain(5,1);Snd.ok();toast(v.label+' 洗得亮晶晶　聲望 +1','good')} } });
+  G.vehicles.forEach(v=>{ if(v.state!=='parked'||v.clean)return; if(inCone(P,v.x,v.z,rg)){ v.wash+=dt; if(v.wash>2.2){v.clean=true;gain(5,1);quest('chore');Snd.ok();toast(v.label+' 洗得亮晶晶　聲望 +1','good')} } });
   G.animals.forEach(a=>{ if(inCone(P,a.x,a.z,rg)){ if(a.kind==='dog'){ if(G.t>a.cool){a.cool=G.t+3;a.vy=5;say(a,'汪汪♪',1.8);Snd.animal('dog')} } else {a.scare=G.t+2.5; if(a.y<=0)a.vy=7} } });
   G.events.forEach(ev=>{ if(ev.type==='fire'&&inCone(P,ev.x,ev.z,rg)){ev.hp-=dt*2.5;if(ev.hp<=0)ev.kill=true} if(ev.pig&&inCone(P,ev.pig.x,ev.pig.z,rg)&&ev.pig.y<=0)ev.pig.vy=6; }); G.events.filter(e=>e.kill).forEach(e=>finishEvent(e,true));
   G.cars.forEach(c=>{ if(inCone(P,c.x,c.z,rg)&&G.t>c.wet){c.wet=G.t+5;say(c,pick(['免費洗車？','謝啦！','欸我窗戶沒關']),2)} });
@@ -1565,7 +1664,7 @@ function updateAnimals(dt){ const P=G.player; G.animals.forEach(a=>{ hopY(a,dt);
   else if(a.kind==='dog'&&G.t<a.follow&&!P.veh){ tx=P.x-Math.sin(P.h)*1.6+1; tz=P.z-Math.cos(P.h)*1.6; sp=dist(P,a)<2.4?0:8; }
   else { a.wait-=dt; if(a.wait<=0){a.wait=R(2,6); const rg=a.kind==='dog'?14:3.5; a.tx=a.hx+R(-rg,rg); a.tz=a.hz+R(-rg,rg)} tx=a.tx; tz=a.tz; }
   const dx=tx-a.x,dz=tz-a.z,d=Math.hypot(dx,dz); if(d>.4&&sp>0){a.x+=dx/d*sp*dt;a.z+=dz/d*sp*dt;a.h=angLerp(a.h,Math.atan2(dx,dz),Math.min(1,dt*10));resolve(a,.4); if(a.y<=0&&sp>3)a.vy=2.2} }); }
-function knockCount(){ S.stats.knock++; const n=S.stats.knock; if([10,30,60,100,200,400].includes(n)){gain(n,0);coin(n);Snd.ok();toast('胡鬧成就：撞飛 '+n+' 樣東西　+'+n+' XP　獎金 +'+n,'fun big',3200)} }
+function knockCount(){ S.stats.knock++; quest('knock'); const n=S.stats.knock; if([10,30,60,100,200,400].includes(n)){gain(n,0);coin(n);Snd.ok();toast('胡鬧成就：撞飛 '+n+' 樣東西　+'+n+' XP　獎金 +'+n,'fun big',3200)} }
 function updateProps(dt){ const P=G.player, movers=[];
   if(P.veh)movers.push({x:P.veh.x,z:P.veh.z,vx:P.vx,vz:P.vz,r:1.7,veh:true}); else if(!P.sleep)movers.push({x:P.x,z:P.z,vx:P.vx,vz:P.vz,r:.6});
   G.ai.forEach(m=>{if(m.phase!=='work'){const V=m.veh;movers.push({x:V.x,z:V.z,vx:Math.sin(V.h)*V.v,vz:Math.cos(V.h)*V.v,r:1.7,veh:true,ai:true})}});
@@ -1667,7 +1766,7 @@ function updateHUD(){
   const st=STAGES[S.stage], hr=(8+G.clock/DAY_LEN*24)%24, hh=Math.floor(hr), mm=Math.floor((hr-hh)*60/10)*10;
   $('hTime').textContent='第'+S.day+'天 '+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
   $('hStage').textContent=st.station; const prev=S.stage?STAGES[S.stage-1].xp:0; $('hXpBar').style.width=clamp((S.xp-prev)/(st.xp-prev)*100,0,100)+'%'; $('hXpTxt').textContent=S.xp+'/'+st.xp;
-  $('hRep').textContent='聲望 '+S.rep; $('hCoin').textContent='獎金 '+S.coin;
+  $('hRep').textContent='聲望 '+S.rep; $('hCoin').textContent='獎金 '+S.coin; { const Q=S.quest, hq=$('hQuest'); hq.hidden=!Q; if(Q)hq.textContent='今日任務 '+Q.q.filter(x=>x.n>=x.need).length+'／3'; }
   const free=S.crew.filter(c=>!isBusy(c)&&roleOf(c)!==3&&c.mood>=30).length, fv=G.vehicles.filter(v=>v.state==='parked');
   $('hRes').innerHTML='待命 '+free+'人 <small>消'+fv.filter(v=>v.type!=='amb').length+' 救'+fv.filter(v=>v.type==='amb').length+'</small>';
   $('pending').innerHTML=G.incidents.map(i=>'<button type="button" class="chip '+(i.kind==='ems'?'ems ':i.kind==='svc'?'svc ':'')+(i.state==='pending'?'wait':'')+'" data-i="'+i.id+'">'+i.sub+' '+fmtT(i.left)+(i.state==='pending'?' 待派':i.state==='player'?' 隊長':' 處理中')+'</button>').join('');
@@ -1699,6 +1798,7 @@ function updateHUD(){
   G.vehicles.forEach(v=>{if(v.state==='parked')return;a=mp(v);x.fillStyle=v.type==='amb'?'#fff':'#ffcf3a';x.fillRect(a[0]-4,a[1]-4,8,8)});
   a=mp(P); x.fillStyle='#fff'; x.beginPath(); x.arc(a[0],a[1],5.5,0,7); x.fill(); x.strokeStyle='#1c2836'; x.lineWidth=2.5; x.stroke();
 }
+$('hQuest').addEventListener('click',()=>{ if(!S.quest)return; Snd.click(); S.quest.q.forEach(x=>toast(QDEF[x.k].t(x.need)+'　'+(x.n>=x.need?'完成':x.n+'／'+x.need),x.n>=x.need?'good':'',3200)); });
 $('pending').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const inc=G.incidents.find(i=>i.id===+b.dataset.i);if(inc&&inc.state==='pending'&&!G.cardInc&&!G.talking)openCard(inc)});
 
 /* ============ 設定 ============ */
@@ -1752,7 +1852,7 @@ function boot(){
 }
 $('bCont').addEventListener('click',()=>{Snd.init();Snd.click();autoFull();openSched()});
 $('bNew').addEventListener('click',()=>{Snd.init();Snd.click();autoFull(); const vol=S.vol; S=freshSave(); S.vol=vol; Cloud.mark(true,-1); openSched(); buildWorld(); persist(true); });
-window.__ff={spawnEvent,finishEvent,useEvent,buildWorld,G,findPath,roadCellNear,getUse,getAct,doUse,dist,get S(){return S},get world(){return world},spawnIncident,openCard,Input,STAGES,endDay,finishIncident,Save,say,jinx,crewTalk,pedTalk,whistle,honk,sun,useThing,VEH,NOZ,coin,openShop,closeShop,makeVehicle,fixBays,scene,camera,renderer,persist,startDuty,openSched,update:dt=>update(dt),rescueTrap,fxOf,ladderUp,ladderDown,sendSup,updateHUD:()=>updateHUD(),closeCard:()=>closeCard(),FX};
+window.__ff={spawnEvent,finishEvent,useEvent,buildWorld,G,findPath,roadCellNear,getUse,getAct,doUse,dist,get S(){return S},get world(){return world},spawnIncident,openCard,Input,STAGES,endDay,finishIncident,Save,say,jinx,crewTalk,pedTalk,whistle,honk,sun,useThing,VEH,NOZ,coin,openShop,closeShop,makeVehicle,fixBays,scene,camera,renderer,persist,startDuty,openSched,update:dt=>update(dt),SKINS,rollBox,openBox,skinThumb,quest,makePerson,rescueTrap,fxOf,ladderUp,ladderDown,sendSup,updateHUD:()=>updateHUD(),closeCard:()=>closeCard(),FX};
 boot();
 })();
 </script>
