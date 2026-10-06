@@ -15,8 +15,8 @@
 
 ## 版本
 
-- JS 開頭 `const VERSION='車干製V2.0'`，畫面左下角會顯示。格式固定為「車干製V主.次」。
-- 目前 V2.0。
+- JS 開頭 `const VERSION='車干製V2.1'`，畫面左下角會顯示。格式固定為「車干製V主.次」。
+- 目前 V2.1。
 
 ## 程式結構（index.html 內，依序）
 
@@ -31,6 +31,8 @@
 - 支援車是 `G.ai` 裡 `sup:true` 的項目，階段 `go → stay → back`，不占隊員。
 - 入室搶救的屋內場景搭在地圖外（z = 地圖半徑 + 140），`G.indoor` 存在時 `resolve()` 改用屋內碰撞，`hoseSrc()` 改從屋內門口算。
 - 消防衣只是外觀；性能差異只來自車和瞄子（之後做連線時要維持這個原則）。
+- 值勤中也能開排班表和分隊倉庫（設定選單，或點 HUD 的獎金）：`inDuty` 為真時這兩個面板關閉後走 `resumeDuty()`，不重建世界；車位與塗裝的更動隔天才生效，消防衣用 `reskin()` 立刻換。
+- 全螢幕預設不自動進入（`S.vol.full`），設定選單可開；`goHome()` 回主畫面。
 - 測試用入口：`window.__ff` 暴露了 G、S、spawnIncident(kind, sub)、update(dt)、openCard、enterIndoor 等。
 
 ## 測試方式

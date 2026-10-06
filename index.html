@@ -214,7 +214,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
       <div class="pill grow"><span id="hStage">小型分隊</span><div class="bar"><i id="hXpBar"></i></div><small id="hXpTxt">0/1000</small></div>
       <div class="pill" id="hRep">聲望 50</div>
       <div class="pill" id="hRes">待命 0</div>
-      <div class="pill" id="hCoin">獎金 0</div>
+      <button class="pill" id="hCoin" type="button" style="border:0;cursor:pointer">獎金 0</button>
       <button class="pill" id="bMenu" type="button">設定</button>
     </div>
     <div id="left">
@@ -313,12 +313,13 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
     <div class="pb">
       <label class="sl" for="vMus">音樂<input id="vMus" type="range" min="0" max="100" value="50"></label>
       <label class="sl" for="vSfx">音效<input id="vSfx" type="range" min="0" max="100" value="70"></label>
-      <div class="btns"><button class="b" id="bMute" type="button">靜音：關</button><button class="b" id="bShadow" type="button">陰影：開</button><button class="b" id="bFull" type="button">全螢幕</button><button class="b teal" id="bResume" type="button">回到遊戲</button></div>
+      <div class="btns"><button class="b" id="bMute" type="button">靜音：關</button><button class="b" id="bShadow" type="button">陰影：開</button><button class="b" id="bFull" type="button">全螢幕</button><button class="b" id="bAutoFull" type="button">自動全螢幕：關</button></div>
+      <div class="btns"><button class="b" id="bMSched" type="button">排班表</button><button class="b" id="bMShop" type="button">分隊倉庫</button><button class="b" id="bHome" type="button">回主畫面</button><button class="b teal" id="bResume" type="button">回到遊戲</button></div>
       <div class="sec">雲端存檔</div>
       <div class="cl"><span>這份存檔的接續碼</span><b id="cCode">----</b><button class="b sm" id="bCopy" type="button">複製</button></div>
       <div class="cl"><input id="iCode" type="text" placeholder="輸入另一台裝置的接續碼" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="9"><button class="b sm" id="bLoad" type="button">載入</button></div>
       <p class="note" id="cStat">雲端：尚未連線</p>
-      <p class="note">如果畫面會卡，把陰影關掉。進度會自動存在這台裝置，並同步到雲端。換裝置時，在新裝置的設定輸入接續碼按「載入」就能接著玩。中途關掉，下次從當天早上重新值勤，經驗與聲望保留。</p>
+      <p class="note">如果畫面會卡，把陰影關掉。進度會自動存在這台裝置，並同步到雲端。換裝置時，在新裝置的設定輸入接續碼按「載入」就能接著玩。值勤中也可以從這裡開排班表和分隊倉庫（點上方的「獎金」也行）。中途關掉，下次從當天早上重新值勤，經驗與聲望保留。</p>
       <div class="btns"><button class="b" id="bWipe" type="button">刪除存檔重新開始</button></div>
     </div>
   </div></div>
@@ -327,7 +328,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
 <script src="three.min.js"></script>
 <script>
 (()=>{'use strict';
-const VERSION='車干製V2.0';
+const VERSION='車干製V2.1';
 const $=id=>document.getElementById(id);
 (function cover(){ const t=$('ovTitle'), im=new Image(); im.onload=()=>{t.style.backgroundImage='url(cover.jpg)'}; im.onerror=()=>t.classList.add('nocover'); im.src='cover.jpg'; })();
 if(!window.THREE){ $('tSub').textContent='3D 元件載入失敗，請檢查網路後重新整理'; return; }
@@ -952,7 +953,7 @@ function buildWorld(){
     const e={c,mesh,x:s0.cx+R(-hw+2,hw-2),z:s0.cz+R(-8,-2),h:R(0,6),mode:'idle',tx:0,tz:0,wait:R(0,3),walk:0,moving:false,busy:false,think:R(3,12),y:0,vy:0,wet:0,talk:0,sulk:null};
     e.tag=makeLabel(256,64,3.5,.875,3.05); mesh.add(e.tag.sp); G.crewEnt[c.id]=e; tagCrew(e); });
   const pm=makePerson({helmet:0xffffff,sk:S.skin}); WG.add(pm);
-  G.player={mesh:pm,x:s0.cx,z:s0.cz+8,h:0,veh:null,hose:null,carry:false,walk:0,moving:false,vx:0,vz:0,boost:0,slow:0,sleep:false,whis:0,honk:0,name:'隊長'};
+  G.player={mesh:pm,sk:S.skin,x:s0.cx,z:s0.cz+8,h:0,veh:null,hose:null,carry:false,walk:0,moving:false,vx:0,vz:0,boost:0,slow:0,sleep:false,whis:0,honk:0,name:'隊長'};
   const ptag=makeLabel(256,64,3.5,.875,3.05); pm.add(ptag.sp); drawTag(ptag,'隊長','#1c2836');
   for(let k=0;k<14+(S?S.stage:0)*8;k++){const r=pick(w.roads), o=randomCiv(), mesh=makePerson(o); WG.add(mesh);
     G.peds.push({mesh,kind:o.kind,i:r.i,j:r.j,x:r.x+3.9,z:r.z+3.9,tx:r.x+3.9,tz:r.z+3.9,h:0,walk:R(0,6),sp:o.kind==='elder'?R(1.1,1.6):R(1.8,2.8),state:'walk',y:0,vy:0,vx:0,vz:0,st:0,cool:0,wet:0,think:R(5,30),bubY:o.kind==='kid'?3.6:4.4})}
@@ -1068,12 +1069,15 @@ function renderSched(){
 }
 $('sTable').addEventListener('click',e=>{const b=e.target.closest('.cell');if(!b)return;const a=S.sched[b.dataset.c];a[b.dataset.s]=(a[b.dataset.s]+1)%4;Snd.click();renderSched()});
 $('bAuto').addEventListener('click',()=>{autoSched();Snd.click();renderSched()});
-$('bDuty').addEventListener('click',()=>{Snd.init();autoFull();startDuty()});
+$('bDuty').addEventListener('click',()=>{Snd.init(); if(inDuty){Snd.click();resumeDuty();return} autoFull();startDuty()});
+let inDuty=false;
+function resumeDuty(){ inDuty=false; G.mode='duty'; $('hud').hidden=false; applySlot(true); const P=G.player; if(P.sk!==S.skin)reskin(); show(G.cardInc?'ovCard':G.talking?'ovTalk':null); Snd.mode(G.mission?'go':'calm'); persist(); }
+function reskin(){ const P=G.player, old=P.mesh, m=makePerson({helmet:0xffffff,sk:S.skin}); WG.remove(old); disposeGroup(old); WG.add(m); P.mesh=m; P.sk=S.skin; bubs.delete(P); P.bub=null; const t=makeLabel(256,64,3.5,.875,3.05); m.add(t.sp); drawTag(t,'隊長','#1c2836'); put(P); }
 function openSched(){ S.crew.forEach(c=>{if(!S.sched[c.id]||S.sched[c.id].length!==6)S.sched={}}); if(!Object.keys(S.sched).length)autoSched(); G.mode='sched'; $('hud').hidden=true;
   if(S.gift){ G.news='新功能：分隊倉庫開張了。出勤可以賺獎金，拿來買新消防車和更厲害的瞄子。先補發 '+S.gift+' 獎金給你，按下面的「分隊倉庫」去看看。'; S.gift=0; Save.save(S); }
   if(S.news&&S.news.length){ G.news=(G.news?G.news+'\n':'')+S.news.join('\n'); S.news=[]; Save.save(S); }
   if(!S.quest||S.quest.day!==S.day){ newQuests(); Save.save(S); } $('sQuest').innerHTML=questHtml();
-  $('sNews').hidden=!G.news; $('sNews').textContent=G.news||''; renderSched(); show('ovSched'); Snd.mode('calm'); }
+  $('bDuty').textContent=inDuty?'回到值勤':'開始值勤'; $('sNews').hidden=!G.news; $('sNews').textContent=G.news||''; renderSched(); show('ovSched'); if(!inDuty)Snd.mode('calm'); }
 
 /* ============ 分隊倉庫：獎金、車庫、瞄子 ============ */
 function coin(n){ if(!n||!S)return; S.coin=Math.max(0,(S.coin||0)+n); if(n>0){ S.stats.coinAll=(S.stats.coinAll||0)+n; if(G.mode==='duty')G.dayCoin=(G.dayCoin||0)+n; } }
@@ -1087,8 +1091,10 @@ function fixBays(){ const st=STAGES[S.stage], n=st.slots; let a;
   if(!hasWater(a)){ const k=a.indexOf(null); a[k>=0?k:a.length-1]='small'; }
   S.bays={st:S.stage,a}; }
 let shopTab='veh', shopDirty=false, shopArm=null;
-function openShop(tab){ if(tab)shopTab=tab; shopArm=null; fixBays(); G.mode='shop'; $('hud').hidden=true; renderShop(); show('ovShop'); }
-function closeShop(){ if(shopDirty){shopDirty=false;buildWorld()} openSched(); }
+let shopBack='sched', shopSnap='';
+function openShop(tab){ if(tab)shopTab=tab; shopArm=null; shopSnap=JSON.stringify([S.bays,S.paint]); if(G.mode==='duty'){inDuty=true;shopBack='duty';stopLoops()} else shopBack='sched'; if(!inDuty)fixBays(); $('bShopX').textContent=shopBack==='duty'?'回到值勤':'回到排班'; G.mode='shop'; $('hud').hidden=true; renderShop(); show('ovShop'); }
+function closeShop(){ if(inDuty){ shopDirty=false; if(shopSnap!==JSON.stringify([S.bays,S.paint]))toast('新車、車位和塗裝，明天上班生效','',3000); if(shopBack==='duty'){resumeDuty();return} openSched(); return; }
+  if(shopDirty){shopDirty=false;buildWorld()} openSched(); }
 const lv5=(v,a,b)=>{const n=clamp(Math.round((v-a)/(b-a)*4)+1,1,5);return '●'.repeat(n)+'○'.repeat(5-n)};
 function renderShop(){ $('shCoin').textContent='獎金 '+S.coin; [...$('shTabs').children].forEach(b=>b.classList.toggle('sel',b.dataset.t===shopTab)); const st=STAGES[S.stage]; let h='';
   if(shopTab==='veh'){ const a=S.bays.a, iss=issued();
@@ -1153,7 +1159,7 @@ $('bShopX').addEventListener('click',()=>{Snd.click();closeShop()});
 
 /* ============ 值勤開始／結束 ============ */
 function startDuty(){
-  buildWorld(); G.mode='duty'; G.paused=false; G.talking=false; G.t=0; G.clock=0; G.slot=0; G.log=[]; G.cardInc=null; G.spawnT=R(9,14); G.dayDone=false; G.jinx=0; G.sleep=false; G.dayCoin=0; G.news=null; FX.wm.color.setHex(NOZ[S.noz].col); G.evT=R(14,22); G.evDone=0; G.rain=S.day>1&&Math.random()<.28; if(G.rain)setTimeout(()=>{if(G.mode==='duty')toast('今天下雨：路滑，車子比較難轉彎','',3200)},4500); $('sleepV').hidden=true;
+  buildWorld(); G.mode='duty'; G.paused=false; G.talking=false; G.t=0; G.clock=0; G.slot=0; G.log=[]; G.cardInc=null; G.spawnT=R(9,14); inDuty=false; G.dayDone=false; G.jinx=0; G.sleep=false; G.dayCoin=0; G.news=null; FX.wm.color.setHex(NOZ[S.noz].col); G.evT=R(14,22); G.evDone=0; G.rain=S.day>1&&Math.random()<.28; if(G.rain)setTimeout(()=>{if(G.mode==='duty')toast('今天下雨：路滑，車子比較難轉彎','',3200)},4500); $('sleepV').hidden=true;
   show(null); $('hud').hidden=false; resize(); Snd.mode('calm'); applySlot(true); persist();
   toast('第 '+S.day+' 天值勤開始。等派遣時可以到處晃晃','',3000);
   // 每天可能有人心情不好
@@ -1869,11 +1875,12 @@ function updateHUD(){
   a=mp(P); x.fillStyle='#fff'; x.beginPath(); x.arc(a[0],a[1],5.5,0,7); x.fill(); x.strokeStyle='#1c2836'; x.lineWidth=2.5; x.stroke();
 }
 $('hQuest').addEventListener('click',()=>{ if(!S.quest)return; Snd.click(); S.quest.q.forEach(x=>toast(QDEF[x.k].t(x.need)+'　'+(x.n>=x.need?'完成':x.n+'／'+x.need),x.n>=x.need?'good':'',3200)); });
+$('hCoin').addEventListener('click',()=>{ if(G.mode!=='duty'||G.cardInc||G.talking)return; Snd.click(); openShop(); });
 $('pending').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const inc=G.incidents.find(i=>i.id===+b.dataset.i);if(inc&&inc.state==='pending'&&!G.cardInc&&!G.talking)openCard(inc)});
 
 /* ============ 設定 ============ */
 let menuFrom=null, wipeArm=false;
-function openMenu(){ if(G.mode==='menu')return; menuFrom={mode:G.mode}; G.mode='menu'; $('vMus').value=Snd.st.m*100; $('vSfx').value=Snd.st.s*100; $('bMute').textContent='靜音：'+(Snd.st.mute?'開':'關'); $('bShadow').textContent='陰影：'+(sun.castShadow?'開':'關'); $('bWipe').textContent='刪除存檔重新開始'; wipeArm=false; $('cCode').textContent=fmtCode(S.code); Cloud.set(Cloud.st.ok,Cloud.st.msg); show('ovMenu'); }
+function openMenu(){ if(G.mode==='menu')return; menuFrom={mode:G.mode}; G.mode='menu'; $('vMus').value=Snd.st.m*100; $('vSfx').value=Snd.st.s*100; $('bMute').textContent='靜音：'+(Snd.st.mute?'開':'關'); $('bShadow').textContent='陰影：'+(sun.castShadow?'開':'關'); $('bWipe').textContent='刪除存檔重新開始'; wipeArm=false; { const d=menuFrom.mode==='duty'; $('bMSched').hidden=$('bMShop').hidden=!d; $('bHome').hidden=menuFrom.mode==='title'; $('bHome').textContent=d?'回主畫面（今天從早上重來）':'回主畫面'; $('bAutoFull').textContent='自動全螢幕：'+(S.vol.full?'開':'關'); } $('cCode').textContent=fmtCode(S.code); Cloud.set(Cloud.st.ok,Cloud.st.msg); show('ovMenu'); }
 function saveVol(){ if(S){S.vol.m=Snd.st.m;S.vol.s=Snd.st.s;S.vol.mute=Snd.st.mute;Save.save(S)} }
 $('bMenu').addEventListener('click',()=>{Snd.init();openMenu()});
 $('vMus').addEventListener('input',e=>{Snd.set('m',e.target.value/100);saveVol()});
@@ -1882,6 +1889,12 @@ $('bMute').addEventListener('click',()=>{Snd.set('mute',!Snd.st.mute);$('bMute')
 $('bShadow').addEventListener('click',()=>{fpsDone=true;setShadow(!sun.castShadow)});
 $('bResume').addEventListener('click',()=>{ G.mode=menuFrom.mode; const back={title:'ovTitle',sched:'ovSched',shop:'ovShop',settle:'ovSettle',promo:'ovPromo'}[G.mode]; show(back||(G.cardInc?'ovCard':G.talking?'ovTalk':null)); });
 $('bCode').addEventListener('click',()=>{Snd.init();openMenu()});
+$('bMSched').addEventListener('click',()=>{ Snd.click(); inDuty=true; stopLoops(); openSched(); });
+$('bMShop').addEventListener('click',()=>{ Snd.click(); G.mode='duty'; openShop(); });
+$('bAutoFull').addEventListener('click',()=>{ S.vol.full=!S.vol.full; Save.save(S); $('bAutoFull').textContent='自動全螢幕：'+(S.vol.full?'開':'關'); Snd.click(); });
+$('bHome').addEventListener('click',()=>{ Snd.click(); goHome(); });
+function goHome(){ persist(true); stopLoops(); inDuty=false; G.paused=false; G.talking=false; G.cardInc=null; G.sleep=false; $('sleepV').hidden=true; $('hud').hidden=true; try{ if(document.fullscreenElement||document.webkitFullscreenElement)(document.exitFullscreen||document.webkitExitFullscreen).call(document) }catch(e){}
+  buildWorld(); G.mode='title'; $('bCont').hidden=false; $('bNew').textContent='重新開始'; $('bNew').className='b'; $('tSub').textContent=VERSION+'　第 '+S.day+' 天・'+STAGES[S.stage].name+'・獎金 '+S.coin; show('ovTitle'); Snd.mode('calm'); }
 $('bCopy').addEventListener('click',()=>{ const t=fmtCode(S.code), done=()=>{$('bCopy').textContent='已複製';setTimeout(()=>$('bCopy').textContent='複製',1500)}; try{navigator.clipboard.writeText(t).then(done).catch(()=>{const r=document.createRange();r.selectNodeContents($('cCode'));const s=getSelection();s.removeAllRanges();s.addRange(r)})}catch(e){} });
 $('bLoad').addEventListener('click',()=>{ const code=$('iCode').value.toUpperCase().replace(/[^A-Z0-9]/g,''); if(code.length!==8){Cloud.set(false,'接續碼是 8 個英數字');return} Cloud.set(null,'讀取中…'); $('bLoad').disabled=true;
   Cloud.pull(code).then(c=>{ $('bLoad').disabled=false; if(!c||c.v!==1||!c.crew){Cloud.set(false,'找不到這組接續碼的存檔');return}
@@ -1893,7 +1906,7 @@ $('bWipe').addEventListener('click',()=>{ if(!wipeArm){wipeArm=true;$('bWipe').t
 const standalone=(()=>{try{return window.top===window.self}catch(e){return false}})();
 function goFull(){ const el=document.documentElement, rq=el.requestFullscreen||el.webkitRequestFullscreen; if(!rq||document.fullscreenElement||document.webkitFullscreenElement)return Promise.resolve(false);
   try{ return Promise.resolve(rq.call(el,{navigationUI:'hide'})).then(()=>{try{screen.orientation.lock('landscape').catch(()=>{})}catch(e){} setTimeout(resize,300); return true}).catch(()=>false) }catch(e){ return Promise.resolve(false) } }
-function autoFull(){ if(standalone)goFull(); }
+function autoFull(){ if(standalone&&S&&S.vol.full)goFull(); }
 $('bFull').addEventListener('click',()=>{ if(document.fullscreenElement||document.webkitFullscreenElement){(document.exitFullscreen||document.webkitExitFullscreen).call(document);return} goFull().then(ok=>{ if(!ok)toast(standalone?'這個瀏覽器不支援全螢幕。iPhone 請用「加入主畫面」':'這個頁面不能全螢幕，請改開獨立網址','',3200) }); });
 document.addEventListener('fullscreenchange',()=>setTimeout(resize,200));
 
@@ -1922,7 +1935,7 @@ function boot(){
 }
 $('bCont').addEventListener('click',()=>{Snd.init();Snd.click();autoFull();openSched()});
 $('bNew').addEventListener('click',()=>{Snd.init();Snd.click();autoFull(); const vol=S.vol; S=freshSave(); S.vol=vol; Cloud.mark(true,-1); openSched(); buildWorld(); persist(true); });
-window.__ff={spawnEvent,finishEvent,useEvent,buildWorld,G,findPath,roadCellNear,getUse,getAct,doUse,dist,get S(){return S},get world(){return world},spawnIncident,openCard,Input,STAGES,endDay,finishIncident,Save,say,jinx,crewTalk,pedTalk,whistle,honk,sun,useThing,VEH,NOZ,coin,openShop,closeShop,makeVehicle,fixBays,scene,camera,renderer,persist,startDuty,openSched,update:dt=>update(dt),enterIndoor,exitIndoor,SKINS,rollBox,openBox,skinThumb,quest,makePerson,rescueTrap,fxOf,ladderUp,ladderDown,sendSup,updateHUD:()=>updateHUD(),closeCard:()=>closeCard(),FX};
+window.__ff={spawnEvent,finishEvent,useEvent,buildWorld,G,findPath,roadCellNear,getUse,getAct,doUse,dist,get S(){return S},get world(){return world},spawnIncident,openCard,Input,STAGES,endDay,finishIncident,Save,say,jinx,crewTalk,pedTalk,whistle,honk,sun,useThing,VEH,NOZ,coin,openShop,closeShop,makeVehicle,fixBays,scene,camera,renderer,persist,startDuty,openSched,update:dt=>update(dt),goHome,resumeDuty,enterIndoor,exitIndoor,SKINS,rollBox,openBox,skinThumb,quest,makePerson,rescueTrap,fxOf,ladderUp,ladderDown,sendSup,updateHUD:()=>updateHUD(),closeCard:()=>closeCard(),FX};
 boot();
 })();
 </script>
