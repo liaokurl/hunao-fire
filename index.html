@@ -67,7 +67,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 #bAct{right:22px;bottom:26px;width:96px;height:96px;background:var(--red);font-size:18px}
 #bAct.tap{background:var(--amber);color:var(--ink)}
 #bUse{right:128px;bottom:20px;width:82px;height:82px;background:var(--teal);font-size:15px}
-#toast{position:absolute;left:50%;top:86px;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(92%,460px)}
+#toast{position:absolute;left:50%;top:86px;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(92%,460px);z-index:6}
 .tst{background:var(--ink);color:#fff;border-radius:10px;padding:7px 14px;font-weight:800;font-size:14px;text-align:center;animation:pop .25s}
 .tst.good{background:var(--teal)} .tst.bad{background:var(--red-d)} .tst.big{font-size:17px;padding:10px 18px} .tst.fun{background:var(--amber);color:var(--ink)}
 .tst b{color:var(--amber);letter-spacing:.08em}
@@ -154,6 +154,31 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
 .cl input{flex:1;min-width:150px;font:inherit;font-weight:800;font-size:16px;padding:9px 10px;border:2px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);text-transform:uppercase;-webkit-user-select:text;user-select:text}
 .b.sm{flex:none;min-width:0;padding:8px 14px;font-size:14px}
 .big{font-size:44px;font-weight:900;text-align:center;margin:4px 0;color:var(--red)}
+.panel.wide{width:min(100%,820px)}
+.tabs{display:flex;gap:6px}
+.tab{flex:1;border:2px solid var(--line);background:#fff;border-radius:10px;padding:8px 6px;font-weight:900;font-size:14px;cursor:pointer}
+.tab.sel{background:var(--ink);color:#fff;border-color:var(--ink)}
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:8px}
+.vc{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.vc.lock .vimg{filter:grayscale(1) brightness(.75)}
+.vimg{display:block;aspect-ratio:320/188;background:var(--line) url(vehicles.jpg) 0 0/400% 200% no-repeat}
+.vb{padding:6px 8px 8px;display:flex;flex-direction:column;gap:3px;flex:1}
+.vb b{font-size:15px;font-weight:900}
+.vb .role{color:var(--red-d);font-weight:800;font-size:11.5px;margin-left:6px}
+.vs{font-size:11.5px;font-weight:700;color:var(--mute);line-height:1.5;font-variant-numeric:tabular-nums}
+.vg{font-size:12px;font-weight:700;line-height:1.35}
+.vg i{font-style:normal;font-size:10.5px;font-weight:900;color:#fff;border-radius:5px;padding:1px 5px;margin-right:5px}
+.vg i.g{background:var(--teal)} .vg i.bd{background:var(--red)}
+.vbtn{margin-top:auto;padding-top:4px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.vbtn .b{flex:1}
+.tagc{font-size:12px;font-weight:900;color:var(--mute);background:var(--line);border-radius:8px;padding:5px 8px;white-space:nowrap}
+.tagc.ok{color:#fff;background:var(--teal)}
+.row{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.row .rn{flex:1;min-width:0;display:flex;flex-direction:column}
+.row .rn b{font-size:15px;font-weight:900} .row .rn small{font-size:11.5px;color:var(--mute);font-weight:700}
+.dot{width:22px;height:22px;border-radius:50%;flex:none;border:2px solid #fff;box-shadow:0 0 0 2px var(--line)}
+.opt.bay{min-width:86px}
+#sNews{background:#fff1cc;border-radius:10px;padding:8px 10px;color:var(--ink)}
 @media (max-height:430px){ #bAct{width:84px;height:84px;font-size:16px} #bUse{width:72px;height:72px;right:116px;font-size:14px} #mini{width:88px;height:88px} #ovTitle .how{display:none} }
 @media (orientation:portrait){ #mini{top:84px} #left{top:84px} #toast{top:200px} #stickZone{height:45%} #ovTitle{background-size:auto 62%;background-position:center top} }
 @media (prefers-reduced-motion:reduce){ .tst,.chip.wait{animation:none} }
@@ -172,6 +197,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
       <div class="pill grow"><span id="hStage">小型分隊</span><div class="bar"><i id="hXpBar"></i></div><small id="hXpTxt">0/1000</small></div>
       <div class="pill" id="hRep">聲望 50</div>
       <div class="pill" id="hRes">待命 0</div>
+      <div class="pill" id="hCoin">獎金 0</div>
       <button class="pill" id="bMenu" type="button">設定</button>
     </div>
     <div id="left">
@@ -187,9 +213,9 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
     <canvas id="mini" width="208" height="208"></canvas>
     <button class="rbtn" id="bUse" type="button" hidden></button>
     <button class="rbtn" id="bAct" type="button" hidden></button>
-    <div id="toast"></div>
   </div>
   <div id="ver"></div>
+  <div id="toast"></div>
 
   <div class="ov" id="ovTitle">
     <div class="tbar">
@@ -207,9 +233,19 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
   <div class="ov" id="ovSched" hidden><div class="panel">
     <div class="ph ink"><img id="sLogo" src="icon.jpg" alt=""><h2 id="sTitle" style="flex:1">勤務排班</h2><span id="sInfo"></span></div>
     <div class="pb">
+      <p class="note" id="sNews" hidden></p>
       <p class="note">點格子切換勤務。每時段至少 1 人值班；救護車需 2 人、消防車需 3 人。人力不夠的時段，由隊長親自補上。休息可消除疲勞。</p>
       <div class="tw"><table class="sch" id="sTable"></table></div>
-      <div class="btns stick"><button class="b" id="bAuto" type="button">自動排班</button><button class="b go" id="bDuty" type="button">開始值勤</button></div>
+      <div class="btns stick"><button class="b teal" id="bShop" type="button">分隊倉庫</button><button class="b" id="bAuto" type="button">自動排班</button><button class="b go" id="bDuty" type="button">開始值勤</button></div>
+    </div>
+  </div></div>
+
+  <div class="ov" id="ovShop" hidden><div class="panel wide">
+    <div class="ph ink"><h2>分隊倉庫</h2><span id="shCoin"></span></div>
+    <div class="pb">
+      <div class="tabs" id="shTabs"><button type="button" class="tab sel" data-t="veh">車庫</button><button type="button" class="tab" data-t="noz">瞄子</button></div>
+      <div class="pb" id="shBody" style="padding:0"></div>
+      <div class="btns stick"><button class="b go" id="bShopX" type="button">回到排班</button></div>
     </div>
   </div></div>
 
@@ -268,7 +304,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
 <script src="three.min.js"></script>
 <script>
 (()=>{'use strict';
-const VERSION='車干製V1.6';
+const VERSION='車干製V1.7';
 const $=id=>document.getElementById(id);
 (function cover(){ const t=$('ovTitle'), im=new Image(); im.onload=()=>{t.style.backgroundImage='url(cover.jpg)'}; im.onerror=()=>t.classList.add('nocover'); im.src='cover.jpg'; })();
 if(!window.THREE){ $('tSub').textContent='3D 元件載入失敗，請檢查網路後重新整理'; return; }
@@ -285,9 +321,9 @@ const stars=n=>'★'.repeat(n)+'☆'.repeat(5-n);
 
 /* ============ 資料表（日後擴充階級只要加在這裡） ============ */
 const STAGES=[
- {name:'小型分隊',station:'圳頂分隊',crew:4, fire:1,amb:1,tank:0,grid:13,step:[3,3,4],sw:2,xp:1000,perDay:5, zones:'res',burst:0},
- {name:'中型分隊',station:'中興分隊',crew:8, fire:2,amb:2,tank:0,grid:19,step:[3,4],  sw:3,xp:3000,perDay:8, zones:'mix',burst:.25},
- {name:'大型分隊',station:'府前分隊',crew:14,fire:3,amb:3,tank:1,grid:22,step:[3,4,4],sw:3,xp:6000,perDay:12,zones:'ind',burst:.35},
+ {name:'小型分隊',station:'圳頂分隊',crew:4, fire:1,amb:1,tank:0,grid:13,step:[3,3,4],sw:2,slots:3,xp:1200,perDay:5, zones:'res',burst:0},
+ {name:'中型分隊',station:'中興分隊',crew:8, fire:2,amb:2,tank:0,grid:19,step:[3,4],  sw:3,slots:4,xp:4000,perDay:8, zones:'mix',burst:.25},
+ {name:'大型分隊',station:'府前分隊',crew:14,fire:3,amb:3,tank:1,grid:22,step:[3,4,4],sw:3,slots:5,xp:9000,perDay:12,zones:'ind',burst:.35},
 ];
 const FUTURE=['大隊長','局長'];
 const ROLES=['值班','救護','消防','休息'];
@@ -307,6 +343,21 @@ const FIRE_T=[
 ];
 const SVC_T=[{sub:'捉蛇',xp:70,desc:'民宅前有蛇出沒',type:'snake'},{sub:'貓咪受困',xp:70,desc:'貓爬上樹不敢下來',type:'cat'}];
 const LVL=['','小火','中火','大火'];
+/* 車輛：cap 水量、seats 座位（含隊長）、max 極速、turn 轉向靈活度、L/W 車身長寬。img 是 vehicles.jpg 的第幾格 */
+const VEH={
+ amb:    {n:'救護車',cap:0,seats:3,max:20,turn:2.7,L:5,W:2.2},
+ small:  {n:'小水箱車',img:0,price:0,   cap:100,seats:4,max:17.5,turn:3.1,L:5.2,W:2.2,good:'靈活、巷子進得去',bad:'水少',role:'起始車'},
+ mid:    {n:'中水箱車',img:1,price:800, cap:180,seats:6,max:16.5,turn:2.6,L:6.3,W:2.4,good:'載更多隊員、水更多',bad:'車身較大',role:'主力'},
+ res:    {n:'水庫車',  img:2,price:1800,cap:480,seats:2,max:14,  turn:2.1,L:7,  W:2.5,good:'12 噸水',bad:'只能坐兩人',role:'幫全隊供水'},
+ ladder: {n:'雲梯車',  img:3,price:3200,cap:90, seats:3,max:14.5,turn:2,  L:7.4,W:2.5,minStage:1,soon:true,good:'救高樓層',bad:'需要空間展開',role:'高樓專用'},
+ chem:   {n:'化學車',  img:4,price:2600,cap:170,seats:4,max:15.5,turn:2.4,L:6.3,W:2.4,minStage:1,soon:true,good:'特殊火警專用',bad:'一般火警沒優勢',role:'工廠、油料'},
+ rescue: {n:'器材車',  img:5,price:2000,cap:0,  seats:4,max:17,  turn:2.7,L:5.9,W:2.4,soon:true,good:'車禍破壞救援',bad:'不能滅火',role:'車禍專用'},
+ support:{n:'後勤照護車',img:6,price:2200,cap:0,seats:3,max:16,  turn:2.6,L:6,  W:2.4,minStage:1,soon:true,good:'快速補體力和裝備',bad:'不能滅火',role:'長時間大火'},
+ panther:{n:'美洲豹',  img:7,price:8000,cap:380,seats:4,max:19,  turn:2.5,L:7,  W:2.8,minStage:2,good:'水量大、射程遠',bad:'最貴',role:'機場、大型火警'},
+};
+const VORDER=['small','mid','res','ladder','chem','rescue','support','panther'];
+const NOZ=[{n:'一般瞄子',price:0,range:13,dmg:40,col:0x6fc3ff,d:'公發的基本款'},{n:'強力瞄子',price:300,range:16,dmg:52,col:0x4da3ff,d:'水柱更集中'},
+ {n:'渦輪瞄子',price:1200,range:20,dmg:66,col:0x9be8ff,d:'旋轉水流，又遠又快'},{n:'黃金瞄子',price:4000,range:26,dmg:85,col:0xffd23f,d:'金色水柱，全隊都在看你'}];
 const SIGNS=['早餐店','雞排','手搖飲','便利店','機車行','藥局','牛肉麵','五金行','滷味','麵包店','理髮','自助餐'];
 const THINK=['午餐吃什麼呢…','好想追劇','雞排配珍奶？','手搖飲要訂了嗎','我的便當呢？','水帶還沒曬…','等等想補眠','好想放假','今晚拜託平安','想換新手機','誰喝了我的飲料','隊長又在巡了','腰好痠','晚點要洗車','體能測驗快到了','救護紀錄還沒打…','下班去吃熱炒','今天好閒喔','想養貓','泡麵要加蛋','冷氣好冷','襪子破洞了'];
 const THINK_BAD=['不想出勤啦…','哼！','我要請假','心好累','別跟我講話','誰都不要理我'];
@@ -326,7 +377,7 @@ function newCrew(used){
 }
 function freshSave(){
   uid=1; const used=new Set(), crew=[]; for(let i=0;i<STAGES[0].crew;i++)crew.push(newCrew(used));
-  return {v:1,code:newCode(),ts:0,rev:1,stage:0,xp:0,rep:50,day:1,seed:(Math.random()*1e9)|0,crew,sched:{},streak:0,done:false,uid,stats:{knock:0},vol:S?S.vol:{m:.5,s:.7,mute:false,shadow:true}};
+  return {v:1,code:newCode(),ts:0,rev:1,stage:0,xp:0,rep:50,day:1,seed:(Math.random()*1e9)|0,crew,sched:{},streak:0,done:false,uid,stats:{knock:0},coin:0,own:{veh:{},noz:[0],skin:['std']},noz:0,skin:'std',bays:null,vol:S?S.vol:{m:.5,s:.7,mute:false,shadow:true}};
 }
 function persist(force){ if(!S)return; S.uid=uid; S.ts=Date.now(); Save.save(S); Cloud.push(!!force); }
 function bump(){ if(S)S.rev=(S.rev||0)+1; } // 只有真的有進度時才加一，雲端用它判斷哪份存檔比較新
@@ -354,7 +405,8 @@ const Cloud=(()=>{ let tok=null,exp=0,busy=false,dirty=false,lastPush=0,synced=f
         body:JSON.stringify({fields:{data:{stringValue:JSON.stringify(S)},t:{integerValue:String(S.ts||Date.now())},v:{integerValue:'1'}}})}); if(!r.ok)throw fail(r,'put'); pushedRev=rev; set(true,'已同步 '+hm()); }
     catch(e){ set(false,why(e)); } busy=false; }
   return {st,pull,push,set,mark(sy,rv){synced=sy;pushedRev=rv}}; })();
-function fixSave(s){ if(!s.code)s.code=newCode(); if(!s.rev)s.rev=1; s.stats=s.stats||{knock:0}; s.vol=s.vol||{m:.5,s:.7,mute:false}; if(s.vol.shadow==null)s.vol.shadow=true; s.crew.forEach(c=>{if(c.mood==null)c.mood=70;if(c.av==null)c.av=pickAv(c)}); return s; }
+function fixSave(s){ if(!s.code)s.code=newCode(); if(!s.rev)s.rev=1; s.stats=s.stats||{knock:0}; s.vol=s.vol||{m:.5,s:.7,mute:false}; if(s.vol.shadow==null)s.vol.shadow=true; s.crew.forEach(c=>{if(c.mood==null)c.mood=70;if(c.av==null)c.av=pickAv(c)});
+  if(s.coin==null){ s.gift=s.coin=200+(s.stage||0)*400+(s.done?600:0); } s.own=s.own||{}; s.own.veh=s.own.veh||{}; s.own.noz=s.own.noz||[0]; s.own.skin=s.own.skin||['std']; if(s.noz==null||!NOZ[s.noz])s.noz=0; s.skin=s.skin||'std'; return s; }
 
 /* ============ 音效（全部用 Web Audio 合成） ============ */
 const Snd=(()=>{
@@ -610,27 +662,53 @@ function randomCiv(){ const r=Math.random(), shirts=[0xe76f51,0x2a9d8f,0x457b9d,
 }
 let decal119=null;
 function makeVehicle(type){
-  const g=new THREE.Group(), fire=type!=='amb', L=type==='amb'?5:type==='tank'?6.2:5.8, W=type==='amb'?2.2:2.4, red=0xd8322a, wh=0xf6f6f2, gl=0x2b3d57, sv=0xc9ccd1, dk=0x22252b, p=[];
+  const M=VEH[type], g=new THREE.Group(), b=new THREE.Group(), fire=type!=='amb', L=M.L, W=M.W, red=0xd8322a, wh=0xf6f6f2, gl=0x2b3d57, sv=0xc9ccd1, dk=0x22252b, yl=0xffd23f, p=[], HP=Math.PI/2;
+  let ly=3.16, lz=L*.33, lx=.5, dy=2.55, dz=-L*.3, dx=W/2+.05, ax=[L*.3,-L*.3], wd=1.02, decal=true, lad=null, tur=null;
   p.push(B(dk,W*.92,.4,L*.96,0,.72,0));
-  if(type==='amb'){ p.push(B(wh,W,2.05,L*.62,0,1.92,-L*.19),B(wh,W,1.35,L*.34,0,1.57,L*.31),B(wh,W*.96,.5,L*.2,0,2.4,L*.26),B(gl,W*.88,.62,.1,0,2.3,L*.365,[-.5,0,0]),B(gl,W+.04,.5,L*.15,0,2.3,L*.27),
+  if(type==='amb'){ ly=2.86; lz=L*.26;
+    p.push(B(wh,W,2.05,L*.62,0,1.92,-L*.19),B(wh,W,1.35,L*.34,0,1.57,L*.31),B(wh,W*.96,.5,L*.2,0,2.4,L*.26),B(gl,W*.88,.62,.1,0,2.3,L*.365,[-.5,0,0]),B(gl,W+.04,.5,L*.15,0,2.3,L*.27),
       B(0xff7a1a,W+.05,.3,L*.99,0,1.25,0),B(red,W+.06,.1,L*.99,0,1.48,0),B(red,.26,.8,.06,0,2,-L*.5-.03),B(red,.8,.26,.06,0,2,-L*.5-.03),
       B(red,.06,.7,.24,W/2+.02,2.3,-L*.15),B(red,.06,.24,.7,W/2+.02,2.3,-L*.15),B(red,.06,.7,.24,-W/2-.02,2.3,-L*.15),B(red,.06,.24,.7,-W/2-.02,2.3,-L*.15),B(dk,1.5,.1,.36,0,2.7,L*.26)); }
-  else { p.push(B(red,W,1.95,L*.3,0,1.87,L*.33),B(wh,W*.96,.12,L*.28,0,2.9,L*.33),B(gl,W*.86,.8,.08,0,2.25,L*.482),B(gl,W+.04,.7,L*.16,0,2.3,L*.36),B(0xffd23f,W+.05,.22,L*.99,0,1.22,0),B(dk,1.6,.1,.4,0,3.0,L*.33));
-    if(type==='fire'){ p.push(B(red,W,2.0,L*.62,0,1.9,-L*.19)); for(let k=0;k<3;k++){p.push(B(sv,.06,1.0,L*.16,W/2+.01,2.0,-L*.02-k*L*.19),B(sv,.06,1.0,L*.16,-W/2-.01,2.0,-L*.02-k*L*.19))}
-      p.push(B(sv,.1,.1,L*.6,-.42,3.02,-L*.18),B(sv,.1,.1,L*.6,.42,3.02,-L*.18)); for(let k=0;k<6;k++)p.push(B(sv,.84,.08,.1,0,3.02,-L*.45+k*L*.108));
-      p.push(Cy(0xf1f1f1,.95,.5,0,1.7,-L*.5-.02,[0,0,Math.PI/2]),Cy(red,.3,.56,0,1.7,-L*.5-.02,[0,0,Math.PI/2])); }
-    else { p.push(B(red,W,.5,L*.62,0,1.2,-L*.19),Cy(sv,2.15,L*.6,0,2.4,-L*.19,[Math.PI/2,0,0]),Cy(red,2.2,.25,0,2.4,-L*.19,[Math.PI/2,0,0]),Cy(dk,.5,.2,0,3.5,-L*.19)); } }
+  else if(type==='panther'){ ax=[L*.34,-L*.08,-L*.34]; wd=1.3; ly=3.5; lz=L*.2; lx=.85; dy=2.25; dz=-L*.2;
+    p.push(B(dk,W,.75,L*.97,0,1.1,0),B(red,W,1.55,L*.62,0,2.2,-L*.18),B(red,W,1.0,L*.34,0,1.95,L*.31),B(gl,W*.95,.95,L*.27,0,2.9,L*.27),B(red,W*.99,.14,L*.3,0,3.42,L*.26),
+      B(gl,W*.9,1.0,.1,0,2.72,L*.43,[-.42,0,0]),B(red,W*.98,.5,.5,0,2.2,L*.455,[-.5,0,0]),B(yl,W+.05,.2,L*.98,0,1.58,0),B(dk,W*.62,.4,.08,0,1.75,L*.485),B(dk,W*.7,.16,L*.46,0,3.05,-L*.2),
+      B(0x1c1c20,W+.06,.5,L*.2,0,2.55,-L*.4),B(sv,.06,.9,L*.22,W/2+.01,2.2,-L*.1),B(sv,.06,.9,L*.22,-W/2-.01,2.2,-L*.1),B(dk,1.9,.12,.4,0,3.5,L*.2));
+    tur=new THREE.Group(); tur.position.set(0,3.13,-L*.1); const tm=vmesh([Cy(red,.95,.36,0,.18,0),B(red,.6,.45,.9,0,.5,.1),Cy(sv,.3,2.0,0,.55,1.3,[HP,0,0]),Cy(red,.42,.34,0,.55,2.3,[HP,0,0]),Cy(dk,.2,.1,0,.55,2.5,[HP,0,0])]); tur.add(tm); b.add(tur); }
+  else {
+    const cl=type==='mid'?2.5:1.75, zc=L/2-cl/2-.04, bl=L-cl-.2, bz=-L/2+.08+bl/2, body=type==='support'?wh:red, stripe=type==='rescue'?0xff7a1a:type==='support'?red:yl;
+    lz=zc; dz=bz;
+    p.push(B(body,W,1.95,cl,0,1.87,zc),B(wh,W*.96,.12,cl*.94,0,2.9,zc),B(gl,W*.86,.8,.08,0,2.25,L/2-.05),B(gl,W+.04,.7,Math.min(1,cl*.5),0,2.3,L/2-.75),B(stripe,W+.05,.22,L*.99,0,1.22,0),B(dk,1.6,.1,.4,0,3.0,zc));
+    if(type==='mid')p.push(B(gl,W+.05,.6,.75,0,2.3,L/2-1.85));
+    const shut=(n,h,y,frac)=>{ for(let k=0;k<n;k++){const z=bz+bl*frac*((n-1)/2-k); p.push(B(sv,.06,h,bl*frac*.86,W/2+.01,y,z),B(sv,.06,h,bl*frac*.86,-W/2-.01,y,z))} };
+    const reel=()=>p.push(Cy(0xf1f1f1,.95,.5,0,1.7,-L/2-.02,[0,0,HP]),Cy(red,.3,.56,0,1.7,-L/2-.02,[0,0,HP]));
+    if(type==='small'){ p.push(B(red,W,1.9,bl,0,1.85,bz)); shut(2,.95,1.95,.46); p.push(B(sv,.1,.1,bl*.9,-.42,2.86,bz),B(sv,.1,.1,bl*.9,.42,2.86,bz),B(sv,.84,.08,.1,0,2.86,bz-bl*.4),B(sv,.84,.08,.1,0,2.86,bz+bl*.4)); reel(); dy=2.5; }
+    else if(type==='mid'){ p.push(B(red,W,2.0,bl,0,1.9,bz)); shut(3,1.0,2.0,.31); p.push(B(sv,.1,.1,bl*.94,-.42,3.02,bz),B(sv,.1,.1,bl*.94,.42,3.02,bz)); for(let k=0;k<6;k++)p.push(B(sv,.84,.08,.1,0,3.02,bz-bl*.44+k*bl*.176)); reel(); }
+    else if(type==='res'){ ax=[L*.33,-L*.2,-L*.37]; dy=2.45; dx=1.12;
+      p.push(B(red,W,.5,bl,0,1.2,bz),Cy(red,2.2,bl*.97,0,2.42,bz,[HP,0,0]),Cy(yl,2.24,.16,0,2.42,bz+bl*.36,[HP,0,0]),Cy(yl,2.24,.16,0,2.42,bz-bl*.36,[HP,0,0]),Cy(0xa92318,2.0,.1,0,2.42,bz-bl*.5,[HP,0,0]),
+        Cy(dk,.56,.2,0,3.56,bz+bl*.15),B(sv,.5,.05,bl*.86,0,3.53,bz),Cy(sv,.3,.5,-W/2+.2,1.5,-L/2+.3,[0,0,HP]),Cy(sv,.3,.5,W/2-.2,1.5,-L/2+.3,[0,0,HP])); }
+    else if(type==='ladder'){ ax=[L*.33,-L*.2,-L*.37]; dy=1.66; decal=false; ly=3.05; lz=L/2-.55;
+      p.push(B(red,W,1.1,bl,0,1.5,bz),Cy(sv,1.6,.3,0,2.2,bz-bl*.22),B(dk,.34,.9,.34,W/2+.05,.75,bz+bl*.36),B(dk,.34,.9,.34,-W/2-.05,.75,bz+bl*.36),B(dk,.34,.9,.34,W/2+.05,.75,bz-bl*.42),B(dk,.34,.9,.34,-W/2-.05,.75,bz-bl*.42)); shut(3,.6,1.6,.3);
+      const pz=bz-bl*.22, LL=L/2-pz-1.5, rails=(w,c)=>{const q=[B(c,.1,.2,LL,-w,.2,LL/2),B(c,.1,.2,LL,w,.2,LL/2),B(c,.06,.5,.06,-w,.45,LL*.25,[.5,0,0]),B(c,.06,.5,.06,w,.45,LL*.25,[.5,0,0]),B(c,.06,.06,LL,-w,.62,LL/2),B(c,.06,.06,LL,w,.62,LL/2)]; for(let z=.3;z<LL;z+=.5)q.push(B(c,w*2,.06,.08,0,.2,z)); return q};
+      const pv=new THREE.Group(); pv.position.set(0,2.35,pz); pv.rotation.order='YXZ'; pv.rotation.x=-.1; const base=vmesh(rails(.48,sv)); pv.add(base);
+      const ext=new THREE.Group(); ext.add(vmesh(rails(.36,0xe2e5e9).concat([B(red,1.3,.12,1.1,0,.08,LL+.55),B(red,1.3,.8,.1,0,.5,LL+1.08),B(red,.1,.8,1.1,-.62,.5,LL+.55),B(red,.1,.8,1.1,.62,.5,LL+.55),B(red,1.3,.5,.1,0,.35,LL+.02),B(wh,1.34,.14,1.14,0,.86,LL+.55)]))); ext.position.y=.06; pv.add(ext); b.add(pv); lad={pv,ext,LL,t:0}; }
+    else if(type==='chem'){ p.push(B(red,W,2.0,bl,0,1.9,bz),B(wh,W+.04,.42,bl*.94,0,1.62,bz),B(yl,.06,.62,.62,W/2+.04,2.3,bz+bl*.28,[Math.PI/4,0,0]),B(yl,.06,.62,.62,-W/2-.04,2.3,bz+bl*.28,[Math.PI/4,0,0]),B(dk,.07,.2,.2,W/2+.05,2.3,bz+bl*.28),B(dk,.07,.2,.2,-W/2-.05,2.3,bz+bl*.28),
+        Cy(dk,.6,.3,0,3.02,bz+bl*.25),Cy(sv,.24,1.4,0,3.3,bz+bl*.25+.55,[HP-.35,0,0]),Cy(0x2f6fd0,.62,.7,-.5,3.25,bz-bl*.25),Cy(0x2f6fd0,.62,.7,.5,3.25,bz-bl*.25),Cy(0xf6f6f2,.64,.1,-.5,3.3,bz-bl*.25),Cy(0xf6f6f2,.64,.1,.5,3.3,bz-bl*.25)); dz=bz-bl*.18; dy=2.45; }
+    else if(type==='rescue'){ p.push(B(red,W,2.0,bl,0,1.9,bz)); shut(3,1.3,1.95,.31); p.push(B(sv,.6,.3,.6,0,3.05,bz+bl*.3),Cy(0xff7a1a,.3,.3,0,3.3,bz+bl*.3),Cy(dk,.34,.9,0,3.3,-L/2+.6),B(0xff7a1a,.22,.22,2.0,0,3.9,-L/2+1.45,[.22,0,0]),B(dk,.1,.5,.1,0,3.85,-L/2+2.4),B(sv,W*.9,.1,.5,0,.95,-L/2-.2)); decal=false; }
+    else { p.push(B(wh,W,2.0,bl,0,1.9,bz),B(red,W+.05,.34,L*.99,0,1.72,0),B(0x3a4658,.06,1.0,bl*.62,W/2+.01,2.25,bz),B(red,1.5,.08,bl*.72,W/2+.72,2.86,bz,[0,0,-.2]),B(wh,1.52,.085,bl*.14,W/2+.72,2.86,bz-bl*.2,[0,0,-.2]),B(wh,1.52,.085,bl*.14,W/2+.72,2.86,bz+bl*.2,[0,0,-.2]),
+        B(0xf4a261,.3,.3,.3,W/2+.08,2.0,bz-bl*.2),B(0x2a9d8f,.3,.4,.3,W/2+.08,2.05,bz),B(0x3a86ff,.3,.3,.3,W/2+.08,2.0,bz+bl*.2),B(0xffd23f,.3,.24,.3,W/2+.08,2.5,bz-bl*.1),B(0xe63946,.3,.24,.3,W/2+.08,2.5,bz+bl*.12),
+        B(red,.06,.6,.2,-W/2-.02,2.3,bz),B(red,.06,.2,.6,-W/2-.02,2.3,bz),B(sv,.5,.2,.9,0,3.0,bz)); decal=false; }
+  }
   p.push(B(sv,W+.1,.3,.3,0,.78,L*.5),Sp(0xfff2a8,.3,-W*.34,1.18,L*.49),Sp(0xfff2a8,.3,W*.34,1.18,L*.49),B(dk,W*.46,.36,.06,0,1.2,L*.487),B(dk,.14,.3,.1,W/2+.14,2.25,L*.46),B(dk,.14,.3,.1,-W/2-.14,2.25,L*.46),
     B(sv,W,.12,.34,0,.62,-L*.5-.1),B(0xd8322a,.3,.2,.06,-W*.36,1.25,-L*.5-.01),B(0xd8322a,.3,.2,.06,W*.36,1.25,-L*.5-.01));
-  [[-1,1],[1,1],[-1,-1],[1,-1]].forEach(([sx,sz])=>{p.push(Cy(dk,1.02,.42,sx*(W/2-.02),.51,sz*L*.3,[0,0,Math.PI/2]),Cy(sv,.46,.46,sx*(W/2-.02),.51,sz*L*.3,[0,0,Math.PI/2]))});
-  const body=vmesh(p); const b=new THREE.Group(); b.add(body); g.add(b);
-  const lg=new THREE.BoxGeometry(.5,.26,.4), ly=type==='amb'?2.86:3.16, lz=type==='amb'?L*.26:L*.33;
-  const l1=new THREE.Mesh(lg,bas(0x802020)), l2=new THREE.Mesh(lg,bas(fire?0x802020:0x203a80)); l1.position.set(-.5,ly,lz); l2.position.set(.5,ly,lz); b.add(l1,l2);
+  ax.forEach(az=>[-1,1].forEach(sx=>{p.push(Cy(dk,wd,.42,sx*(W/2-.02),wd/2,az,[0,0,HP]),Cy(sv,wd*.45,.46,sx*(W/2-.02),wd/2,az,[0,0,HP]))}));
+  const body=vmesh(p); b.add(body); g.add(b);
+  const lg=new THREE.BoxGeometry(.5,.26,.4);
+  const l1=new THREE.Mesh(lg,bas(0x802020)), l2=new THREE.Mesh(lg,bas(fire?0x802020:0x203a80)); l1.position.set(-lx,ly,lz); l2.position.set(lx,ly,lz); b.add(l1,l2);
   if(!decal119){ const cv=document.createElement('canvas'); cv.width=256; cv.height=96; const x=cv.getContext('2d'); x.font='900 84px '+FONT; x.textAlign='center'; x.textBaseline='middle'; x.fillStyle='#fff'; x.strokeStyle='#7a1410'; x.lineWidth=8; x.strokeText('119',128,52); x.fillText('119',128,52);
     decal119={geo:new THREE.PlaneGeometry(1.5,.56),mat:new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cv),transparent:true})}; KEEP.add(decal119.geo); KEEP.add(decal119.mat); }
-  [1,-1].forEach(sx=>{const d=new THREE.Mesh(decal119.geo,decal119.mat);d.position.set(sx*(W/2+.05),type==='tank'?1.2:2.55,-L*.3);d.rotation.y=sx*Math.PI/2;b.add(d)});
+  if(decal)[1,-1].forEach(sx=>{const d=new THREE.Mesh(decal119.geo,decal119.mat);d.position.set(sx*dx,dy,type==='amb'?-L*.3:dz);d.rotation.y=sx*Math.PI/2;b.add(d)});
   const sh=new THREE.Mesh(blobGeo,shadowMat); sh.scale.set(W*.7,1,L*.62); sh.position.y=.05; g.add(sh);
-  g.userData={b,l1,l2,fire,L}; return g;
+  g.userData={b,l1,l2,fire,L,lad,tur}; return g;
 }
 const flameGeo=new THREE.ConeGeometry(.7,1.9,7); KEEP.add(flameGeo);
 function makeFlame(){ const g=new THREE.Group(); [[0xff5a1f,1,0],[0xffa51f,.7,.25],[0xffe45c,.42,.1]].forEach(([c,s,o],k)=>{const m=new THREE.Mesh(flameGeo,bas(c));m.scale.setScalar(s);m.position.set(o*(k%2?1:-1),.95*s,o);g.add(m)}); g.userData.ph=Math.random()*9; return g; }
@@ -662,9 +740,9 @@ function animalMesh(k){ let p;
 const G={mode:'title',paused:false,t:0,clock:0,slot:0,incidents:[],vehicles:[],crewEnt:{},peds:[],ai:[],log:[],props:[],things:[],animals:[],cars:[],events:[],blockers:[],unit:null,mission:null,player:null,spawnT:0,cardInc:null,camT:{x:0,z:0},jinx:0};
 const FX={water:[],smoke:[],wi:0,si:0};
 (function initFX(){ const wg=new THREE.SphereGeometry(.22,6,5), wm=bas(0x6fc3ff), sg=new THREE.SphereGeometry(.7,7,6), sm=new THREE.MeshBasicMaterial({color:0x4a4a4f,transparent:true,opacity:.6,depthWrite:false});
-  for(let i=0;i<90;i++){const m=new THREE.Mesh(wg,wm);m.visible=false;scene.add(m);FX.water.push({m,life:0,vx:0,vy:0,vz:0})}
+  FX.wm=wm; for(let i=0;i<90;i++){const m=new THREE.Mesh(wg,wm);m.visible=false;scene.add(m);FX.water.push({m,life:0,vx:0,vy:0,vz:0})}
   for(let i=0;i<60;i++){const m=new THREE.Mesh(sg,sm);m.visible=false;scene.add(m);FX.smoke.push({m,life:0,max:1,vx:0,vz:0})} })();
-function emitWater(x,y,z,h,up){ const p=FX.water[FX.wi++%FX.water.length]; p.life=up?1.1:.75; const sp=up?R(1,3):R(13,16), a=up?R(0,6.28):h+R(-.08,.08); p.vx=Math.sin(a)*sp; p.vz=Math.cos(a)*sp; p.vy=up?R(9,13):R(3.5,5); p.m.position.set(x,y,z); p.m.visible=true; }
+function emitWater(x,y,z,h,up,k){ k=k||1; const p=FX.water[FX.wi++%FX.water.length]; p.life=up?1.1:.75*(k>1.3?1.15:1); const sp=up?R(1,3):R(13,16)*k, a=up?R(0,6.28):h+R(-.08,.08); p.vx=Math.sin(a)*sp; p.vz=Math.cos(a)*sp; p.vy=up?R(9,13):R(3.5,5); p.m.position.set(x,y,z); p.m.visible=true; }
 function emitSmoke(x,y,z,s){ const p=FX.smoke[FX.si++%FX.smoke.length]; p.life=p.max=R(1.6,2.6); p.vx=R(-.5,.5); p.vz=R(-.8,.1); p.s=s; p.m.position.set(x+R(-.4,.4),y,z); p.m.visible=true; }
 const arrow=new THREE.Mesh(new THREE.ConeGeometry(.9,2.2,3),bas(0xffd400)); arrow.rotation.x=Math.PI/2; const arrowG=new THREE.Group(); arrowG.add(arrow); arrowG.visible=false; scene.add(arrowG);
 const hoseLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3()]),new THREE.LineBasicMaterial({color:0xf2efe6})); hoseLine.frustumCulled=false; hoseLine.visible=false; scene.add(hoseLine);
@@ -749,7 +827,7 @@ function buildWorld(){
   const lw=box(.5,2.6,9,wallC), rw=box(.5,2.6,9,wallC); lw.position.set(-hw+.25,1.3,-5.5); rw.position.set(hw-.25,1.3,-5.5); sg.add(lw,rw);
   const band=box(s0.W,.5,.56,0xd8322a); band.position.set(0,2.5,-9.75); sg.add(band);
   [-hw+.4,hw-.4].forEach(x=>{const p=box(.7,3.4,.7,0xd8322a);p.position.set(x,1.7,9.4);sg.add(p)});
-  const nbay=st.fire+st.amb+st.tank, bsp=Math.min(4.8,(s0.W-3)/nbay); for(let k=0;k<=nbay;k++){const ln=box(.14,.02,6.4,0xffd23f);ln.castShadow=false;ln.position.set((k-nbay/2)*bsp,.13,4.4);sg.add(ln)}
+  fixBays(); const nbay=S.bays.a.filter(Boolean).length+st.amb, bsp=Math.min(4.8,(s0.W-3)/nbay); for(let k=0;k<=nbay;k++){const ln=box(.14,.02,6.4,0xffd23f);ln.castShadow=false;ln.position.set((k-nbay/2)*bsp,.13,4.4);sg.add(ln)}
   const sign=textSprite(st.station,'#d8322a','#ffffff',9,2.25); sign.position.set(0,5,-9.6); sg.add(sign);
   sg.add(vmeshAt([B(0x8a5a3a,3,1,1.2,0,.6,0),B(0x22303f,.9,.7,.12,.3,1.5,-.2),B(0x6cc4ff,.8,.6,.02,.3,1.5,-.13),B(0xd8322a,.5,.25,.4,-.8,1.22,0),B(0x2a3340,.8,.9,.8,0,.5,1.3)],-hw+3,0,-3));
   const dl=textSprite('值班台','#1c2836','#ffffff',3.2,.8); dl.position.set(-hw+3,3.1,-3); sg.add(dl);
@@ -799,9 +877,9 @@ function buildWorld(){
   for(let k=0;k<2+(S?S.stage:0);k++){const r=pick(w.roads), m=animalMesh('dog');WG.add(m);G.animals.push({kind:'dog',mesh:m,x:r.x+3.5,z:r.z+3.5,h:0,hx:r.x,hz:r.z,tx:r.x+3.5,tz:r.z+3.5,wait:R(0,3),y:0,vy:0,bubY:2.6,cool:0,follow:0,scare:0})}
   // 實體
   G.vehicles=[]; G.crewEnt={}; G.peds=[]; G.incidents=[]; G.ai=[]; G.unit=null; G.mission=null;
-  const vt=[]; for(let k=0;k<st.fire;k++)vt.push(['fire','消防'+(k+1)+'號']); for(let k=0;k<st.amb;k++)vt.push(['amb','救護'+(k+1)+'號']); for(let k=0;k<st.tank;k++)vt.push(['tank','水箱車']);
-  vt.forEach(([type,label],k)=>{const bay={x:s0.cx+(k-(vt.length-1)/2)*bsp,z:s0.cz+4.4}, mesh=makeVehicle(type); WG.add(mesh);
-    G.vehicles.push({id:k,type,label,mesh,x:bay.x,z:bay.z,h:0,v:0,lean:0,bay,state:'parked',water:type==='tank'?220:100,cap:type==='tank'?220:100,hyd:null,lights:false,wash:0,clean:false})});
+  const vt=S.bays.a.filter(Boolean), tot={}, vcn={}; for(let k=0;k<st.amb;k++)vt.push('amb'); vt.forEach(t=>tot[t]=(tot[t]||0)+1);
+  vt.forEach((type,k)=>{ vcn[type]=(vcn[type]||0)+1; const M=VEH[type], label=type==='amb'?'救護'+vcn[type]+'號':M.n+(tot[type]>1?vcn[type]+'號':''), bay={x:s0.cx+(k-(vt.length-1)/2)*bsp,z:s0.cz+4.4}, mesh=makeVehicle(type); WG.add(mesh);
+    G.vehicles.push({id:k,type,M,label,mesh,x:bay.x,z:bay.z,h:0,v:0,lean:0,bay,state:'parked',water:M.cap,cap:M.cap,hyd:null,lights:false,wash:0,clean:false})});
   const crew=S?S.crew:[]; crew.forEach(c=>{const mesh=makePerson({helmet:0xffc400}); WG.add(mesh);
     const e={c,mesh,x:s0.cx+R(-hw+2,hw-2),z:s0.cz+R(-8,-2),h:R(0,6),mode:'idle',tx:0,tz:0,wait:R(0,3),walk:0,moving:false,busy:false,think:R(3,12),y:0,vy:0,wet:0,talk:0,sulk:null};
     e.tag=makeLabel(256,64,3.5,.875,3.05); mesh.add(e.tag.sp); G.crewEnt[c.id]=e; tagCrew(e); });
@@ -855,7 +933,7 @@ function pickAv(c){ const L=FEM.has(c.name)?[1,4]:[0,2,3,5,6,7]; return L[c.id%L
 const avPos=i=>'background-position:'+(i%3)*50+'% '+Math.floor(i/3)*50+'%';
 const avHtml=(i,cls)=>'<i class="av '+(cls||'')+'" style="'+avPos(i)+'"></i>';
 function toast(html,cls,ms){ const d=document.createElement('div'); d.className='tst '+(cls||''); d.innerHTML=html; const bx=$('toast'); bx.appendChild(d); while(bx.children.length>3)bx.firstChild.remove(); setTimeout(()=>d.remove(),ms||2600); }
-function show(id){ ['ovTitle','ovSched','ovCard','ovSettle','ovPromo','ovMenu','ovTalk'].forEach(o=>$(o).hidden=o!==id); }
+function show(id){ ['ovTitle','ovSched','ovShop','ovCard','ovSettle','ovPromo','ovMenu','ovTalk'].forEach(o=>$(o).hidden=o!==id); }
 const curSlot=()=>Math.min(5,Math.floor(G.clock/SLOT_LEN));
 const roleOf=c=>S.sched[c.id]?S.sched[c.id][curSlot()]:3;
 const isBusy=c=>G.crewEnt[c.id]&&G.crewEnt[c.id].busy;
@@ -912,7 +990,7 @@ function autoSched(){ const n=S.crew.length; S.sched={};
     rest.forEach((c,k)=>S.sched[c.id][s]=k<nE?1:2); }
 }
 function renderSched(){
-  const st=STAGES[S.stage]; $('sTitle').textContent='第 '+S.day+' 天 勤務排班'; $('sInfo').textContent=st.name+'・'+st.station;
+  const st=STAGES[S.stage]; $('sTitle').textContent='第 '+S.day+' 天 勤務排班'; $('sInfo').textContent=st.station+'・獎金 '+S.coin;
   let h='<thead><tr><th></th>'+SLOTS.map(s=>'<th>'+s+'</th>').join('')+'</tr></thead><tbody>';
   S.crew.forEach(c=>{h+='<tr><td class="nm"><div class="nmw">'+avHtml(c.av,'sm')+'<div>'+c.name+' <small class="'+(c.mood<30?'sulk':'')+'">Lv'+c.lv+' 消'+c.fire+' 救'+c.ems+' 駕'+c.drive+' 心情'+c.mood+' <span class="fat"><i style="width:'+c.fat+'%"></i></span></small></div></div></td>'+
     S.sched[c.id].map((r,s)=>'<td><button type="button" class="cell r'+r+'" data-c="'+c.id+'" data-s="'+s+'">'+ROLES[r]+'</button></td>').join('')+'</tr>'});
@@ -923,11 +1001,55 @@ function renderSched(){
 $('sTable').addEventListener('click',e=>{const b=e.target.closest('.cell');if(!b)return;const a=S.sched[b.dataset.c];a[b.dataset.s]=(a[b.dataset.s]+1)%4;Snd.click();renderSched()});
 $('bAuto').addEventListener('click',()=>{autoSched();Snd.click();renderSched()});
 $('bDuty').addEventListener('click',()=>{Snd.init();autoFull();startDuty()});
-function openSched(){ S.crew.forEach(c=>{if(!S.sched[c.id]||S.sched[c.id].length!==6)S.sched={}}); if(!Object.keys(S.sched).length)autoSched(); G.mode='sched'; $('hud').hidden=true; renderSched(); show('ovSched'); Snd.mode('calm'); }
+function openSched(){ S.crew.forEach(c=>{if(!S.sched[c.id]||S.sched[c.id].length!==6)S.sched={}}); if(!Object.keys(S.sched).length)autoSched(); G.mode='sched'; $('hud').hidden=true;
+  if(S.gift){ G.news='新功能：分隊倉庫開張了。出勤可以賺獎金，拿來買新消防車和更厲害的瞄子。先補發 '+S.gift+' 獎金給你，按下面的「分隊倉庫」去看看。'; S.gift=0; Save.save(S); }
+  $('sNews').hidden=!G.news; $('sNews').textContent=G.news||''; renderSched(); show('ovSched'); Snd.mode('calm'); }
+
+/* ============ 分隊倉庫：獎金、車庫、瞄子 ============ */
+function coin(n){ if(!n||!S)return; S.coin=Math.max(0,(S.coin||0)+n); if(n>0){ S.stats.coinAll=(S.stats.coinAll||0)+n; if(G.mode==='duty')G.dayCoin=(G.dayCoin||0)+n; } }
+const issued=()=>{const st=STAGES[S.stage];return {small:st.fire,res:st.tank}};
+function bayLeft(arr){ const iss=issued(), left={}; VORDER.forEach(id=>left[id]=(S.own.veh[id]?1:0)+(iss[id]||0)); (arr||[]).forEach(id=>{if(id)left[id]--}); return left; }
+const hasWater=a=>a.some(id=>id&&VEH[id].cap>0);
+function fixBays(){ const st=STAGES[S.stage], n=st.slots; let a;
+  if(S.bays&&S.bays.st===S.stage&&Array.isArray(S.bays.a)){ const left=bayLeft(); a=S.bays.a.slice(0,n).map(id=>{ if(id&&VEH[id]&&id!=='amb'&&left[id]>0){left[id]--;return id} return null }); while(a.length<n)a.push(null); }
+  else { const iss=issued(), pool=[]; VORDER.slice().reverse().forEach(id=>{if(S.own.veh[id])pool.push(id)}); for(let k=0;k<(iss.res||0);k++)pool.push('res'); for(let k=0;k<iss.small;k++)pool.push('small');
+    a=pool.slice(0,n); if(!hasWater(a))a[a.length-1]='small'; while(a.length<n)a.push(null); a.sort((x,y)=>(x?VORDER.indexOf(x):99)-(y?VORDER.indexOf(y):99)); }
+  if(!hasWater(a)){ const k=a.indexOf(null); a[k>=0?k:a.length-1]='small'; }
+  S.bays={st:S.stage,a}; }
+let shopTab='veh', shopDirty=false, shopArm=null;
+function openShop(tab){ if(tab)shopTab=tab; shopArm=null; fixBays(); G.mode='shop'; $('hud').hidden=true; renderShop(); show('ovShop'); }
+function closeShop(){ if(shopDirty){shopDirty=false;buildWorld()} openSched(); }
+const lv5=(v,a,b)=>{const n=clamp(Math.round((v-a)/(b-a)*4)+1,1,5);return '●'.repeat(n)+'○'.repeat(5-n)};
+function renderShop(){ $('shCoin').textContent='獎金 '+S.coin; [...$('shTabs').children].forEach(b=>b.classList.toggle('sel',b.dataset.t===shopTab)); const st=STAGES[S.stage]; let h='';
+  if(shopTab==='veh'){ const a=S.bays.a, iss=issued();
+    h+='<div class="sec">車位編成（'+st.station+'有 '+st.slots+' 個消防車位，點車位可以換車）</div><div class="opts">'+a.map((id,k)=>'<button type="button" class="opt bay'+(id?' sel':'')+'" data-bay="'+k+'">車位 '+(k+1)+'<small>'+(id?VEH[id].n:'空位')+'</small></button>').join('')+'</div>';
+    h+='<p class="note">出勤時這些車會停在車庫。救護車 '+st.amb+' 台固定配發，不占消防車位。</p><div class="vgrid">'+VORDER.map(id=>{ const M=VEH[id], own=!!S.own.veh[id], lock=(M.minStage||0)>S.stage, n=a.filter(x=>x===id).length, is=iss[id]||0;
+      let btn; if(lock)btn='<span class="tagc">升到'+STAGES[M.minStage].name+'開放</span>'; else if(own)btn='<span class="tagc ok">已擁有'+(n?'・已配置':'・未配置')+'</span>';
+      else if(M.soon)btn='<span class="tagc">下一版開放</span>'; else if(M.price)btn='<button type="button" class="b sm go" data-buy="'+id+'"'+(S.coin<M.price?' disabled':'')+'>'+(shopArm===id?'再按一次確認':'購買　'+M.price)+'</button>'; else btn='';
+      if(is&&!own)btn='<span class="tagc ok">公發 '+is+' 台</span>'+btn;
+      return '<div class="vc'+(lock?' lock':'')+'"><i class="vimg" style="background-position:'+(M.img%4)*33.333+'% '+Math.floor(M.img/4)*100+'%"></i><div class="vb"><div><b>'+M.n+'</b><small class="role">'+M.role+'</small></div>'+
+        '<div class="vs">水量 '+(M.cap||'不載水')+'　座位 '+M.seats+'<br>速度 '+lv5(M.max,14,19)+'　靈活 '+lv5(M.turn,2,3.1)+'</div><div class="vg"><i class="g">長處</i>'+M.good+'</div><div class="vg"><i class="bd">短處</i>'+M.bad+'</div><div class="vbtn">'+btn+'</div></div></div>'; }).join('')+'</div>'; }
+  else if(shopTab==='noz'){ h+='<p class="note">瞄子就是水帶前端的噴嘴。等級越高，水噴得越遠、滅火越快。隊長拿水帶時使用。</p><div class="lst">'+NOZ.map((z,k)=>{ const own=S.own.noz.includes(k), eq=S.noz===k;
+      return '<div class="row"><i class="dot" style="background:#'+z.col.toString(16).padStart(6,'0')+'"></i><span class="rn"><b>'+z.n+'</b><small>射程 '+z.range+' 公尺　威力 '+z.dmg+'　'+z.d+'</small></span>'+(eq?'<span class="tagc ok">使用中</span>':own?'<button type="button" class="b sm" data-eq="'+k+'">裝備</button>':'<button type="button" class="b sm go" data-nz="'+k+'"'+(S.coin<z.price?' disabled':'')+'>'+(shopArm==='n'+k?'再按一次確認':'購買　'+z.price)+'</button>')+'</div>'; }).join('')+'</div>'; }
+  $('shBody').innerHTML=h; }
+function shopClick(e){ const b=e.target.closest('button'); if(!b||b.disabled)return false; const d=b.dataset;
+  if(d.bay!=null){ const a=S.bays.a, k=+d.bay, cur=a[k]; a[k]=null; const left=bayLeft(a), opts=VORDER.filter(id=>left[id]>0||id===cur).concat([null]); let nx=opts[(opts.indexOf(cur)+1)%opts.length];
+    a[k]=nx; if(!hasWater(a)){ nx=opts.find(id=>id&&VEH[id].cap>0)||cur; a[k]=nx; toast('至少要留一台能出水的車','bad',1800); } shopDirty=true; Snd.click(); persist(); }
+  else if(d.buy){ const id=d.buy, M=VEH[id]; if(S.coin<M.price)return false; if(shopArm!==id){shopArm=id;Snd.click();renderShop();return true} shopArm=null; coin(-M.price); S.own.veh[id]=1;
+    const a=S.bays.a; let k=a.indexOf(null); if(k<0){ k=a.lastIndexOf('small'); if(k>=0){ const t=a.slice(); t[k]=id; if(!hasWater(t))k=-1; } } if(k>=0)a[k]=id; shopDirty=true; bump(); persist(true); Snd.promo();
+    toast('新車入庫：<b>'+M.n+'</b>'+(k>=0?'，已停進車位 '+(k+1):'。車位滿了，點上面的車位換車'),'good big',3600); }
+  else if(d.nz){ const k=+d.nz, z=NOZ[k]; if(S.coin<z.price)return false; if(shopArm!=='n'+k){shopArm='n'+k;Snd.click();renderShop();return true} shopArm=null; coin(-z.price); S.own.noz.push(k); S.noz=k; bump(); persist(true); Snd.done(); toast('買了 <b>'+z.n+'</b>，已經裝上','good big',3000); }
+  else if(d.eq){ S.noz=+d.eq; Snd.click(); persist(); }
+  else return false;
+  renderShop(); return true; }
+$('shBody').addEventListener('click',shopClick);
+$('shTabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;shopTab=b.dataset.t;shopArm=null;Snd.click();renderShop()});
+$('bShop').addEventListener('click',()=>{Snd.init();Snd.click();openShop()});
+$('bShopX').addEventListener('click',()=>{Snd.click();closeShop()});
 
 /* ============ 值勤開始／結束 ============ */
 function startDuty(){
-  buildWorld(); G.mode='duty'; G.paused=false; G.talking=false; G.t=0; G.clock=0; G.slot=0; G.log=[]; G.cardInc=null; G.spawnT=R(9,14); G.dayDone=false; G.jinx=0; G.sleep=false; G.evT=R(14,22); G.evDone=0; G.rain=S.day>1&&Math.random()<.28; if(G.rain)setTimeout(()=>{if(G.mode==='duty')toast('今天下雨：路滑，車子比較難轉彎','',3200)},4500); $('sleepV').hidden=true;
+  buildWorld(); G.mode='duty'; G.paused=false; G.talking=false; G.t=0; G.clock=0; G.slot=0; G.log=[]; G.cardInc=null; G.spawnT=R(9,14); G.dayDone=false; G.jinx=0; G.sleep=false; G.dayCoin=0; G.news=null; FX.wm.color.setHex(NOZ[S.noz].col); G.evT=R(14,22); G.evDone=0; G.rain=S.day>1&&Math.random()<.28; if(G.rain)setTimeout(()=>{if(G.mode==='duty')toast('今天下雨：路滑，車子比較難轉彎','',3200)},4500); $('sleepV').hidden=true;
   show(null); $('hud').hidden=false; resize(); Snd.mode('calm'); applySlot(true); persist();
   toast('第 '+S.day+' 天值勤開始。等派遣時可以到處晃晃','',3000);
   // 每天可能有人心情不好
@@ -942,7 +1064,7 @@ function endDay(){
   G.mode='settle'; $('hud').hidden=true; stopLoops(); G.sleep=false;
   const ok=G.log.filter(l=>l.ok).length, xp=G.log.reduce((a,l)=>a+l.xp,0), rep=G.log.reduce((a,l)=>a+l.rep,0);
   $('eTitle').textContent='第 '+S.day+' 天 勤務結算'; $('eSum').textContent=ok+'／'+G.log.length+' 件成功';
-  $('eInfo').innerHTML='<div><small>案件經驗</small>+'+xp+' XP</div><div><small>案件聲望</small>'+(rep>=0?'+':'')+rep+'</div><div><small>累積經驗</small>'+S.xp+'／'+STAGES[S.stage].xp+'</div><div><small>目前聲望</small>'+S.rep+'</div><div><small>撞飛東西</small>'+S.stats.knock+' 樣</div><div><small>突發狀況</small>排除 '+(G.evDone||0)+' 件</div>';
+  $('eInfo').innerHTML='<div><small>案件經驗</small>+'+xp+' XP</div><div><small>案件聲望</small>'+(rep>=0?'+':'')+rep+'</div><div><small>累積經驗</small>'+S.xp+'／'+STAGES[S.stage].xp+'</div><div><small>目前聲望</small>'+S.rep+'</div><div><small>今日獎金</small>+'+(G.dayCoin||0)+'（共 '+S.coin+'）</div><div><small>撞飛東西</small>'+S.stats.knock+' 樣</div><div><small>突發狀況</small>排除 '+(G.evDone||0)+' 件</div>';
   $('eList').innerHTML=G.log.length?G.log.map(l=>'<div class="li '+(l.ok?'':'bad')+'"><span>'+l.sub+'・'+l.by+'</span><span>'+(l.ok?'<span class="stars">'+stars(l.stars)+'</span> +'+l.xp:'失敗 '+l.rep+' 聲望')+'</span></div>').join(''):'<p class="note">今天平安無事。</p>';
   S.crew.forEach(c=>c.fat=clamp(c.fat-35,0,100));
   $('eCrew').innerHTML=S.crew.map(c=>'<div class="li"><span>'+avHtml(c.av,'sm')+' '+c.name+' Lv'+c.lv+'</span><span>疲勞 '+c.fat+'・心情 '+c.mood+'</span></div>').join('');
@@ -955,9 +1077,9 @@ $('bNext').addEventListener('click',()=>{ Snd.click(); const st=STAGES[S.stage];
   openSched(); });
 function promoArt(f){ const im=$('pImg'); const pn=im.parentElement; im.onerror=()=>{im.hidden=true;pn.classList.remove('art');$('pHead').style.borderRadius=''}; im.onload=()=>{im.hidden=false;pn.classList.add('art');$('pHead').style.borderRadius='0'}; im.src=f; }
 function promote(){ const old=STAGES[S.stage]; S.stage++; const st=STAGES[S.stage]; S.seed=(Math.random()*1e9)|0; uid=S.uid||uid;
-  const used=new Set(S.crew.map(c=>c.name)); while(S.crew.length<st.crew)S.crew.push(newCrew(used)); S.uid=uid; S.sched={}; autoSched(); bump(); persist(true);
+  const used=new Set(S.crew.map(c=>c.name)); while(S.crew.length<st.crew)S.crew.push(newCrew(used)); S.uid=uid; S.sched={}; autoSched(); S.bays=null; coin(500); bump(); persist(true);
   buildWorld(); G.mode='promo'; $('pTitle').textContent='升遷命令'; $('pBig').textContent=st.name+'長'; $('bPromo').textContent='到新分隊報到';
-  $('pText').textContent='恭喜！你在'+old.station+'表現優異，即日起調任'+st.station+'分隊長。轄區是全新的街道與建築，隊員 '+st.crew+' 人、消防車 '+st.fire+' 台、救護車 '+st.amb+' 台'+(st.tank?'、水箱車 1 台':'')+'，案件也會更密集。';
+  $('pText').textContent='恭喜！你在'+old.station+'表現優異，即日起調任'+st.station+'分隊長。轄區是全新的街道與建築，隊員 '+st.crew+' 人、消防車 '+st.fire+' 台、救護車 '+st.amb+' 台'+(st.tank?'、水庫車 1 台':'')+'，案件也會更密集。另發升遷獎金 500，消防車位增加為 '+st.slots+' 個。';
   promoArt(S.stage===1?'promo1.jpg':'promo2.jpg'); show('ovPromo'); Snd.promo(); }
 $('bPromo').addEventListener('click',()=>{Snd.click();openSched()});
 
@@ -1005,15 +1127,15 @@ function burn(b){ b.burnt=true; const c=new THREE.Color(0x3a3532); world.bodyMes
   if(b.gable){world.gableMesh.setColorAt(b.gIdx,c);world.gableMesh.instanceColor.needsUpdate=true}else{world.roofMesh.setColorAt(b.rIdx,c);world.roofMesh.instanceColor.needsUpdate=true} }
 function finishIncident(inc,ok,crewList,byCaptain){
   if(inc.state==='done')return; inc.state='done';
-  const frac=1-inc.left/inc.total; let st_=frac<.25?5:frac<.4?4:frac<.55?3:frac<.75?2:1; if(inc.spread||inc.rough)st_=Math.max(1,st_-1);
-  let xp=0,rep=0; const stat=inc.kind==='ems'?'ems':'fire';
-  if(ok){ S.streak++; xp=Math.round(inc.xp*(.5+.1*st_)*(1+Math.min(S.streak-1,5)*.1)*(byCaptain?1.2:1)); rep=st_-2;
+  const frac=1-inc.left/inc.total; let st_=frac<.2?5:frac<.34?4:frac<.5?3:frac<.7?2:1; if(inc.spread||inc.rough)st_=Math.max(1,st_-1);
+  let xp=0,rep=0,cn=0; const stat=inc.kind==='ems'?'ems':'fire';
+  if(ok){ S.streak++; xp=Math.round(inc.xp*(.5+.1*st_)*(1+Math.min(S.streak-1,5)*.1)*(byCaptain?1.2:1)); rep=st_-2; cn=Math.round(inc.xp*.4*(.6+.1*st_)*(byCaptain?1.25:1)); coin(cn);
     (crewList||[]).forEach(c=>{mood(c,4);c.xp+=Math.round(inc.xp/2);if(c.xp>=c.lv*100){c.xp-=c.lv*100;c.lv++;c[stat]=Math.min(99,c[stat]+3);c.drive=Math.min(99,c.drive+1);toast(c.name+' 升到 Lv'+c.lv,'good',2000)}});
-    toast('<b>'+stars(st_)+'</b><br>'+inc.sub+' 處置完成　+'+xp+' XP'+(S.streak>1?'　連續 '+S.streak+' 件':''),'good big',3400); if(byCaptain)Snd.done(); else Snd.ok(); }
+    toast('<b>'+stars(st_)+'</b><br>'+inc.sub+' 處置完成　+'+xp+' XP　獎金 +'+cn+(S.streak>1?'　連續 '+S.streak+' 件':''),'good big',3400); if(byCaptain)Snd.done(); else Snd.ok(); }
   else { S.streak=0; rep=-8; (crewList||[]).forEach(c=>mood(c,-6)); if(inc.kind==='fire'&&inc.where!=='road')burn(inc.b);
     toast(inc.sub+' 處置失敗　聲望 −8','bad big',3400); Snd.fail(); }
   S.xp+=xp; S.rep=clamp(S.rep+rep,0,100);
-  G.log.push({sub:inc.sub,ok,stars:st_,xp,rep,by:byCaptain?'隊長出勤':crewList&&crewList.length?crewList.map(c=>c.name).join('、'):'無人處理'});
+  G.log.push({sub:inc.sub,ok,stars:st_,xp,rep,coin:cn,by:byCaptain?'隊長出勤':crewList&&crewList.length?crewList.map(c=>c.name).join('、'):'無人處理'});
   if(G.mission&&G.mission.inc===inc){ G.mission=null; const P=G.player; P.hose=null; P.carry=false; if(G.unit){G.unit.veh.hyd=null} }
   if(G.cardInc===inc)closeCard();
   closeIncident(inc); bump(); persist();
@@ -1024,11 +1146,12 @@ function eff(list,stat,inc,withCap){ if(!list.length)return withCap?.9:.3; let a
 
 /* ============ 派遣卡 ============ */
 let sel={veh:null,crew:new Set(),cap:false};
-const fitsVeh=(inc,v)=>inc.kind==='ems'?v.type==='amb':v.type!=='amb';
+const fitsVeh=(inc,v)=>inc.kind==='ems'?v.type==='amb':inc.kind==='fire'?v.type!=='amb'&&v.cap>0:v.type!=='amb'&&v.type!=='support';
+const vScore=(inc,v)=>(v.M.seats>=inc.need?100:0)+(inc.kind==='fire'?v.M.cap/10:-v.M.cap/100);
 function capState(inc){ if(G.mission)return {ok:false,why:'隊長正在處理另一件案件'};
   if(G.unit){ return fitsVeh(inc,G.unit.veh)?{ok:true,unit:true}:{ok:false,why:'隊長在外，車種不符'} } return {ok:true}; }
 function openCard(inc){ if(G.mode!=='duty'||inc.state!=='pending'||G.talking)return; if(G.sleep)wake(true); G.cardInc=inc; G.paused=true; inc.shown=true; Input.act=false;
-  const cs=capState(inc), avV=G.vehicles.filter(v=>v.state==='parked'&&fitsVeh(inc,v));
+  const cs=capState(inc), avV=G.vehicles.filter(v=>v.state==='parked'&&fitsVeh(inc,v)).sort((a,b)=>vScore(inc,b)-vScore(inc,a));
   const want=inc.kind==='ems'?1:2, stat=inc.kind==='ems'?'ems':'fire';
   const av=S.crew.filter(c=>!isBusy(c)&&c.mood>=30&&roleOf(c)!==0&&roleOf(c)!==3).sort((a,b)=>((roleOf(b)===want?30:0)+b[stat])-((roleOf(a)===want?30:0)+a[stat]));
   sel={veh:avV[0]?avV[0].id:null,crew:new Set(),cap:false};
@@ -1036,23 +1159,24 @@ function openCard(inc){ if(G.mode!=='duty'||inc.state!=='pending'||G.talking)ret
   if(sel.cap&&!cs.unit&&sel.crew.size+1>inc.need){ const lastId=[...sel.crew].pop(); sel.crew.delete(lastId); }
   Snd.bell(); renderCard(); show('ovCard'); }
 function renderCard(){ const inc=G.cardInc; if(!inc)return; const cs=capState(inc), k=inc.kind, fire=k!=='ems';
+  const selV=G.vehicles.find(v=>v.id===sel.veh), seats=cs.unit||!selV?99:selV.M.seats; while(sel.crew.size+(sel.cap?1:0)>seats)sel.crew.delete([...sel.crew].pop());
   $('cHead').className='ph'+(k==='ems'?' ems':k==='svc'?' teal':''); $('cTitle').textContent=(k==='fire'?'火警：':k==='ems'?'緊急救護：':'為民服務：')+inc.sub; $('cTime').textContent='剩餘 '+fmtT(inc.left);
   const d=Math.hypot(inc.x-world.station.cx,inc.z-world.station.cz)/100;
   $('cInfo').innerHTML='<div><small>地點</small>'+inc.addr+'</div><div><small>距離</small>'+d.toFixed(1)+' 公里</div><div><small>等級</small>'+(k==='fire'?LVL[inc.lvl]:k==='ems'?(inc.serious?'重大':'一般'):'一般')+'</div><div><small>需求人力</small>'+inc.need+' 人</div><div><small>建議車輛</small>'+(fire?'消防車':'救護車')+'</div>'+(inc.desc?'<div><small>狀況</small>'+inc.desc+'</div>':'');
   const vs=G.vehicles.filter(v=>fitsVeh(inc,v));
   $('cVeh').innerHTML=vs.map(v=>{const mine=cs.unit&&G.unit.veh===v, free=v.state==='parked'&&!cs.unit;
-    return '<button type="button" class="opt'+((sel.veh===v.id||(mine&&sel.cap))?' sel':'')+'" data-v="'+v.id+'"'+(free?'':' disabled')+'>'+v.label+'<small>'+(mine?'隊長使用中，可直接轉往':v.state==='parked'?'在隊待命':'出勤中')+'</small></button>'}).join('');
+    return '<button type="button" class="opt'+((sel.veh===v.id||(mine&&sel.cap))?' sel':'')+'" data-v="'+v.id+'"'+(free?'':' disabled')+'>'+v.label+'<small>'+(mine?'隊長使用中，可直接轉往':v.state==='parked'?'在隊待命':'出勤中')+'・座位 '+v.M.seats+(v.M.cap?'・水 '+v.M.cap:'')+'</small></button>'}).join('');
   const stat=fire?'fire':'ems';
   let h='<button type="button" class="opt hav cap'+(sel.cap?' sel':'')+'" data-cap="1"'+(cs.ok?'':' disabled')+'>'+avHtml(8,'sm')+'<span>隊長親自出勤<small>'+(cs.ok?(cs.unit?'從現場直接轉往':'由你實際操作'):cs.why)+'</small></span></button>';
-  h+=S.crew.map(c=>{const r=roleOf(c), busy=isBusy(c), sulk=c.mood<30, dis=busy||sulk||!!cs.unit;
+  h+=S.crew.map(c=>{const r=roleOf(c), busy=isBusy(c), sulk=c.mood<30, dis=busy||sulk||!!cs.unit||(!sel.crew.has(c.id)&&sel.crew.size+(sel.cap?1:0)>=seats);
     return '<button type="button" class="opt hav'+(sel.crew.has(c.id)?' sel':'')+(sulk?' sulk':'')+'" data-c="'+c.id+'"'+(dis?' disabled':'')+'>'+avHtml(c.av,'sm')+'<span>'+c.name+' '+(fire?'消':'救')+c[stat]+'<small>'+(busy?'出勤中':sulk?'鬧脾氣，不想出勤':ROLES[r]+(r===3?'（召回加疲勞）':r===0?'（離開值班台）':''))+'・疲勞 '+c.fat+'</small></span></button>'}).join('');
   $('cCrew').innerHTML=h;
   const n=sel.crew.size+(sel.cap?1:0)+(cs.unit&&sel.cap?G.unit.mates.length:0), hasV=sel.veh!=null||(cs.unit&&sel.cap);
-  $('cCrewLbl').textContent='出勤人員（已選 '+n+'／需 '+inc.need+'）';
+  $('cCrewLbl').textContent='出勤人員（已選 '+n+'／需 '+inc.need+(seats<99?'・車上座位 '+seats:'')+'）';
   const note=$('cNote'); note.className='note';
   if(!hasV){note.textContent='目前沒有可用的'+(fire?'消防車':'救護車')+'，請按「稍後處理」等車輛返隊。';note.classList.add('warn')}
   else if(n===0){note.textContent='請至少選一名人員，或由隊長親自出勤。';note.classList.add('warn')}
-  else if(n<inc.need){note.textContent='人力不足，處置會比較慢。';note.classList.add('warn')}
+  else if(n<inc.need){note.textContent=seats<inc.need?'這台車坐不下 '+inc.need+' 人，處置會比較慢。可以換座位多的車。':'人力不足，處置會比較慢。';note.classList.add('warn')}
   else note.textContent=sel.cap?'派遣後請跑到車庫上車，跟著黃色箭頭開往現場。':'隊員會自行出勤處理，結果依能力、疲勞、心情與距離而定。';
   if(S.crew.some(c=>c.mood<30&&!isBusy(c)))note.textContent+='　有人在鬧脾氣，先去找他聊聊才派得動。';
   $('bSend').disabled=!hasV||n===0;
@@ -1123,10 +1247,10 @@ function getUse(){ const P=G.player, U=G.unit, M=G.mission; if(G.mode!=='duty'||
     if(P.carry&&dV<5.2)return {label:'送上<br>救護車',fn(){P.carry=false;inc.patient.state='loaded';inc.patient.mesh.visible=false;Snd.door();toast('傷患已上車，開往急診','good',2200)}};
     if(P.carry)return null;
     if(inc&&inc.kind==='ems'&&inc.patient.state==='ground'&&inc.patient.treated&&dist(P,inc.patient)<3)return {label:'抬上<br>擔架',fn(){inc.patient.state='carried';P.carry=true;Snd.click()}};
-    if(inc&&inc.snake&&dist(P,inc.snake)<2.6)return {label:'抓蛇',fn(){const s=inc.snake; if(s.miss<1&&Math.random()<.6){s.miss++;s.dash=1.2;s.h=Math.atan2(s.x-P.x,s.z-P.z);say(P,'滑掉了！',1.8);Snd.boing()} else {say(P,'抓到了！',2);finishIncident(inc,true,U.mates,true)}}};
+    if(inc&&inc.snake&&dist(P,inc.snake)<2.6)return {label:'抓蛇',fn(){const s=inc.snake; if(s.miss<2&&Math.random()<.65){s.miss++;s.dash=1.2;s.h=Math.atan2(s.x-P.x,s.z-P.z);say(P,'滑掉了！',1.8);Snd.boing()} else {say(P,'抓到了！',2);finishIncident(inc,true,U.mates,true)}}};
     if(inc&&inc.kind!=='ems'){ if(P.hose&&P.hose.veh&&dV<4.2)return {label:'收水帶',fn(){P.hose=null;Snd.click()}};
       if(inc.kind==='fire'){const h=nearestHyd(P,3.2); if(h&&V.hyd!==h&&Math.hypot(h.x-V.x,h.z-V.z)<30)return {label:'接<br>消防栓',fn(){V.hyd=h;Snd.ok();toast('已接上消防栓，水源不中斷','good',2200)}}}
-      if(!P.hose&&dV<4.8&&dist(V,inc)<26)return {label:'拿水帶',fn(){P.hose={veh:V};Snd.click()}}; }
+      if(!P.hose&&V.cap>0&&dV<4.8&&dist(V,inc)<26)return {label:'拿水帶',fn(){P.hose={veh:V};Snd.click()}}; }
     if(dV<4.8&&!P.hose)return {label:'上車',fn(){P.veh=V;V.hyd=null;U.mates.forEach(c=>G.crewEnt[c.id].mode='hidden');Snd.door();if(inc&&V.type!=='amb')Snd.horn()}};
   }
   if(P.hose&&P.hose.reel){ if(dist(P,P.hose.reel)<3.2)return {label:'收水帶',fn(){P.hose=null;Snd.click()}}; return null; }
@@ -1222,7 +1346,7 @@ function spawnEvent(force){ if(G.events.length>=2||!world)return null; const P=G
   ev.mk=add(textSprite('！','#ffb81f','#1c2836',3.8,3.8,true)); ev.mk.position.set(evPos(ev).x,7,evPos(ev).z);
   G.events.push(ev); toast('突發：'+EV[type].n+'（小地圖黃點）','fun',3000); Snd.radio(); return ev; }
 function finishEvent(ev,ok){ const k=G.events.indexOf(ev); if(k<0)return; G.events.splice(k,1); ev.objs.forEach(o=>WG.remove(o)); [ev.pig,ev.kid,ev.mom].forEach(e=>{if(e)bubs.delete(e)}); const b=G.blockers.indexOf(ev); if(b>=0)G.blockers.splice(b,1);
-  const T=EV[ev.type]; if(ok){ gain(T.xp,T.rep); S.stats.ev=(S.stats.ev||0)+1; G.evDone=(G.evDone||0)+1; toast('突發排除：'+T.n+'　+'+T.xp+' XP　聲望 +'+T.rep,'good',2800); Snd.ok(); bump(); persist(); }
+  const T=EV[ev.type]; if(ok){ gain(T.xp,T.rep); coin(Math.round(T.xp*.4)); S.stats.ev=(S.stats.ev||0)+1; G.evDone=(G.evDone||0)+1; toast('突發排除：'+T.n+'　+'+T.xp+' XP　獎金 +'+Math.round(T.xp*.4),'good',2800); Snd.ok(); bump(); persist(); }
   else { if(T.pen)gain(0,T.pen); toast(T.fail,T.pen?'bad':'',2600); } }
 function useEvent(ev){ const P=G.player;
   if(ev.type==='fire'){ ev.hp--; for(let k=0;k<5;k++)emitSmoke(ev.x,1.6,ev.z,.5); Snd.pop(); if(ev.hp<=0)finishEvent(ev,true); }
@@ -1259,25 +1383,25 @@ function updateSky(dt){ const duty=G.mode==='duty'||G.mode==='menu', hr=duty?(8+
   rainPts.visible=!!rain; if(rain){ const a=rainPts.geometry.attributes.position; for(let i=0;i<a.count;i++){let y=a.getY(i)-42*dt; if(y<0)y+=40; a.setY(i,y)} a.needsUpdate=true; rainPts.position.set(G.camT.x,0,G.camT.z); } }
 
 /* ============ 每幀更新 ============ */
-function driveVehicle(V,j,dt){ const max=V.type==='amb'?20:17;
-  if(j.mag>.15){ const want=Math.atan2(j.x,-j.y), d=angDiff(V.h,want); const tr=G.rain?2.0:2.7; V.h+=clamp(d,-tr*dt,tr*dt); V.lean=lerp(V.lean,clamp(d,-1,1)*.13*Math.min(1,V.v/max+.2),dt*6);
+function driveVehicle(V,j,dt){ const max=V.M.max;
+  if(j.mag>.15){ const want=Math.atan2(j.x,-j.y), d=angDiff(V.h,want); const tr=V.M.turn*(G.rain?.74:1); V.h+=clamp(d,-tr*dt,tr*dt); V.lean=lerp(V.lean,clamp(d,-1,1)*.13*Math.min(1,V.v/max+.2),dt*6);
     V.v=lerp(V.v,max*j.mag*Math.max(.3,Math.cos(d)),dt*(G.rain?1.15:1.7)); } else { V.v=lerp(V.v,0,dt*3.2); V.lean=lerp(V.lean,0,dt*6); }
   V.x+=Math.sin(V.h)*V.v*dt; V.z+=Math.cos(V.h)*V.v*dt; if(resolve(V,1.5)){ if(V.v>7)Snd.bump(); V.v*=.55; V.bounce=.25; } }
-function hoseSrc(P){ const hs=P.hose; if(hs.reel)return {x:hs.reel.x,z:hs.reel.z,max:26}; const V=hs.veh; return {x:V.x-Math.sin(V.h)*2.8,z:V.z-Math.cos(V.h)*2.8,max:30}; }
+function hoseSrc(P){ const hs=P.hose; if(hs.reel)return {x:hs.reel.x,z:hs.reel.z,max:26}; const V=hs.veh, r=V.M.L/2-.1; return {x:V.x-Math.sin(V.h)*r,z:V.z-Math.cos(V.h)*r,max:30}; }
 function inCone(P,x,z,range){ const d=Math.hypot(x-P.x,z-P.z); return d<range&&d>.3&&Math.abs(angDiff(P.h,Math.atan2(x-P.x,z-P.z)))<.42; }
 function sprayWorld(P,dt){ // 水柱噴到的東西各有反應
-  const sx=Math.sin(P.h), sz=Math.cos(P.h);
-  G.peds.forEach(p=>{ if(p.state==='fly')return; if(inCone(P,p.x,p.z,10)){ p.x+=sx*5*dt; p.z+=sz*5*dt; if(G.t>p.wet){p.wet=G.t+3;say(p,pick(['好冰！','我的頭髮！','幹嘛啦！','消防隊欺負人']),2.2); if(!p.wetN){p.wetN=1;gain(0,-1);toast('噴到路人　聲望 −1','bad',1500)}} } });
-  for(const id in G.crewEnt){ const e=G.crewEnt[id]; if(!e.mesh.visible||e.mode==='work'||e.mode==='scene')continue; if(inCone(P,e.x,e.z,10)){ e.x+=sx*4*dt; e.z+=sz*4*dt; if(G.t>e.wet){e.wet=G.t+4;mood(e.c,-3);e.vy=5;say(e,pick(['隊長！！','衣服濕了啦','很幼稚耶','我要報復']),2.4)} } }
-  G.props.forEach(p=>{ if(inCone(P,p.x,p.z,10)){ p.vx+=sx*26*dt; p.vz+=sz*26*dt; p.active=true; if(p.y<=0&&Math.random()<dt*2)p.vy=3 } });
+  const sx=Math.sin(P.h), sz=Math.cos(P.h), rg=NOZ[S.noz].range*.77;
+  G.peds.forEach(p=>{ if(p.state==='fly')return; if(inCone(P,p.x,p.z,rg)){ p.x+=sx*5*dt; p.z+=sz*5*dt; if(G.t>p.wet){p.wet=G.t+3;say(p,pick(['好冰！','我的頭髮！','幹嘛啦！','消防隊欺負人']),2.2); if(!p.wetN){p.wetN=1;gain(0,-1);toast('噴到路人　聲望 −1','bad',1500)}} } });
+  for(const id in G.crewEnt){ const e=G.crewEnt[id]; if(!e.mesh.visible||e.mode==='work'||e.mode==='scene')continue; if(inCone(P,e.x,e.z,rg)){ e.x+=sx*4*dt; e.z+=sz*4*dt; if(G.t>e.wet){e.wet=G.t+4;mood(e.c,-3);e.vy=5;say(e,pick(['隊長！！','衣服濕了啦','很幼稚耶','我要報復']),2.4)} } }
+  G.props.forEach(p=>{ if(inCone(P,p.x,p.z,rg)){ p.vx+=sx*26*dt; p.vz+=sz*26*dt; p.active=true; if(p.y<=0&&Math.random()<dt*2)p.vy=3 } });
   let dead=false;
-  G.things.forEach(t=>{ if(t.type==='plant'&&inCone(P,t.px,t.pz,10)){ t.g=Math.min(2.6,t.g+dt*.5); if(t.g>=1&&!t.done){t.done=true;gain(5,0);moodAll(2);toast('花開了！全隊心情 +2','good')} if(t.g>=2.5&&!t.big){t.big=true;toast('澆太多，長成樹了啦！','fun')} }
+  G.things.forEach(t=>{ if(t.type==='plant'&&inCone(P,t.px,t.pz,rg)){ t.g=Math.min(2.6,t.g+dt*.5); if(t.g>=1&&!t.done){t.done=true;gain(5,0);moodAll(2);toast('花開了！全隊心情 +2','good')} if(t.g>=2.5&&!t.big){t.big=true;toast('澆太多，長成樹了啦！','fun')} }
     else if(t.type==='dust'&&inCone(P,t.x,t.z,9)){ t.wash=(t.wash||0)+dt; if(t.wash>.5){WG.remove(t.mesh);t.dead=dead=true;gain(2,0)} } });
   if(dead){ G.things=G.things.filter(t=>!t.dead); if(!G.things.some(q=>q.type==='dust')){gain(0,1);moodAll(3);toast('用水柱把地板沖乾淨了！聲望 +1','good')} }
-  G.vehicles.forEach(v=>{ if(v.state!=='parked'||v.clean)return; if(inCone(P,v.x,v.z,10)){ v.wash+=dt; if(v.wash>2.2){v.clean=true;gain(5,1);Snd.ok();toast(v.label+' 洗得亮晶晶　聲望 +1','good')} } });
-  G.animals.forEach(a=>{ if(inCone(P,a.x,a.z,10)){ if(a.kind==='dog'){ if(G.t>a.cool){a.cool=G.t+3;a.vy=5;say(a,'汪汪♪',1.8);Snd.animal('dog')} } else {a.scare=G.t+2.5; if(a.y<=0)a.vy=7} } });
-  G.events.forEach(ev=>{ if(ev.type==='fire'&&inCone(P,ev.x,ev.z,10)){ev.hp-=dt*2.5;if(ev.hp<=0)ev.kill=true} if(ev.pig&&inCone(P,ev.pig.x,ev.pig.z,10)&&ev.pig.y<=0)ev.pig.vy=6; }); G.events.filter(e=>e.kill).forEach(e=>finishEvent(e,true));
-  G.cars.forEach(c=>{ if(inCone(P,c.x,c.z,10)&&G.t>c.wet){c.wet=G.t+5;say(c,pick(['免費洗車？','謝啦！','欸我窗戶沒關']),2)} });
+  G.vehicles.forEach(v=>{ if(v.state!=='parked'||v.clean)return; if(inCone(P,v.x,v.z,rg)){ v.wash+=dt; if(v.wash>2.2){v.clean=true;gain(5,1);Snd.ok();toast(v.label+' 洗得亮晶晶　聲望 +1','good')} } });
+  G.animals.forEach(a=>{ if(inCone(P,a.x,a.z,rg)){ if(a.kind==='dog'){ if(G.t>a.cool){a.cool=G.t+3;a.vy=5;say(a,'汪汪♪',1.8);Snd.animal('dog')} } else {a.scare=G.t+2.5; if(a.y<=0)a.vy=7} } });
+  G.events.forEach(ev=>{ if(ev.type==='fire'&&inCone(P,ev.x,ev.z,rg)){ev.hp-=dt*2.5;if(ev.hp<=0)ev.kill=true} if(ev.pig&&inCone(P,ev.pig.x,ev.pig.z,rg)&&ev.pig.y<=0)ev.pig.vy=6; }); G.events.filter(e=>e.kill).forEach(e=>finishEvent(e,true));
+  G.cars.forEach(c=>{ if(inCone(P,c.x,c.z,rg)&&G.t>c.wet){c.wet=G.t+5;say(c,pick(['免費洗車？','謝啦！','欸我窗戶沒關']),2)} });
   G.incidents.forEach(inc=>{ if(inc.cat&&!inc.cat.down&&inCone(P,inc.cat.x,inc.cat.z,11)){ inc.cat.down=true; inc.cat.wet=true; inc.rough=true; say(inc.cat,'喵！！（生氣）',2.5); Snd.animal('cat') } if(inc.snake&&inCone(P,inc.snake.x,inc.snake.z,9)){inc.snake.dash=.6;inc.snake.h=P.h} });
 }
 function updatePlayer(dt){ const P=G.player, j=Input.vec(), M=G.mission, inc=M&&M.inc, ox=P.x, oz=P.z; P.spray=false; P.treat=false;
@@ -1297,12 +1421,12 @@ function updatePlayer(dt){ const P=G.player, j=Input.vec(), M=G.mission, inc=M&&
   if(j.mag>.15&&sp>0){ const h=Math.atan2(j.x,-j.y); P.h=angLerp(P.h,h,Math.min(1,dt*14)); P.x+=Math.sin(h)*sp*j.mag*dt; P.z+=Math.cos(h)*sp*j.mag*dt; P.walk+=dt*sp*1.5; P.moving=true; } else P.moving=false;
   resolve(P,.55);
   if(P.hose){ const s=hoseSrc(P), dx=P.x-s.x, dz=P.z-s.z, d=Math.hypot(dx,dz); if(d>s.max){P.x=s.x+dx/d*s.max;P.z=s.z+dz/d*s.max; if(!P.hoseWarn||G.t-P.hoseWarn>4){P.hoseWarn=G.t;toast(P.hose.veh?'水帶不夠長，把消防車開近一點':'水帶只有這麼長','',2000)}}
-    const V=P.hose.veh; if(V&&V.hyd)V.water=Math.min(V.cap,V.water+22*dt);
+    const V=P.hose.veh, NZ=NOZ[S.noz]; if(V&&V.hyd)V.water=Math.min(V.cap,V.water+22*dt);
     if(Input.act){ if(!V||V.water>0){ P.spray=true; if(V&&!V.hyd)V.water-=5*dt;
-        if(inc&&inc.kind==='fire'){ let best=null,bd=15; inc.nodes.forEach(n=>{if(n.hp<=0)return;const d=Math.hypot(n.x-P.x,n.z-P.z);if(d<bd){bd=d;best=n}});
+        if(inc&&inc.kind==='fire'){ let best=null,bd=NZ.range+2; inc.nodes.forEach(n=>{if(n.hp<=0)return;const d=Math.hypot(n.x-P.x,n.z-P.z);if(d<bd){bd=d;best=n}});
           if(best&&j.mag<.15)P.h=angLerp(P.h,Math.atan2(best.x-P.x,best.z-P.z),Math.min(1,dt*9));
-          let hitN=null,hd=13; inc.nodes.forEach(n=>{if(n.hp<=0)return;const d=Math.hypot(n.x-P.x,n.z-P.z);if(d<hd&&Math.abs(angDiff(P.h,Math.atan2(n.x-P.x,n.z-P.z)))<.5){hd=d;hitN=n}}); if(hitN){hitN.hp-=40*dt;inc.lastHit=G.t} }
-        const ex=P.x+Math.sin(P.h)*.8, ez=P.z+Math.cos(P.h)*.8; emitWater(ex,1.5,ez,P.h); if(Math.random()<.6)emitWater(ex,1.5,ez,P.h);
+          let hitN=null,hd=NZ.range; inc.nodes.forEach(n=>{if(n.hp<=0)return;const d=Math.hypot(n.x-P.x,n.z-P.z);if(d<hd&&Math.abs(angDiff(P.h,Math.atan2(n.x-P.x,n.z-P.z)))<.5){hd=d;hitN=n}}); if(hitN){hitN.hp-=NZ.dmg*dt;inc.lastHit=G.t} }
+        const ex=P.x+Math.sin(P.h)*.8, ez=P.z+Math.cos(P.h)*.8; emitWater(ex,1.5,ez,P.h,false,NZ.range/13); if(Math.random()<.6)emitWater(ex,1.5,ez,P.h,false,NZ.range/13);
         sprayWorld(P,dt);
       } else if(!P.dryWarn||G.t-P.dryWarn>4){P.dryWarn=G.t;toast('水箱沒水了！去接消防栓','bad',2200)} } }
   if(P.carry&&inc){ inc.patient.x=P.x; inc.patient.z=P.z; }
@@ -1352,7 +1476,7 @@ function updateAnimals(dt){ const P=G.player; G.animals.forEach(a=>{ hopY(a,dt);
   else if(a.kind==='dog'&&G.t<a.follow&&!P.veh){ tx=P.x-Math.sin(P.h)*1.6+1; tz=P.z-Math.cos(P.h)*1.6; sp=dist(P,a)<2.4?0:8; }
   else { a.wait-=dt; if(a.wait<=0){a.wait=R(2,6); const rg=a.kind==='dog'?14:3.5; a.tx=a.hx+R(-rg,rg); a.tz=a.hz+R(-rg,rg)} tx=a.tx; tz=a.tz; }
   const dx=tx-a.x,dz=tz-a.z,d=Math.hypot(dx,dz); if(d>.4&&sp>0){a.x+=dx/d*sp*dt;a.z+=dz/d*sp*dt;a.h=angLerp(a.h,Math.atan2(dx,dz),Math.min(1,dt*10));resolve(a,.4); if(a.y<=0&&sp>3)a.vy=2.2} }); }
-function knockCount(){ S.stats.knock++; const n=S.stats.knock; if([10,30,60,100,200,400].includes(n)){gain(n,0);Snd.ok();toast('胡鬧成就：撞飛 '+n+' 樣東西　+'+n+' XP','fun big',3200)} }
+function knockCount(){ S.stats.knock++; const n=S.stats.knock; if([10,30,60,100,200,400].includes(n)){gain(n,0);coin(n);Snd.ok();toast('胡鬧成就：撞飛 '+n+' 樣東西　+'+n+' XP　獎金 +'+n,'fun big',3200)} }
 function updateProps(dt){ const P=G.player, movers=[];
   if(P.veh)movers.push({x:P.veh.x,z:P.veh.z,vx:P.vx,vz:P.vz,r:1.7,veh:true}); else if(!P.sleep)movers.push({x:P.x,z:P.z,vx:P.vx,vz:P.vz,r:.6});
   G.ai.forEach(m=>{if(m.phase!=='work'){const V=m.veh;movers.push({x:V.x,z:V.z,vx:Math.sin(V.h)*V.v,vz:Math.cos(V.h)*V.v,r:1.7,veh:true,ai:true})}});
@@ -1387,7 +1511,7 @@ function updateIncidents(dt){
       inc.nodes.forEach(n=>{ const f=Math.max(0,n.hp/n.max); n.m.visible=f>0; if(f>0){const s=(.6+f*.9)*(1+Math.sin(G.t*11+n.m.userData.ph)*.12)*(1+(inc.lvl-1)*.18); n.m.scale.set(s,s*(1+Math.sin(G.t*17+n.m.userData.ph)*.18),s); n.m.rotation.y+=dt*3; if(Math.random()<dt*5*f)emitSmoke(n.x,n.y+1.8*s,n.z,.8+f*.8+inc.lvl*.2)} });
       if(fireFrac(inc)<=0){ const cap=G.mission&&G.mission.inc===inc; finishIncident(inc,true,inc.by||[],cap); continue; }
     } else if(inc.snake){ const s=inc.snake; let sp=1.6; const dP=dist(P,s);
-      if(s.dash>0){s.dash-=dt;sp=9} else if(!P.veh&&dP<4.2&&inc.state==='player'){s.h=angLerp(s.h,Math.atan2(s.x-P.x,s.z-P.z),dt*6);sp=4.6} else { if(Math.hypot(s.tx-s.x,s.tz-s.z)<.6){s.tx=inc.x+R(-5,5);s.tz=inc.z+R(-2.5,4)} s.h=angLerp(s.h,Math.atan2(s.tx-s.x,s.tz-s.z),dt*3) }
+      if(s.dash>0){s.dash-=dt;sp=9} else if(!P.veh&&dP<4.2&&inc.state==='player'){s.h=angLerp(s.h,Math.atan2(s.x-P.x,s.z-P.z),dt*6);sp=5.3} else { if(Math.hypot(s.tx-s.x,s.tz-s.z)<.6){s.tx=inc.x+R(-5,5);s.tz=inc.z+R(-2.5,4)} s.h=angLerp(s.h,Math.atan2(s.tx-s.x,s.tz-s.z),dt*3) }
       s.x+=Math.sin(s.h)*sp*dt; s.z+=Math.cos(s.h)*sp*dt; const ox=s.x-inc.x, oz=s.z-inc.z, od=Math.hypot(ox,oz); if(od>8){s.x=inc.x+ox/od*8;s.z=inc.z+oz/od*8;s.h+=2.4} resolve(s,.4);
       s.mesh.position.set(s.x,0,s.z); s.mesh.rotation.y=s.h+Math.sin(G.t*12)*.35; }
     else if(inc.cat){ const c=inc.cat; if(c.down&&c.y>0){ c.y=Math.max(0,c.y-9*dt); c.z+=dt*1.2; c.mesh.position.set(c.x,c.y,c.z); if(c.y<=0){ const cap=G.mission&&G.mission.inc===inc; if(!c.wet)say(G.player,'乖，下來了',2); finishIncident(inc,true,cap&&G.unit?G.unit.mates:inc.by||[],cap); continue; } } }
@@ -1450,7 +1574,7 @@ function updateHUD(){
   const st=STAGES[S.stage], hr=(8+G.clock/DAY_LEN*24)%24, hh=Math.floor(hr), mm=Math.floor((hr-hh)*60/10)*10;
   $('hTime').textContent='第'+S.day+'天 '+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
   $('hStage').textContent=st.station; const prev=S.stage?STAGES[S.stage-1].xp:0; $('hXpBar').style.width=clamp((S.xp-prev)/(st.xp-prev)*100,0,100)+'%'; $('hXpTxt').textContent=S.xp+'/'+st.xp;
-  $('hRep').textContent='聲望 '+S.rep;
+  $('hRep').textContent='聲望 '+S.rep; $('hCoin').textContent='獎金 '+S.coin;
   const free=S.crew.filter(c=>!isBusy(c)&&roleOf(c)!==3&&c.mood>=30).length, fv=G.vehicles.filter(v=>v.state==='parked');
   $('hRes').innerHTML='待命 '+free+'人 <small>消'+fv.filter(v=>v.type!=='amb').length+' 救'+fv.filter(v=>v.type==='amb').length+'</small>';
   $('pending').innerHTML=G.incidents.map(i=>'<button type="button" class="chip '+(i.kind==='ems'?'ems ':i.kind==='svc'?'svc ':'')+(i.state==='pending'?'wait':'')+'" data-i="'+i.id+'">'+i.sub+' '+fmtT(i.left)+(i.state==='pending'?' 待派':i.state==='player'?' 隊長':' 處理中')+'</button>').join('');
@@ -1488,7 +1612,7 @@ $('vMus').addEventListener('input',e=>{Snd.set('m',e.target.value/100);saveVol()
 $('vSfx').addEventListener('input',e=>{Snd.set('s',e.target.value/100);saveVol();Snd.click()});
 $('bMute').addEventListener('click',()=>{Snd.set('mute',!Snd.st.mute);$('bMute').textContent='靜音：'+(Snd.st.mute?'開':'關');saveVol()});
 $('bShadow').addEventListener('click',()=>{fpsDone=true;setShadow(!sun.castShadow)});
-$('bResume').addEventListener('click',()=>{ G.mode=menuFrom.mode; const back={title:'ovTitle',sched:'ovSched',settle:'ovSettle',promo:'ovPromo'}[G.mode]; show(back||(G.cardInc?'ovCard':G.talking?'ovTalk':null)); });
+$('bResume').addEventListener('click',()=>{ G.mode=menuFrom.mode; const back={title:'ovTitle',sched:'ovSched',shop:'ovShop',settle:'ovSettle',promo:'ovPromo'}[G.mode]; show(back||(G.cardInc?'ovCard':G.talking?'ovTalk':null)); });
 $('bCode').addEventListener('click',()=>{Snd.init();openMenu()});
 $('bCopy').addEventListener('click',()=>{ const t=fmtCode(S.code), done=()=>{$('bCopy').textContent='已複製';setTimeout(()=>$('bCopy').textContent='複製',1500)}; try{navigator.clipboard.writeText(t).then(done).catch(()=>{const r=document.createRange();r.selectNodeContents($('cCode'));const s=getSelection();s.removeAllRanges();s.addRange(r)})}catch(e){} });
 $('bLoad').addEventListener('click',()=>{ const code=$('iCode').value.toUpperCase().replace(/[^A-Z0-9]/g,''); if(code.length!==8){Cloud.set(false,'接續碼是 8 個英數字');return} Cloud.set(null,'讀取中…'); $('bLoad').disabled=true;
@@ -1530,7 +1654,7 @@ function boot(){
 }
 $('bCont').addEventListener('click',()=>{Snd.init();Snd.click();autoFull();openSched()});
 $('bNew').addEventListener('click',()=>{Snd.init();Snd.click();autoFull(); const vol=S.vol; S=freshSave(); S.vol=vol; Cloud.mark(true,-1); openSched(); buildWorld(); persist(true); });
-window.__ff={spawnEvent,finishEvent,useEvent,buildWorld,G,findPath,roadCellNear,getUse,getAct,doUse,dist,get S(){return S},get world(){return world},spawnIncident,openCard,Input,STAGES,endDay,finishIncident,Save,say,jinx,crewTalk,pedTalk,whistle,honk,sun,useThing};
+window.__ff={spawnEvent,finishEvent,useEvent,buildWorld,G,findPath,roadCellNear,getUse,getAct,doUse,dist,get S(){return S},get world(){return world},spawnIncident,openCard,Input,STAGES,endDay,finishIncident,Save,say,jinx,crewTalk,pedTalk,whistle,honk,sun,useThing,VEH,NOZ,coin,openShop,closeShop,makeVehicle,fixBays,scene,camera,renderer,persist,startDuty,openSched,update:dt=>update(dt),updateHUD:()=>updateHUD(),closeCard:()=>closeCard(),FX};
 boot();
 })();
 </script>
