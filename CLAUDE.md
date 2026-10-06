@@ -15,8 +15,8 @@
 
 ## 版本
 
-- JS 開頭 `const VERSION='車干製V2.3'`，畫面左下角會顯示。格式固定為「車干製V主.次」。
-- 目前 V2.3。
+- JS 開頭 `const VERSION='車干製V2.4'`，畫面左下角會顯示。格式固定為「車干製V主.次」。
+- 目前 V2.4。
 
 ## 程式結構（index.html 內，依序）
 
@@ -35,6 +35,9 @@
 - 全螢幕預設不自動進入（`S.vol.full`），設定選單可開；`goHome()` 回主畫面。
 - 連線合作（`RT`、`CO`、`net*`、`coop*`）：Firebase Realtime Database `https://hunao-fire-default-rtdb.asia-southeast1.firebasedatabase.app`，規則只開放 `rooms/$room` 給已登入者。用 REST 寫入、EventSource 串流讀取，沒有載 SDK，沿用存檔的匿名登入（`Cloud.tok()`）。資料：`rooms/{4位數房號}/meta`（房主寫：state lobby/play/end、seed、order、rd 回合數、res 結果）、`p/{pid}`（各自寫：名字、消防衣 sk、塗裝 pt、瞄子 nz、車 veh、心跳 hb、即時狀態 s）、`w`（房主寫：各火點血量、剩餘時間、受困狀態）。房主是主機：火點血量、延燒、勝負都它算；其他人回報自己累計打了多少血（`CO.dmg`，由 `hitNode()` 累加）。開打時 `G.coopCfg` 讓 `buildWorld()` 用共同種子建同一張圖，`G.coop` 為真時值勤迴圈不出案件、不走時鐘，`inc.net` 的案件不在本機結案。玩家帶自己的消防衣、塗裝、瞄子、車進場。分頁切到背景時房主會停擺，是已知限制。
 - 連線測試：`localStorage.ff_rtdb` 設成本機位址就會改連那裡且不帶登入，測試用的假伺服器要實作 GET/PUT/PATCH/DELETE 和 `text/event-stream`（put／patch 事件）。每個玩家要開獨立的瀏覽器 context。用 `__ff.update(.05)` 加 `__ff.netTick(.05)` 快轉。
+- 地圖風格（`THEMES`：tw 台灣、jp 日本、eg 埃及、db 杜拜）：每種風格有小、中、大三個分隊，`S.theme`＋`S.stage` 決定現在在哪，**一律用 `ST()` 取得目前分隊設定**（它會把 `STAGES[S.stage]` 加上風格的分隊名和 `th`），不要直接讀 `STAGES[S.stage]`。進度在 `S.prog[風格]`：`top` 已開放到哪一級（-1 是整個風格還鎖著）、`xp[]` 各級經驗、`clr[]` 是否通過、`seed[]` 各級地圖種子；`S.xp` 是目前這一級的經驗。`STAGES[k].xp` 是該級的通過門檻（不是累計）。台灣圳頂分隊通過後才開放其他風格。`gotoMap()` 換地圖，多出來的隊員放 `S.bench`。風格影響配色、樹、公園裝飾、招牌、路名、獎金倍率 `cm`。
+- 圳頂分隊（台灣小型，`st.zd`）用 `ROADS_ZD` 的真實路名，地址由 `addrOf()` 依路段固定產生。分隊的貓狗有名字（`PETS`、茱蒂）。
+- 大量傷病患（`inc.mci`）：`inc.pts` 是所有傷患，`inc.patient` 指向目前處理的那位，`mciNext()` 換下一位；車輛的 `load` 記載了幾人，一台最多 2 人。零星勤務（`JOB`、`inc.job`）是按住完成的通用流程。
 - 測試用入口：`window.__ff` 暴露了 G、S、spawnIncident(kind, sub)、update(dt)、openCard、enterIndoor 等。
 
 ## 測試方式

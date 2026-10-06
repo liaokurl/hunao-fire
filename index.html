@@ -195,6 +195,9 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
 #bxName{font-size:22px;font-weight:900} #bxMsg{margin:0 0 4px;font-weight:800;color:var(--mute)}
 #bxRes .btns{width:100%}
 .chip.q{background:var(--ink)}
+.mapc{background:#fff;border:1px solid var(--line);border-left:8px solid var(--tc);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.mth b{font-size:17px;font-weight:900;color:var(--tc)} .mth small{margin-left:8px;font-weight:700;color:var(--mute);font-size:12px}
+.mapc .opt{flex:1;min-width:132px}
 .sl input[type=text]{font:inherit;font-weight:800;font-size:16px;padding:9px 10px;border:2px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);-webkit-user-select:text;user-select:text}
 #nCodeBig{font-size:30px;letter-spacing:.2em}
 #nCode{text-transform:none;letter-spacing:.2em}
@@ -245,6 +248,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
       <div class="btns">
         <button class="b go" id="bCont" type="button" hidden>繼續值勤</button>
         <button class="b go" id="bNew" type="button">開始遊戲</button>
+        <button class="b" id="bTMap" type="button" hidden>選地圖</button>
         <button class="b teal" id="bNet" type="button">連線合作</button>
         <button class="b sm" id="bCode" type="button">接續碼</button>
       </div>
@@ -259,7 +263,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
       <div class="sec" id="sQLbl">今日任務（三個都完成送皮膚箱）</div><div class="lst" id="sQuest"></div>
       <p class="note">點格子切換勤務。每時段至少 1 人值班；救護車需 2 人、消防車需 3 人。人力不夠的時段，由隊長親自補上。休息可消除疲勞。</p>
       <div class="tw"><table class="sch" id="sTable"></table></div>
-      <div class="btns stick"><button class="b teal" id="bShop" type="button">分隊倉庫</button><button class="b" id="bAuto" type="button">自動排班</button><button class="b go" id="bDuty" type="button">開始值勤</button></div>
+      <div class="btns stick"><button class="b teal" id="bShop" type="button">分隊倉庫</button><button class="b" id="bMap" type="button">換地圖</button><button class="b" id="bAuto" type="button">自動排班</button><button class="b go" id="bDuty" type="button">開始值勤</button></div>
     </div>
   </div></div>
 
@@ -273,6 +277,15 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
   </div>
   <div id="boxPop" hidden><div id="bxBox"></div><div id="bxRes" hidden><div id="bxRar"></div><img id="bxImg" alt=""><b id="bxName"></b><p id="bxMsg"></p><div class="btns"><button class="b" id="bxWear" type="button">馬上穿</button><button class="b go" id="bxOk" type="button">收下</button></div></div></div>
   </div>
+
+  <div class="ov" id="ovMap" hidden><div class="panel wide">
+    <div class="ph ink"><h2>選擇地圖</h2><span id="mapCoin"></span></div>
+    <div class="pb">
+      <p class="note">每個國家都有小型、中型、大型三個分隊，經驗各自累計。獎金、車、消防衣全部共用。台灣的圳頂分隊是基礎關，通過後其他國家才會開放。</p>
+      <div class="pb" id="mapBody" style="padding:0"></div>
+      <div class="btns stick"><button class="b go" id="bMapX" type="button">回到排班</button></div>
+    </div>
+  </div></div>
 
   <div class="ov" id="ovNet" hidden><div class="panel">
     <div class="ph ink"><h2>連線合作</h2><span id="nVer"></span></div>
@@ -354,7 +367,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
 <script src="three.min.js"></script>
 <script>
 (()=>{'use strict';
-const VERSION='車干製V2.3';
+const VERSION='車干製V2.4';
 const $=id=>document.getElementById(id);
 (function cover(){ const t=$('ovTitle'), im=new Image(); im.onload=()=>{t.style.backgroundImage='url(cover.jpg)'}; im.onerror=()=>t.classList.add('nocover'); im.src='cover.jpg'; })();
 if(!window.THREE){ $('tSub').textContent='3D 元件載入失敗，請檢查網路後重新整理'; return; }
@@ -372,8 +385,8 @@ const stars=n=>'★'.repeat(n)+'☆'.repeat(5-n);
 /* ============ 資料表（日後擴充階級只要加在這裡） ============ */
 const STAGES=[
  {name:'小型分隊',station:'圳頂分隊',zd:true,crew:4, fire:1,amb:1,tank:0,grid:13,step:[3,3,4],sw:2,slots:3,xp:1200,perDay:5, zones:'res',burst:0},
- {name:'中型分隊',station:'中興分隊',crew:8, fire:2,amb:2,tank:0,grid:19,step:[3,4],  sw:3,slots:4,xp:4000,perDay:8, zones:'mix',burst:.25},
- {name:'大型分隊',station:'府前分隊',crew:14,fire:3,amb:3,tank:1,grid:22,step:[3,4,4],sw:3,slots:5,xp:9000,perDay:12,zones:'ind',burst:.35},
+ {name:'中型分隊',station:'中興分隊',crew:8, fire:2,amb:2,tank:0,grid:19,step:[3,4],  sw:3,slots:4,xp:2800,perDay:8, zones:'mix',burst:.25},
+ {name:'大型分隊',station:'府前分隊',crew:14,fire:3,amb:3,tank:1,grid:22,step:[3,4,4],sw:3,slots:5,xp:5000,perDay:12,zones:'ind',burst:.35},
 ];
 const FUTURE=['大隊長','局長'];
 const ROLES=['值班','救護','消防','休息'];
@@ -424,6 +437,25 @@ const THINK_BAD=['不想出勤啦…','哼！','我要請假','心好累','別�
 const THINK_REST=['Zzz…','好睏','夢到在滅火…','再睡五分鐘'];
 const PED_SAY=['今天天氣真好','菜又漲價了','垃圾車幾點來？','要去接小孩','晚餐煮什麼','公車怎麼還不來','手機快沒電了','好熱喔'];
 
+/* ============ 地圖風格：每種風格都有小、中、大三個分隊。台灣的圳頂分隊通過後，其他風格才開放 ============ */
+const THEMES={
+ tw:{n:'台灣',d:'熟悉的街道，從圳頂分隊開始',css:'#df3a2c',cm:1,st:['圳頂分隊','中興分隊','府前分隊'],sky:0xa6dcea,ground:0x9ccf8a,pave:0xd9d3c3,road:0x4c5663,park:0x8fcf7a,tree:[0x3f9b52,0x4caf50,0x2f8a4a],
+   hc:[0xf3d2b5,0xf7e7b0,0xcfe6cf,0xc6dcf2,0xf2c4cf,0xeadcc2,0xddd2f0,0xf5f0e6,0xe9c9a8],hr:[0xb5503c,0x8a5a3c,0x566b8a,0x6b8757,0x9a4a3a],signs:SIGNS,roads:ROADS},
+ jp:{n:'日本',d:'櫻花、鳥居、黑瓦屋頂',css:'#e0559a',cm:1.1,st:['櫻町分署','港南分署','新都心分署'],sky:0xcfe6f5,ground:0xa9d49a,pave:0xd6d2c8,road:0x555d68,park:0xb5dba0,tree:[0xffb7c5,0xff9db5,0xf7c6d4],deco:'torii',
+   hc:[0xf4efe4,0xe9dfcc,0xd9c9a8,0xf7f3ea,0xc9b79a,0xe6e0d2,0xdccfb4,0xf0e8d8,0xbfae90],hr:[0x3d4654,0x4a5568,0x2f3a48,0x5a4636,0x44505e],
+   signs:['拉麵','壽司','居酒屋','便利店','藥妝','書店','咖哩','蕎麥麵','定食','大福','錢湯','文具'],roads:['櫻通','本町通','驛前通','銀座街','港町','神社前','松並木','大手町','城下町','梅小路','富士見坂','朝日通']},
+ eg:{n:'埃及',d:'沙漠、金字塔、棕櫚樹',css:'#c98a1e',cm:1.2,st:['綠洲分隊','尼羅分隊','金字塔分隊'],sky:0xf0e2bc,ground:0xe6cf95,pave:0xdcc9a0,road:0x6b6257,park:0xecd9a4,tree:[0x3f9b52,0x4a9f4f,0x2f8a4a],palm:true,deco:'pyramid',
+   hc:[0xe8d3a2,0xdcc08a,0xf0e0b8,0xd4b483,0xe6c99a,0xcfb07a,0xf2e6c4,0xe0c890,0xd9bb86],hr:[0xb08a5a,0xa67c4e,0xc49a66,0x8f6b42,0xb5925f],
+   signs:['香料','地毯','茶館','烤餅','紙莎草','駱駝行','陶器','水煙','椰棗','金飾','市集','麵包'],roads:['尼羅大道','法老路','金字塔街','綠洲路','沙丘街','人面獅身路','紙莎草街','聖甲蟲路','太陽神路','駱駝巷','市集街','棕櫚路']},
+ db:{n:'杜拜',d:'玻璃高樓、海灣、高塔',css:'#2f6fd0',cm:1.3,st:['棕櫚分隊','碼頭分隊','天際分隊'],sky:0xbfe3f5,ground:0xe9d9a8,pave:0xe4dccb,road:0x4a5360,park:0x9ad6b0,tree:[0x3f9b52,0x4caf50,0x2f8a4a],palm:true,deco:'tower',tall:1,
+   hc:[0xcfe3f2,0xe8f0f6,0xb9d4ea,0xdfe9f0,0xa9c9e6,0xf2f5f8,0xc5d9e8,0xd9e6ef,0xb4cfe3],hr:[0x5b7fa6,0x7a94ad,0x4a6a8f,0x8aa3ba,0x3f5f85],
+   signs:['金飾','香水','跑車行','咖啡','椰棗','購物城','地毯','珠寶','手機','冰淇淋','海鮮','茶館'],roads:['謝赫大道','棕櫚路','碼頭街','黃金街','天際大道','沙漠玫瑰路','獵鷹街','珍珠路','帆船街','綠洲大道','噴泉路','世博路']},
+};
+const TORDER=['tw','jp','eg','db'];
+const ST=()=>{ const th=THEMES[S.theme]||THEMES.tw, b=STAGES[S.stage]; return Object.assign({},b,{station:th.st[S.stage],zd:!!b.zd&&th===THEMES.tw,th}); };
+const topStage=()=>Math.max(...TORDER.map(t=>S.prog[t].top));
+const newProg=()=>{ const o={}; TORDER.forEach(t=>o[t]={top:t==='tw'?0:-1,xp:[0,0,0],clr:[false,false,false],seed:[0,0,0]}); return o; };
+
 /* ============ 存檔（介面可替換：之後接雲端只要換掉 load / save） ============ */
 const Save={key:'ffcaptain_v1',mem:null,
  load(){try{const s=localStorage.getItem(this.key);if(s)return JSON.parse(s)}catch(e){}return this.mem},
@@ -437,9 +469,9 @@ function newCrew(used){
 }
 function freshSave(){
   uid=1; const used=new Set(), crew=[]; for(let i=0;i<STAGES[0].crew;i++)crew.push(newCrew(used));
-  return {v:1,code:newCode(),ts:0,rev:1,stage:0,xp:0,rep:50,day:1,seed:(Math.random()*1e9)|0,crew,sched:{},streak:0,done:false,uid,stats:{knock:0},coin:0,own:{veh:{},noz:[0],skin:['std'],paint:['red']},noz:0,skin:'std',paint:'red',box:1,bays:null,vol:S?S.vol:{m:.5,s:.7,mute:false,shadow:true}};
+  return {v:1,code:newCode(),ts:0,rev:1,stage:0,xp:0,rep:50,day:1,seed:(Math.random()*1e9)|0,crew,sched:{},streak:0,done:false,uid,stats:{knock:0},theme:'tw',prog:newProg(),bench:[],coin:0,own:{veh:{},noz:[0],skin:['std'],paint:['red']},noz:0,skin:'std',paint:'red',box:1,bays:null,vol:S?S.vol:{m:.5,s:.7,mute:false,shadow:true}};
 }
-function persist(force){ if(!S)return; S.uid=uid; S.ts=Date.now(); Save.save(S); Cloud.push(!!force); }
+function persist(force){ if(!S)return; if(S.prog&&S.prog[S.theme]&&!S.prog[S.theme].seed[S.stage])S.prog[S.theme].seed[S.stage]=S.seed; S.uid=uid; S.ts=Date.now(); Save.save(S); Cloud.push(!!force); }
 function bump(){ if(S)S.rev=(S.rev||0)+1; } // 只有真的有進度時才加一，雲端用它判斷哪份存檔比較新
 function newCode(){ const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c=''; for(let i=0;i<8;i++)c+=A[Math.floor(Math.random()*A.length)]; return c; }
 const fmtCode=c=>c?c.slice(0,4)+'-'+c.slice(4):'';
@@ -467,6 +499,10 @@ const Cloud=(()=>{ let tok=null,exp=0,busy=false,dirty=false,lastPush=0,synced=f
   return {st,pull,push,set,tok:token,mark(sy,rv){synced=sy;pushedRev=rv}}; })();
 function fixSave(s){ if(!s.code)s.code=newCode(); if(!s.rev)s.rev=1; s.stats=s.stats||{knock:0}; s.vol=s.vol||{m:.5,s:.7,mute:false}; if(s.vol.shadow==null)s.vol.shadow=true; s.crew.forEach(c=>{if(c.mood==null)c.mood=70;if(c.av==null)c.av=pickAv(c)});
   if(s.coin==null){ s.gift=s.coin=200+(s.stage||0)*400+(s.done?600:0); } s.own=s.own||{}; s.own.veh=s.own.veh||{}; s.own.noz=s.own.noz||[0]; s.own.skin=s.own.skin||['std']; if(s.noz==null||!NOZ[s.noz])s.noz=0; s.skin=SKINS[s.skin]?s.skin:'std'; s.own.paint=s.own.paint||['red']; s.paint=PAINT[s.paint]?s.paint:'red';
+  if(!s.prog){ const oc=[0,1200,4000], need=STAGES.map(t=>t.xp), k0=s.stage||0; s.theme='tw'; s.prog=newProg(); const q=s.prog.tw; q.top=k0; for(let k=0;k<k0;k++){q.xp[k]=need[k];q.clr[k]=true}
+    q.xp[k0]=Math.max(0,(s.xp||0)-oc[k0]); if(s.done){q.clr[2]=true;q.xp[2]=Math.max(q.xp[2],need[2])} q.seed[k0]=s.seed; s.xp=q.xp[k0]; if(k0>0||s.done)TORDER.forEach(t=>{if(s.prog[t].top<0)s.prog[t].top=0});
+    if(k0>0||s.done)s.news=(s.news||[]).concat(['新功能：地圖風格。日本、埃及、杜拜的分隊開放了，在排班畫面按「換地圖」可以去，獎金比較多。']); }
+  if(!THEMES[s.theme])s.theme='tw'; s.bench=s.bench||[]; if(s.prog[s.theme]&&!s.prog[s.theme].seed[s.stage||0])s.prog[s.theme].seed[s.stage||0]=s.seed; TORDER.forEach(t=>{ if(!s.prog[t])s.prog[t]={top:-1,xp:[0,0,0],clr:[false,false,false],seed:[0,0,0]} });
   if(s.box==null){ s.box=1; s.news=(s.news||[]).concat(['新功能：消防衣皮膚箱。送你 1 個免費的箱子，到「分隊倉庫 → 消防衣」開箱。每天完成三個今日任務可以再拿一個，出勤存獎金也能抽。']); } return s; }
 
 /* ============ 音效（全部用 Web Audio 合成） ============ */
@@ -594,7 +630,7 @@ function inst(geo,mat,items,fn,shadow){
 }
 function prismGeo(){ const v=[-.5,0,.5,.5,0,.5,.5,1,0, -.5,0,.5,.5,1,0,-.5,1,0, .5,0,-.5,-.5,0,-.5,-.5,1,0, .5,0,-.5,-.5,1,0,.5,1,0, .5,0,.5,.5,0,-.5,.5,1,0, -.5,0,-.5,-.5,0,.5,-.5,1,0];
   const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(v,3)); g.computeVertexNormals(); return g; }
-const darken=(c,f)=>{const k=new THREE.Color(c);k.multiplyScalar(f);return k.getHex()};
+const darken=(c,f)=>{const k=new THREE.Color(c);k.multiplyScalar(f);k.r=Math.min(1,k.r);k.g=Math.min(1,k.g);k.b=Math.min(1,k.b);return k.getHex()};
 
 /* ============ 地圖生成 ============ */
 const CS=10; let world=null;
@@ -635,7 +671,7 @@ function genMap(st,seed){
     w.station={...sR,cx:cx(sR.i0)+(sR.w-1)*CS/2,cz:cx(sR.j0)+CS/2,W:sR.w*CS};
     w.station.front={i:sR.i0+Math.floor(sR.w/2),j:sR.j0+2};
     w.hosp={...hR,cx:cx(hR.i0)+CS/2,cz:cx(hR.j0)+CS/2}; w.hosp.drop={x:w.hosp.cx,z:w.hosp.cz+CS+5}; w.hosp.cell={i:hR.i0,j:hR.j0+2};
-    const HC=[0xf3d2b5,0xf7e7b0,0xcfe6cf,0xc6dcf2,0xf2c4cf,0xeadcc2,0xddd2f0,0xf5f0e6,0xe9c9a8], HR=[0xb5503c,0x8a5a3c,0x566b8a,0x6b8757,0x9a4a3a];
+    const TH=st.th||THEMES.tw, HC=TH.hc, HR=TH.hr;
     w.blds=[]; w.parks=[]; w.bAt=[]; for(let i=0;i<N;i++)w.bAt.push(new Array(N).fill(null));
     const central=(i,j)=>Math.abs(i-N/2)<N*.27&&Math.abs(j-N/2)<N*.27;
     for(let i=0;i<N;i++)for(let j=0;j<N;j++){ if(g[i][j]!==0)continue;
@@ -649,11 +685,11 @@ function genMap(st,seed){
       const f=(a,b)=>a+rnd()*(b-a); let bw,bd,fl,col,roof,gable=false;
       if(type==='house'){bw=f(5.8,7.6);bd=f(5.8,7.2);fl=ri(1,2);col=HC[ri(0,HC.length-1)];roof=HR[ri(0,HR.length-1)];gable=rnd()<.55}
       else if(type==='shop'){bw=8;bd=6.8;fl=ri(1,2);col=[0xf6e2b3,0xf2c9a6,0xcfe8e0,0xf4d0d8,0xe6e0d2][ri(0,4)];roof=0x7a7f88}
-      else if(type==='office'){bw=f(6.4,7.8);bd=f(6.4,7.4);fl=ri(2,3);col=[0xa9bfdc,0xd0dae8,0xbfd2c1,0xd9d2c4][ri(0,3)];roof=0x5b6578}
+      else if(type==='office'){bw=f(6.4,7.8);bd=f(6.4,7.4);fl=ri(2,3)+(TH.tall||0);col=[0xa9bfdc,0xd0dae8,0xbfd2c1,0xd9d2c4][ri(0,3)];roof=0x5b6578}
       else if(type==='factory'){bw=8.6;bd=7.8;fl=1;col=[0xc2c2ba,0xb1bcc5,0xcbc0ad][ri(0,2)];roof=0x6f7f95;gable=true}
       else{bw=8.6;bd=6.6;fl=2;col=0xf7e39a;roof=0xb5503c}
       const bh=type==='factory'?4.4:fl*2.5+.4, x=cx(i),z=cx(j);
-      const b={i,j,type,zone,x,z,w:bw,d:bd,h:bh,fl,col,roof,gable,door:ri(0,2),sign:SIGNS[ri(0,SIGNS.length-1)],tower:rnd()<.6,
+      const b={i,j,type,zone,x,z,w:bw,d:bd,h:bh,fl,col,roof,gable,door:ri(0,2),sign:TH.signs[ri(0,TH.signs.length-1)],tower:rnd()<.6,
         minX:x-bw/2,maxX:x+bw/2,minZ:z-bd/2,maxZ:z+bd/2,south:j+1<N&&g[i][j+1]===1,burnt:false,idx:w.blds.length};
       b.doorX=type==='house'||type==='office'?x+(b.door-1)*(bw/3.2):x;
       w.blds.push(b); w.bAt[i][j]=b; }
@@ -863,14 +899,15 @@ function addProp(type,x,z,ry){ const m=new THREE.Mesh(propGeo(type),VC); m.castS
   const p={type,mesh:m,x,y:0,z,vx:0,vy:0,vz:0,sx:0,sz:0,active:false,r:PR[type],bounce:type==='ball'?.72:type==='melon'?.45:.3,kt:0}; G.props.push(p); return p; }
 
 function buildWorld(){
-  const CF=G.coopCfg, st=CF?CF.st:STAGES[S?S.stage:0], seed=CF?CF.seed:(S?S.seed:12345);
+  const CF=G.coopCfg, st=CF?CF.st:(S?ST():STAGES[0]), seed=CF?CF.seed:(S?S.seed:12345);
   if(G.indoor){ scene.remove(G.indoor.g); G.indoor=null; }
   scene.remove(WG); disposeGroup(WG); bubs.clear(); WG=new THREE.Group(); scene.add(WG);
   const w=genMap(st,seed), N=w.N, size=N*CS, g=w.g;
-  const ground=new THREE.Mesh(new THREE.PlaneGeometry(size+160,size+160),lam(0x9ccf8a)); ground.rotation.x=-Math.PI/2; ground.position.y=-.05; ground.receiveShadow=true; WG.add(ground);
-  const pave=new THREE.Mesh(new THREE.PlaneGeometry(size,size),lam(0xd9d3c3)); pave.rotation.x=-Math.PI/2; pave.receiveShadow=true; WG.add(pave);
+  const TH=st.th||THEMES.tw; SKY.day.setHex(TH.sky);
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(size+160,size+160),lam(TH.ground)); ground.rotation.x=-Math.PI/2; ground.position.y=-.05; ground.receiveShadow=true; WG.add(ground);
+  const pave=new THREE.Mesh(new THREE.PlaneGeometry(size,size),lam(TH.pave)); pave.rotation.x=-Math.PI/2; pave.receiveShadow=true; WG.add(pave);
   const flat=new THREE.PlaneGeometry(1,1); flat.rotateX(-Math.PI/2);
-  WG.add(inst(flat,lam(0x4c5663),w.roads,(r,d)=>{d.position.set(r.x,.02,r.z);d.scale.set(CS,1,CS)},'recv'));
+  WG.add(inst(flat,lam(TH.road),w.roads,(r,d)=>{d.position.set(r.x,.02,r.z);d.scale.set(CS,1,CS)},'recv'));
   const isR=(i,j)=>i>=0&&j>=0&&i<N&&j<N&&g[i][j]===1, cnt=(i,j)=>[isR(i+1,j),isR(i-1,j),isR(i,j-1),isR(i,j+1)].filter(Boolean).length;
   const dash=[], zebra=[], curb=[];
   w.roads.forEach(r=>{const E=isR(r.i+1,r.j),W_=isR(r.i-1,r.j),No=isR(r.i,r.j-1),So=isR(r.i,r.j+1);
@@ -879,7 +916,7 @@ function buildWorld(){
   WG.add(inst(flat,lam(0xf2efe0),dash,(r,d)=>{d.position.set(r.x,.04,r.z);d.scale.set(r.h?2.4:.28,1,r.h?.28:2.4)},false));
   WG.add(inst(flat,lam(0xf7f5ea),zebra,(r,d)=>{d.position.set(r.x,.045,r.z);d.scale.set(r.h?1.6:.8,1,r.h?.8:1.6)},false));
   WG.add(inst(GB,lam(0xb9b3a4),curb,(r,d)=>{d.position.set(r.x,.09,r.z);d.scale.set(r.h?CS:.3,.18,r.h?.3:CS)},'recv'));
-  WG.add(inst(flat,lam(0x8fcf7a),w.parks,(p,d)=>{d.position.set(p.x,.03,p.z);d.scale.set(8.8,1,8.8)},'recv'));
+  WG.add(inst(flat,lam(TH.park),w.parks,(p,d)=>{d.position.set(p.x,.03,p.z);d.scale.set(8.8,1,8.8)},'recv'));
   // 建築：牆面、踢腳、屋頂、門窗、陽台、招牌、水塔
   const white=()=>new THREE.MeshLambertMaterial({color:0xffffff}), bl=w.blds;
   w.bodyMesh=inst(GB,white(),bl,(b,d)=>{d.position.set(b.x,b.h/2,b.z);d.scale.set(b.w,b.h,b.d);return b.col}); WG.add(w.bodyMesh);
@@ -913,11 +950,17 @@ function buildWorld(){
   WG.add(inst(GB,lam(0xdfe3e6),ac,(q,d)=>{d.position.set(q.x,q.y,q.z);d.scale.set(.9,.7,.7)}));
   const ch=bl.filter(b=>b.type==='factory'); WG.add(inst(new THREE.CylinderGeometry(.5,.62,3.4,8),lam(0x9a6a55),ch,(b,d)=>{d.position.set(b.x+2.8,b.h+1.6,b.z-2.4)}));
   const sch=bl.filter(b=>b.type==='school'); WG.add(inst(GC,lam(0xd5d9de),sch,(b,d)=>{d.position.set(b.maxX-.6,3.5,b.maxZ+.8);d.scale.set(.12,7,.12)},false)); WG.add(inst(GB,lam(0xe63946),sch,(b,d)=>{d.position.set(b.maxX+.1,6.5,b.maxZ+.8);d.scale.set(1.3,.8,.05)},false));
-  const trees=[]; w.parks.forEach(p=>{for(let k=0;k<4;k++)trees.push({x:p.x+[-2.6,2.6,-2.2,2.4][k],z:p.z+[-2.6,-2.2,2.4,2.6][k],s:1+((p.i*3+p.j+k)%3)*.2,c:[0x3f9b52,0x4caf50,0x2f8a4a][(p.i+k)%3]})});
-  bl.forEach(b=>{if(b.type==='house'&&(b.i+b.j)%3===0)trees.push({x:b.minX-.5,z:b.maxZ+.6,s:.8,c:0x4caf50})});
-  WG.add(inst(new THREE.CylinderGeometry(.2,.28,1.3,6),lam(0x7a5236),trees,(t,d)=>{d.position.set(t.x,.65,t.z)}));
-  WG.add(inst(new THREE.SphereGeometry(1.25,9,7),white(),trees,(t,d)=>{d.position.set(t.x,2.2*t.s,t.z);d.scale.set(t.s,t.s*1.1,t.s);return t.c}));
-  WG.add(inst(new THREE.SphereGeometry(.9,8,6),white(),trees,(t,d)=>{d.position.set(t.x+.5*t.s,2.9*t.s,t.z-.2);d.scale.setScalar(t.s);return darken(t.c,1.12)},false));
+  const trees=[]; w.parks.forEach(p=>{for(let k=0;k<4;k++)trees.push({x:p.x+[-2.6,2.6,-2.2,2.4][k],z:p.z+[-2.6,-2.2,2.4,2.6][k],s:1+((p.i*3+p.j+k)%3)*.2,c:TH.tree[(p.i+k)%3]})});
+  bl.forEach(b=>{if(b.type==='house'&&(b.i+b.j)%3===0)trees.push({x:b.minX-.5,z:b.maxZ+.6,s:.8,c:TH.tree[1]})});
+  const palm=!!TH.palm;
+  WG.add(inst(new THREE.CylinderGeometry(.2,.28,1.3,6),lam(palm?0x9a7a4e:0x7a5236),trees,(t,d)=>{d.position.set(t.x,palm?1.5*t.s:.65,t.z);if(palm)d.scale.set(1,2.3*t.s,1)}));
+  WG.add(inst(new THREE.SphereGeometry(1.25,9,7),white(),trees,(t,d)=>{d.position.set(t.x,(palm?3.1:2.2)*t.s,t.z);d.scale.set(palm?t.s*1.3:t.s,palm?t.s*.42:t.s*1.1,palm?t.s*1.3:t.s);return t.c}));
+  WG.add(inst(new THREE.SphereGeometry(.9,8,6),white(),trees,(t,d)=>{d.position.set(t.x+(palm?0:.5*t.s),(palm?3.45:2.9)*t.s,t.z-(palm?0:.2));d.scale.set(palm?t.s*.9:t.s,palm?t.s*.4:t.s,palm?t.s*.9:t.s);return darken(t.c,1.12)},false));
+  if(TH.deco)w.parks.slice(1).forEach(p=>{ if((p.i*7+p.j*3)%2)return; let m;
+    if(TH.deco==='torii')m=vmeshAt([Cy(0xd8322a,.4,4.2,-1.8,2.1,0),Cy(0xd8322a,.4,4.2,1.8,2.1,0),B(0xd8322a,5.4,.36,.5,0,4.3,0),B(0x1c1c20,5.9,.22,.6,0,4.6,0),B(0xd8322a,4.2,.26,.36,0,3.5,0)],p.x,0,p.z+1.2);
+    else if(TH.deco==='pyramid'){ m=new THREE.Mesh(new THREE.ConeGeometry(3.3,4.6,4),lam(0xdcb96e)); m.position.set(p.x,2.3,p.z); m.rotation.y=Math.PI/4; m.castShadow=true; w.extra.push({minX:p.x-2.1,maxX:p.x+2.1,minZ:p.z-2.1,maxZ:p.z+2.1}); }
+    else { m=vmeshAt([Cy(0xb9d4ea,2.2,8,0,4,0),Cy(0x9fc3e0,1.5,5,0,10.5,0),Cy(0xe8f0f6,.5,4,0,15,0),Cy(0x5b7fa6,2.5,.3,0,.15,0)],p.x,0,p.z); w.extra.push({minX:p.x-1.2,maxX:p.x+1.2,minZ:p.z-1.2,maxZ:p.z+1.2}); }
+    WG.add(m); });
   const lamps=w.roads.filter(r=>(r.i*5+r.j*3)%4===0).map(r=>({x:r.x+4.5,z:r.z-4.5}));
   WG.add(inst(GC,lam(0x6b7280),lamps,(q,d)=>{d.position.set(q.x,2.2,q.z);d.scale.set(.14,4.4,.14)},false)); w.lampMat=lam(0xfff2a8); WG.add(inst(GB,w.lampMat,lamps,(q,d)=>{d.position.set(q.x-.4,4.4,q.z+.3);d.scale.set(.9,.14,.36)},false));
   w.hydGeo=merge([Cy(0xe63946,.5,.9,0,.45,0),Sp(0xe63946,.5,0,.9,0),Cy(0xd9dde2,.22,.74,0,.6,0,[0,0,Math.PI/2]),Cy(0xb5302a,.66,.12,0,.06,0)]);
@@ -1040,7 +1083,7 @@ function pickAv(c){ const L=FEM.has(c.name)?[1,4]:[0,2,3,5,6,7]; return L[c.id%L
 const avPos=i=>'background-position:'+(i%3)*50+'% '+Math.floor(i/3)*50+'%';
 const avHtml=(i,cls)=>'<i class="av '+(cls||'')+'" style="'+avPos(i)+'"></i>';
 function toast(html,cls,ms){ const d=document.createElement('div'); d.className='tst '+(cls||''); d.innerHTML=html; const bx=$('toast'); bx.appendChild(d); while(bx.children.length>3)bx.firstChild.remove(); setTimeout(()=>d.remove(),ms||2600); }
-function show(id){ ['ovTitle','ovSched','ovShop','ovNet','ovCard','ovSettle','ovPromo','ovMenu','ovTalk'].forEach(o=>$(o).hidden=o!==id); }
+function show(id){ if(id==='ovTitle')$('bTMap').hidden=$('bCont').hidden; ['ovTitle','ovSched','ovShop','ovMap','ovNet','ovCard','ovSettle','ovPromo','ovMenu','ovTalk'].forEach(o=>$(o).hidden=o!==id); }
 const curSlot=()=>Math.min(5,Math.floor(G.clock/SLOT_LEN));
 const roleOf=c=>S.sched[c.id]?S.sched[c.id][curSlot()]:3;
 const isBusy=c=>G.crewEnt[c.id]&&G.crewEnt[c.id].busy;
@@ -1097,7 +1140,7 @@ function autoSched(){ const n=S.crew.length; S.sched={};
     rest.forEach((c,k)=>S.sched[c.id][s]=k<nE?1:2); }
 }
 function renderSched(){
-  const st=STAGES[S.stage]; $('sTitle').textContent='第 '+S.day+' 天 勤務排班'; $('sInfo').textContent=st.station+'・獎金 '+S.coin;
+  const st=ST(); $('sTitle').textContent='第 '+S.day+' 天 勤務排班'; $('sInfo').textContent=st.th.n+'・'+st.station+'・獎金 '+S.coin;
   let h='<thead><tr><th></th>'+SLOTS.map(s=>'<th>'+s+'</th>').join('')+'</tr></thead><tbody>';
   S.crew.forEach(c=>{h+='<tr><td class="nm"><div class="nmw">'+avHtml(c.av,'sm')+'<div>'+c.name+' <small class="'+(c.mood<30?'sulk':'')+'">Lv'+c.lv+' 消'+c.fire+' 救'+c.ems+' 駕'+c.drive+' 心情'+c.mood+' <span class="fat"><i style="width:'+c.fat+'%"></i></span></small></div></div></td>'+
     S.sched[c.id].map((r,s)=>'<td><button type="button" class="cell r'+r+'" data-c="'+c.id+'" data-s="'+s+'">'+ROLES[r]+'</button></td>').join('')+'</tr>'});
@@ -1115,14 +1158,14 @@ function openSched(){ S.crew.forEach(c=>{if(!S.sched[c.id]||S.sched[c.id].length
   if(S.gift){ G.news='新功能：分隊倉庫開張了。出勤可以賺獎金，拿來買新消防車和更厲害的瞄子。先補發 '+S.gift+' 獎金給你，按下面的「分隊倉庫」去看看。'; S.gift=0; Save.save(S); }
   if(S.news&&S.news.length){ G.news=(G.news?G.news+'\n':'')+S.news.join('\n'); S.news=[]; Save.save(S); }
   if(!S.quest||S.quest.day!==S.day){ newQuests(); Save.save(S); } $('sQuest').innerHTML=questHtml();
-  $('bDuty').textContent=inDuty?'回到值勤':'開始值勤'; $('sNews').hidden=!G.news; $('sNews').textContent=G.news||''; renderSched(); show('ovSched'); if(!inDuty)Snd.mode('calm'); }
+  $('bDuty').textContent=inDuty?'回到值勤':'開始值勤'; $('bMap').hidden=inDuty; $('sNews').hidden=!G.news; $('sNews').textContent=G.news||''; renderSched(); show('ovSched'); if(!inDuty)Snd.mode('calm'); }
 
 /* ============ 分隊倉庫：獎金、車庫、瞄子 ============ */
 function coin(n){ if(!n||!S)return; S.coin=Math.max(0,(S.coin||0)+n); if(n>0){ S.stats.coinAll=(S.stats.coinAll||0)+n; if(G.mode==='duty')G.dayCoin=(G.dayCoin||0)+n; } }
-const issued=()=>{const st=STAGES[S.stage];return {small:st.fire,res:st.tank}};
+const issued=()=>{const st=ST();return {small:st.fire,res:st.tank}};
 function bayLeft(arr){ const iss=issued(), left={}; VORDER.forEach(id=>left[id]=(S.own.veh[id]?1:0)+(iss[id]||0)); (arr||[]).forEach(id=>{if(id)left[id]--}); return left; }
 const hasWater=a=>a.some(id=>id&&VEH[id].cap>0);
-function fixBays(){ const st=STAGES[S.stage], n=st.slots; let a;
+function fixBays(){ const st=ST(), n=st.slots; let a;
   if(S.bays&&S.bays.st===S.stage&&Array.isArray(S.bays.a)){ const left=bayLeft(); a=S.bays.a.slice(0,n).map(id=>{ if(id&&VEH[id]&&id!=='amb'&&left[id]>0){left[id]--;return id} return null }); while(a.length<n)a.push(null); }
   else { const iss=issued(), pool=[]; VORDER.slice().reverse().forEach(id=>{if(S.own.veh[id])pool.push(id)}); for(let k=0;k<(iss.res||0);k++)pool.push('res'); for(let k=0;k<iss.small;k++)pool.push('small');
     a=pool.slice(0,n); if(!hasWater(a))a[a.length-1]='small'; while(a.length<n)a.push(null); a.sort((x,y)=>(x?VORDER.indexOf(x):99)-(y?VORDER.indexOf(y):99)); }
@@ -1134,10 +1177,10 @@ function openShop(tab){ if(tab)shopTab=tab; shopArm=null; shopSnap=JSON.stringif
 function closeShop(){ if(inDuty){ shopDirty=false; if(shopSnap!==JSON.stringify([S.bays,S.paint]))toast('新車、車位和塗裝，明天上班生效','',3000); if(shopBack==='duty'){resumeDuty();return} openSched(); return; }
   if(shopDirty){shopDirty=false;buildWorld()} openSched(); }
 const lv5=(v,a,b)=>{const n=clamp(Math.round((v-a)/(b-a)*4)+1,1,5);return '●'.repeat(n)+'○'.repeat(5-n)};
-function renderShop(){ $('shCoin').textContent='獎金 '+S.coin; [...$('shTabs').children].forEach(b=>b.classList.toggle('sel',b.dataset.t===shopTab)); const st=STAGES[S.stage]; let h='';
+function renderShop(){ $('shCoin').textContent='獎金 '+S.coin; [...$('shTabs').children].forEach(b=>b.classList.toggle('sel',b.dataset.t===shopTab)); const st=ST(); let h='';
   if(shopTab==='veh'){ const a=S.bays.a, iss=issued();
     h+='<div class="sec">車位編成（'+st.station+'有 '+st.slots+' 個消防車位，點車位可以換車）</div><div class="opts">'+a.map((id,k)=>'<button type="button" class="opt bay'+(id?' sel':'')+'" data-bay="'+k+'">車位 '+(k+1)+'<small>'+(id?VEH[id].n:'空位')+'</small></button>').join('')+'</div>';
-    h+='<p class="note">出勤時這些車會停在車庫。救護車 '+st.amb+' 台固定配發，不占消防車位。</p><div class="vgrid">'+VORDER.map(id=>{ const M=VEH[id], own=!!S.own.veh[id], lock=(M.minStage||0)>S.stage, n=a.filter(x=>x===id).length, is=iss[id]||0;
+    h+='<p class="note">出勤時這些車會停在車庫。救護車 '+st.amb+' 台固定配發，不占消防車位。</p><div class="vgrid">'+VORDER.map(id=>{ const M=VEH[id], own=!!S.own.veh[id], lock=(M.minStage||0)>topStage(), n=a.filter(x=>x===id).length, is=iss[id]||0;
       let btn; if(lock)btn='<span class="tagc">升到'+STAGES[M.minStage].name+'開放</span>'; else if(own)btn='<span class="tagc ok">已擁有'+(n?'・已配置':'・未配置')+'</span>';
       else if(M.soon)btn='<span class="tagc">下一版開放</span>'; else if(M.price)btn='<button type="button" class="b sm go" data-buy="'+id+'"'+(S.coin<M.price?' disabled':'')+'>'+(shopArm===id?'再按一次確認':'購買　'+M.price)+'</button>'; else btn='';
       if(is&&!own)btn='<span class="tagc ok">公發 '+is+' 台</span>'+btn;
@@ -1212,29 +1255,39 @@ function endDay(){
   G.mode='settle'; $('hud').hidden=true; stopLoops(); G.sleep=false;
   const ok=G.log.filter(l=>l.ok).length, xp=G.log.reduce((a,l)=>a+l.xp,0), rep=G.log.reduce((a,l)=>a+l.rep,0);
   $('eTitle').textContent='第 '+S.day+' 天 勤務結算'; $('eSum').textContent=ok+'／'+G.log.length+' 件成功';
-  $('eInfo').innerHTML='<div><small>案件經驗</small>+'+xp+' XP</div><div><small>案件聲望</small>'+(rep>=0?'+':'')+rep+'</div><div><small>累積經驗</small>'+S.xp+'／'+STAGES[S.stage].xp+'</div><div><small>目前聲望</small>'+S.rep+'</div><div><small>今日獎金</small>+'+(G.dayCoin||0)+'（共 '+S.coin+'）</div><div><small>撞飛東西</small>'+S.stats.knock+' 樣</div><div><small>突發狀況</small>排除 '+(G.evDone||0)+' 件</div>';
+  $('eInfo').innerHTML='<div><small>案件經驗</small>+'+xp+' XP</div><div><small>案件聲望</small>'+(rep>=0?'+':'')+rep+'</div><div><small>累積經驗</small>'+S.xp+'／'+ST().xp+'</div><div><small>目前聲望</small>'+S.rep+'</div><div><small>今日獎金</small>+'+(G.dayCoin||0)+'（共 '+S.coin+'）</div><div><small>撞飛東西</small>'+S.stats.knock+' 樣</div><div><small>突發狀況</small>排除 '+(G.evDone||0)+' 件</div>';
   $('eList').innerHTML=G.log.length?G.log.map(l=>'<div class="li '+(l.ok?'':'bad')+'"><span>'+l.sub+'・'+l.by+'</span><span>'+(l.ok?'<span class="stars">'+stars(l.stars)+'</span> +'+l.xp:'失敗 '+l.rep+' 聲望')+'</span></div>').join(''):'<p class="note">今天平安無事。</p>';
   S.crew.forEach(c=>c.fat=clamp(c.fat-35,0,100)); $('eQuest').innerHTML=questHtml();
   $('eCrew').innerHTML=S.crew.map(c=>'<div class="li"><span>'+avHtml(c.av,'sm')+' '+c.name+' Lv'+c.lv+'</span><span>疲勞 '+c.fat+'・心情 '+c.mood+'</span></div>').join('');
-  S.day++; bump(); persist(true); show('ovSettle'); Snd.mode('calm');
+  S.prog[S.theme].xp[S.stage]=S.xp; S.day++; bump(); persist(true); show('ovSettle'); Snd.mode('calm');
 }
-$('bNext').addEventListener('click',()=>{ Snd.click(); const st=STAGES[S.stage];
-  if(S.xp>=st.xp){ if(S.rep<40){ toast('經驗已達標，但聲望不足 40，升遷延後','bad',3200); openSched(); return; }
-    if(S.stage<STAGES.length-1){ promote(); return; }
-    if(!S.done){ S.done=true; Save.save(S); $('pTitle').textContent='歷練完成'; $('pBig').textContent=FUTURE[0]; $('pText').textContent='你已完成大型分隊的歷練，具備升任'+FUTURE[0]+'的資格。'+FUTURE.join('、')+'階段尚未開放，之後更新會加入。現在可以留在'+st.station+'繼續值勤。'; $('bPromo').textContent='繼續值勤'; G.mode='promo'; promoArt('promo2.jpg'); show('ovPromo'); Snd.promo(); return; } }
+$('bNext').addEventListener('click',()=>{ Snd.click(); const st=ST(), q=S.prog[S.theme]; q.xp[S.stage]=S.xp;
+  if(S.xp>=st.xp&&!q.clr[S.stage]){ if(S.rep<40){ G.news='經驗已達標，但聲望不足 40，升遷延後。多拿幾次高星評價再來。'; openSched(); return; }
+    q.clr[S.stage]=true; coin(500); S.box=(S.box||0)+1; const first=S.theme==='tw'&&S.stage===0; if(first)TORDER.forEach(t=>{if(S.prog[t].top<0)S.prog[t].top=0});
+    if(S.stage<STAGES.length-1){ q.top=Math.max(q.top,S.stage+1); promote(first); return; }
+    S.done=true; bump(); persist(true); $('pTitle').textContent='歷練完成'; $('pBig').textContent=st.th.n+'全破'; $('pText').textContent='你完成了'+st.th.n+'三個分隊的歷練，發給獎金 500 和皮膚箱 1 個。可以留在'+st.station+'繼續值勤賺獎金，或按「換地圖」到別的國家。'+FUTURE.join('、')+'階段之後更新會加入。'; $('bPromo').textContent='繼續值勤'; G.mode='promo'; promoArt('promo2.jpg'); show('ovPromo'); Snd.promo(); return; }
   openSched(); });
 function promoArt(f){ const im=$('pImg'); const pn=im.parentElement; im.onerror=()=>{im.hidden=true;pn.classList.remove('art');$('pHead').style.borderRadius=''}; im.onload=()=>{im.hidden=false;pn.classList.add('art');$('pHead').style.borderRadius='0'}; im.src=f; }
-function promote(){ const old=STAGES[S.stage]; S.stage++; const st=STAGES[S.stage]; S.seed=(Math.random()*1e9)|0; uid=S.uid||uid;
-  const used=new Set(S.crew.map(c=>c.name)); while(S.crew.length<st.crew)S.crew.push(newCrew(used)); S.uid=uid; S.sched={}; autoSched(); S.bays=null; coin(500); S.box=(S.box||0)+1; bump(); persist(true);
-  buildWorld(); G.mode='promo'; $('pTitle').textContent='升遷命令'; $('pBig').textContent=st.name+'長'; $('bPromo').textContent='到新分隊報到';
-  $('pText').textContent='恭喜！你在'+old.station+'表現優異，即日起調任'+st.station+'分隊長。轄區是全新的街道與建築，隊員 '+st.crew+' 人、消防車 '+st.fire+' 台、救護車 '+st.amb+' 台'+(st.tank?'、水庫車 1 台':'')+'，案件也會更密集。另發升遷獎金 500 和皮膚箱 1 個，消防車位增加為 '+st.slots+' 個。';
+function gotoMap(theme,stage){ S.prog[S.theme].xp[S.stage]=S.xp; S.theme=theme; S.stage=stage; const q=S.prog[theme]; S.xp=q.xp[stage]||0; if(!q.seed[stage])q.seed[stage]=((Math.random()*1e9)|0)+1; S.seed=q.seed[stage]; uid=S.uid||uid;
+  const need=STAGES[stage].crew, used=new Set(S.crew.concat(S.bench).map(c=>c.name)); while(S.crew.length>need)S.bench.push(S.crew.pop()); while(S.crew.length<need)S.crew.push(S.bench.length?S.bench.pop():newCrew(used));
+  S.uid=uid; S.sched={}; autoSched(); S.bays=null; bump(); persist(true); buildWorld(); }
+function promote(first){ const old=ST(); gotoMap(S.theme,S.stage+1); const st=ST(); G.mode='promo'; $('pTitle').textContent='升遷命令'; $('pBig').textContent=st.name+'長'; $('bPromo').textContent='到新分隊報到';
+  $('pText').textContent='恭喜！你在'+old.station+'表現優異，即日起調任'+st.station+'分隊長。轄區是全新的街道與建築，隊員 '+st.crew+' 人、消防車 '+st.fire+' 台、救護車 '+st.amb+' 台'+(st.tank?'、水庫車 1 台':'')+'，案件也會更密集。另發升遷獎金 500 和皮膚箱 1 個，消防車位增加為 '+st.slots+' 個。'+(first?'日本、埃及、杜拜的小型分隊也開放了，在排班畫面按「換地圖」可以去。':'');
   promoArt(S.stage===1?'promo1.jpg':'promo2.jpg'); show('ovPromo'); Snd.promo(); }
+function openMap(){ G.mode='map'; $('hud').hidden=true; renderMap(); show('ovMap'); }
+function renderMap(){ const need=STAGES.map(t=>t.xp); $('mapCoin').textContent='獎金 '+S.coin; $('mapBody').innerHTML=TORDER.map(t=>{ const th=THEMES[t], q=S.prog[t];
+    return '<div class="mapc" style="--tc:'+th.css+'"><div class="mth"><b>'+th.n+'</b><small>'+th.d+(th.cm>1?'・獎金 ×'+th.cm:'')+'</small></div><div class="opts">'+[0,1,2].map(k=>{ const lock=q.top<k, cur=S.theme===t&&S.stage===k, xp=cur?S.xp:q.xp[k];
+      return '<button type="button" class="opt'+(cur?' sel':'')+'" data-map="'+t+':'+k+'"'+(lock?' disabled':'')+'>'+th.st[k]+'<small>'+STAGES[k].name+'・'+(lock?(q.top<0?'先通過台灣的圳頂分隊':'先通過上一級'):q.clr[k]?'已通過 ★':'經驗 '+Math.min(xp,need[k])+'／'+need[k])+(cur?'・目前':'')+'</small></button>'; }).join('')+'</div></div>'; }).join(''); }
+$('mapBody').addEventListener('click',e=>{ const b=e.target.closest('[data-map]'); if(!b||b.disabled)return; const [t,k]=b.dataset.map.split(':'); Snd.click(); if(t!==S.theme||+k!==S.stage){ gotoMap(t,+k); toast('到 '+THEMES[t].n+'・'+THEMES[t].st[+k]+' 報到','good',2400); } openSched(); });
+$('bMap').addEventListener('click',()=>{Snd.click();openMap()});
+$('bMapX').addEventListener('click',()=>{Snd.click();openSched()});
+$('bTMap').addEventListener('click',()=>{Snd.init();Snd.click();openMap()});
 $('bPromo').addEventListener('click',()=>{Snd.click();openSched()});
 
 /* ============ 案件 ============ */
 let incId=1;
 const hasVeh=t=>G.vehicles.some(v=>v.type===t);
-function addrOf(b){ const w=world, L=w.st.zd?ROADS_ZD:ROADS, k=Math.max(0,w.LZ.indexOf(b.j+1)), seg=w.LX.filter(x=>x<=b.i).length; return L[(k*4+seg+(w.st.zd?0:w.seed%L.length))%L.length]+' '+(((b.i*7+b.j*13)%96)*2+1)+' 號'; }
+function addrOf(b){ const w=world, L=w.st.zd?ROADS_ZD:(w.st.th?w.st.th.roads:ROADS), k=Math.max(0,w.LZ.indexOf(b.j+1)), seg=w.LX.filter(x=>x<=b.i).length; return L[(k*4+seg+(w.st.zd?0:w.seed%L.length))%L.length]+' '+(((b.i*7+b.j*13)%96)*2+1)+' 號'; }
 function wpick(L,w){ let tot=0; const ws=L.map(t=>{const x=w(t);tot+=x;return x}); let r=Math.random()*tot; for(let k=0;k<L.length;k++){r-=ws[k];if(r<=0)return L[k]} return L[L.length-1]; }
 function spawnIncident(force,sub){
   const w=world, r=Math.random(), kind=force||(r<.46?'ems':r<.8?'fire':'svc');
@@ -1350,7 +1403,7 @@ function finishIncident(inc,ok,crewList,byCaptain){
   if(inc.state==='done')return; inc.state='done'; if(G.indoor&&G.indoor.inc===inc)exitIndoor(true);
   const frac=1-inc.left/inc.total; let st_=frac<.2?5:frac<.34?4:frac<.5?3:frac<.7?2:1; if(inc.spread||inc.rough)st_=Math.max(1,st_-1);
   let xp=0,rep=0,cn=0; const stat=inc.kind==='ems'?'ems':'fire';
-  if(ok){ S.streak++; xp=Math.round(inc.xp*(.5+.1*st_)*(1+Math.min(S.streak-1,5)*.1)*(byCaptain?1.2:1)); rep=st_-2; cn=Math.round(inc.xp*.4*(.6+.1*st_)*(byCaptain?1.25:1)*(inc.rescued?1.3:1)); if(inc.rescued)xp=Math.round(xp*1.3); coin(cn); if(inc.fx&&inc.fx.care)(crewList||[]).forEach(c=>c.fat=clamp(c.fat-10,0,100));
+  if(ok){ S.streak++; xp=Math.round(inc.xp*(.5+.1*st_)*(1+Math.min(S.streak-1,5)*.1)*(byCaptain?1.2:1)); rep=st_-2; cn=Math.round(inc.xp*.4*(.6+.1*st_)*(byCaptain?1.25:1)*(inc.rescued?1.3:1)*(ST().th.cm||1)); if(inc.rescued)xp=Math.round(xp*1.3); coin(cn); if(inc.fx&&inc.fx.care)(crewList||[]).forEach(c=>c.fat=clamp(c.fat-10,0,100));
     (crewList||[]).forEach(c=>{mood(c,4);c.xp+=Math.round(inc.xp/2);if(c.xp>=c.lv*100){c.xp-=c.lv*100;c.lv++;c[stat]=Math.min(99,c[stat]+3);c.drive=Math.min(99,c.drive+1);toast(c.name+' 升到 Lv'+c.lv,'good',2000)}});
     toast('<b>'+stars(st_)+'</b><br>'+inc.sub+' 處置完成'+(inc.rescued?'（救出受困者）':'')+'　+'+xp+' XP　獎金 +'+cn+(S.streak>1?'　連續 '+S.streak+' 件':''),'good big',3400); if(byCaptain)Snd.done(); else Snd.ok(); }
   else { S.streak=0; rep=-8; (crewList||[]).forEach(c=>mood(c,-6)); if(inc.kind==='fire'&&inc.where!=='road')burn(inc.b);
@@ -1856,7 +1909,7 @@ function update(dt){
   if(G.paused)return;
   G.t+=dt; if(!G.coop&&G.clock<DAY_LEN)G.clock=Math.min(DAY_LEN,G.clock+dt);
   const s=curSlot(); if(s!==G.slot){G.slot=s;applySlot(false)}
-  if(G.clock<DAY_LEN-25){ G.spawnT-=dt; const st=STAGES[S.stage];
+  if(G.clock<DAY_LEN-25){ G.spawnT-=dt; const st=ST();
     if(G.spawnT<=0){ if(G.incidents.length<S.stage+2){ const inc=spawnIncident(); if(inc&&!G.cardInc)openCard(inc); }
       G.spawnT=(Math.random()<st.burst?R(6,12):DAY_LEN/st.perDay*R(.65,1.35)); if(G.jinx>0){G.jinx--;G.spawnT*=.4} } }
   if(G.paused)return;
@@ -1902,9 +1955,9 @@ function syncMeshes(dt){
 /* ============ HUD ============ */
 const mctx=$('mini').getContext('2d'); let hudT=0;
 function updateHUD(){
-  const st=STAGES[S.stage], hr=(8+G.clock/DAY_LEN*24)%24, hh=Math.floor(hr), mm=Math.floor((hr-hh)*60/10)*10;
+  const st=ST(), hr=(8+G.clock/DAY_LEN*24)%24, hh=Math.floor(hr), mm=Math.floor((hr-hh)*60/10)*10;
   $('hTime').textContent='第'+S.day+'天 '+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
-  $('hStage').textContent=G.coop&&CO?'連線 '+CO.code+'・'+(Object.keys(CO.rem).length+1)+' 人':st.station; const prev=S.stage?STAGES[S.stage-1].xp:0; $('hXpBar').style.width=clamp((S.xp-prev)/(st.xp-prev)*100,0,100)+'%'; $('hXpTxt').textContent=S.xp+'/'+st.xp;
+  $('hStage').textContent=G.coop&&CO?'連線 '+CO.code+'・'+(Object.keys(CO.rem).length+1)+' 人':st.station; const prev=0; $('hXpBar').style.width=clamp((S.xp-prev)/(st.xp-prev)*100,0,100)+'%'; $('hXpTxt').textContent=S.xp+'/'+st.xp;
   $('hRep').textContent='聲望 '+S.rep; $('hCoin').textContent='獎金 '+S.coin; { const Q=S.quest, hq=$('hQuest'); hq.hidden=!Q; if(Q)hq.textContent='今日任務 '+Q.q.filter(x=>x.n>=x.need).length+'／3'; }
   const free=S.crew.filter(c=>!isBusy(c)&&roleOf(c)!==3&&c.mood>=30).length, fv=G.vehicles.filter(v=>v.state==='parked');
   $('hRes').innerHTML='待命 '+free+'人 <small>消'+fv.filter(v=>v.type!=='amb').length+' 救'+fv.filter(v=>v.type==='amb').length+'</small>';
@@ -1952,18 +2005,18 @@ $('vMus').addEventListener('input',e=>{Snd.set('m',e.target.value/100);saveVol()
 $('vSfx').addEventListener('input',e=>{Snd.set('s',e.target.value/100);saveVol();Snd.click()});
 $('bMute').addEventListener('click',()=>{Snd.set('mute',!Snd.st.mute);$('bMute').textContent='靜音：'+(Snd.st.mute?'開':'關');saveVol()});
 $('bShadow').addEventListener('click',()=>{fpsDone=true;setShadow(!sun.castShadow)});
-$('bResume').addEventListener('click',()=>{ G.mode=menuFrom.mode; const back={title:'ovTitle',sched:'ovSched',shop:'ovShop',net:'ovNet',settle:'ovSettle',promo:'ovPromo'}[G.mode]; show(back||(G.cardInc?'ovCard':G.talking?'ovTalk':null)); });
+$('bResume').addEventListener('click',()=>{ G.mode=menuFrom.mode; const back={title:'ovTitle',sched:'ovSched',shop:'ovShop',net:'ovNet',map:'ovMap',settle:'ovSettle',promo:'ovPromo'}[G.mode]; show(back||(G.cardInc?'ovCard':G.talking?'ovTalk':null)); });
 $('bCode').addEventListener('click',()=>{Snd.init();openMenu()});
 $('bMSched').addEventListener('click',()=>{ Snd.click(); inDuty=true; stopLoops(); openSched(); });
 $('bMShop').addEventListener('click',()=>{ Snd.click(); G.mode='duty'; openShop(); });
 $('bAutoFull').addEventListener('click',()=>{ S.vol.full=!S.vol.full; Save.save(S); $('bAutoFull').textContent='自動全螢幕：'+(S.vol.full?'開':'關'); Snd.click(); });
 $('bHome').addEventListener('click',()=>{ Snd.click(); if(CO)netLeave(); else goHome(); });
 function goHome(){ persist(true); stopLoops(); inDuty=false; G.paused=false; G.talking=false; G.cardInc=null; G.sleep=false; $('sleepV').hidden=true; $('hud').hidden=true; try{ if(document.fullscreenElement||document.webkitFullscreenElement)(document.exitFullscreen||document.webkitExitFullscreen).call(document) }catch(e){}
-  buildWorld(); G.mode='title'; $('bCont').hidden=false; $('bNew').textContent='重新開始'; $('bNew').className='b'; $('tSub').textContent=VERSION+'　第 '+S.day+' 天・'+STAGES[S.stage].name+'・獎金 '+S.coin; show('ovTitle'); Snd.mode('calm'); }
+  buildWorld(); G.mode='title'; $('bCont').hidden=false; $('bNew').textContent='重新開始'; $('bNew').className='b'; $('tSub').textContent=VERSION+'　第 '+S.day+' 天・'+ST().name+'・獎金 '+S.coin; show('ovTitle'); Snd.mode('calm'); }
 $('bCopy').addEventListener('click',()=>{ const t=fmtCode(S.code), done=()=>{$('bCopy').textContent='已複製';setTimeout(()=>$('bCopy').textContent='複製',1500)}; try{navigator.clipboard.writeText(t).then(done).catch(()=>{const r=document.createRange();r.selectNodeContents($('cCode'));const s=getSelection();s.removeAllRanges();s.addRange(r)})}catch(e){} });
 $('bLoad').addEventListener('click',()=>{ const code=$('iCode').value.toUpperCase().replace(/[^A-Z0-9]/g,''); if(code.length!==8){Cloud.set(false,'接續碼是 8 個英數字');return} Cloud.set(null,'讀取中…'); $('bLoad').disabled=true;
   Cloud.pull(code).then(c=>{ $('bLoad').disabled=false; if(!c||c.v!==1||!c.crew){Cloud.set(false,'找不到這組接續碼的存檔');return}
-    const vol=S.vol; S=fixSave(c); S.code=code; S.vol=vol; uid=S.uid||100; Save.save(S); Cloud.mark(true,S.rev); stopLoops(); $('iCode').value=''; $('bCont').hidden=false; openSched(); buildWorld(); Cloud.set(true,'已載入：第 '+S.day+' 天・'+STAGES[S.stage].name); })
+    const vol=S.vol; S=fixSave(c); S.code=code; S.vol=vol; uid=S.uid||100; Save.save(S); Cloud.mark(true,S.rev); stopLoops(); $('iCode').value=''; $('bCont').hidden=false; openSched(); buildWorld(); Cloud.set(true,'已載入：第 '+S.day+' 天・'+ST().name); })
   .catch(()=>{ $('bLoad').disabled=false; }); });
 $('bWipe').addEventListener('click',()=>{ if(!wipeArm){wipeArm=true;$('bWipe').textContent='再按一次確認刪除';return} Save.clear(); const vol=S.vol; S=freshSave(); S.vol=vol; Cloud.mark(true,-1); persist(true); stopLoops(); openSched(); buildWorld(); });
 
@@ -2105,17 +2158,17 @@ addEventListener('pagehide',persist);
 function boot(){
   $('ver').textContent=VERSION; $('mVer').textContent=VERSION;
   const sv=Save.load(); if(sv&&sv.v===1&&sv.crew&&sv.crew.length){ S=fixSave(sv); uid=S.uid||100; Snd.st.m=S.vol.m; Snd.st.s=S.vol.s; Snd.st.mute=!!S.vol.mute; $('bCont').hidden=false; $('bNew').textContent='重新開始'; $('bNew').className='b';
-    $('tSub').textContent=VERSION+'　第 '+S.day+' 天・'+STAGES[S.stage].name+'・經驗 '+S.xp; }
+    $('tSub').textContent=VERSION+'　第 '+S.day+' 天・'+ST().name+'・經驗 '+S.xp; }
   else { S=freshSave(); $('tSub').textContent=VERSION+'　從地方小分隊開始歷練'; }
-  sun.castShadow=S.vol.shadow!==false; resize(); buildWorld(); requestAnimationFrame(frame);
+  $('bTMap').hidden=$('bCont').hidden; sun.castShadow=S.vol.shadow!==false; resize(); buildWorld(); requestAnimationFrame(frame);
   // 開機時問一次雲端：雲端比較新就用雲端的（例如在另一台裝置玩過）
   if(sv)Cloud.pull(S.code).then(c=>{ if(c&&c.v===1&&c.crew&&(c.rev||0)>(S.rev||0)&&G.mode==='title'){ const vol=S.vol, code=S.code; S=fixSave(c); S.code=code; S.vol=vol; uid=S.uid||100; Save.save(S); buildWorld();
-      $('tSub').textContent=VERSION+'　已取得雲端較新的進度：第 '+S.day+' 天・'+STAGES[S.stage].name+'・經驗 '+S.xp; }
+      $('tSub').textContent=VERSION+'　已取得雲端較新的進度：第 '+S.day+' 天・'+ST().name+'・經驗 '+S.xp; }
     if(c&&(c.rev||0)>(S.rev||0))return; Cloud.mark(true,c?(c.rev||0):-1); Cloud.push(true); }).catch(()=>{});
 }
 $('bCont').addEventListener('click',()=>{Snd.init();Snd.click();autoFull();openSched()});
 $('bNew').addEventListener('click',()=>{Snd.init();Snd.click();autoFull(); const vol=S.vol; S=freshSave(); S.vol=vol; Cloud.mark(true,-1); openSched(); buildWorld(); persist(true); });
-window.__ff={spawnEvent,finishEvent,useEvent,buildWorld,G,findPath,roadCellNear,getUse,getAct,doUse,dist,get S(){return S},get world(){return world},spawnIncident,openCard,Input,STAGES,endDay,finishIncident,Save,say,jinx,crewTalk,pedTalk,whistle,honk,sun,useThing,VEH,NOZ,coin,openShop,closeShop,makeVehicle,fixBays,scene,camera,renderer,persist,startDuty,openSched,update:dt=>update(dt),get CO(){return CO},RT,netCreate,netJoin,netStart,netLeave,netTick:r=>netTick(r),goHome,resumeDuty,enterIndoor,exitIndoor,SKINS,rollBox,openBox,skinThumb,quest,makePerson,rescueTrap,fxOf,ladderUp,ladderDown,sendSup,updateHUD:()=>updateHUD(),closeCard:()=>closeCard(),FX};
+window.__ff={spawnEvent,finishEvent,useEvent,buildWorld,G,findPath,roadCellNear,getUse,getAct,doUse,dist,get S(){return S},get world(){return world},spawnIncident,openCard,Input,STAGES,endDay,finishIncident,Save,say,jinx,crewTalk,pedTalk,whistle,honk,sun,useThing,VEH,NOZ,coin,openShop,closeShop,makeVehicle,fixBays,scene,camera,renderer,persist,startDuty,openSched,update:dt=>update(dt),gotoMap,openMap,THEMES,ST,get CO(){return CO},RT,netCreate,netJoin,netStart,netLeave,netTick:r=>netTick(r),goHome,resumeDuty,enterIndoor,exitIndoor,SKINS,rollBox,openBox,skinThumb,quest,makePerson,rescueTrap,fxOf,ladderUp,ladderDown,sendSup,updateHUD:()=>updateHUD(),closeCard:()=>closeCard(),FX};
 boot();
 })();
 </script>
