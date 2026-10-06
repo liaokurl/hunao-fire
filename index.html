@@ -250,7 +250,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
       <label class="sl" for="vMus">音樂<input id="vMus" type="range" min="0" max="100" value="50"></label>
       <label class="sl" for="vSfx">音效<input id="vSfx" type="range" min="0" max="100" value="70"></label>
       <div class="btns"><button class="b" id="bMute" type="button">靜音：關</button><button class="b" id="bShadow" type="button">陰影：開</button><button class="b" id="bFull" type="button">全螢幕</button><button class="b teal" id="bResume" type="button">回到遊戲</button></div>
-      <p class="note">如果畫面會卡，把陰影關掉。進度在每天結算與升遷時自動存在這台裝置；雲端存檔尚未開放。</p>
+      <p class="note">如果畫面會卡，把陰影關掉。進度會自動存在這台裝置的這個瀏覽器（每 15 秒、每件案件結束、關閉頁面時）。中途關掉，下次會從當天早上重新值勤，經驗與聲望保留。無痕視窗或清除瀏覽資料會讓存檔消失。</p>
       <div class="btns"><button class="b" id="bWipe" type="button">刪除存檔重新開始</button></div>
     </div>
   </div></div>
@@ -259,7 +259,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
 <script src="three.min.js"></script>
 <script>
 (()=>{'use strict';
-const VERSION='車干製V1.3';
+const VERSION='車干製V1.4';
 const $=id=>document.getElementById(id);
 (function cover(){ const t=$('ovTitle'), im=new Image(); im.onload=()=>{t.style.backgroundImage='url(cover.jpg)'}; im.onerror=()=>t.classList.add('nocover'); im.src='cover.jpg'; })();
 if(!window.THREE){ $('tSub').textContent='3D 元件載入失敗，請檢查網路後重新整理'; return; }
@@ -319,6 +319,7 @@ function freshSave(){
   uid=1; const used=new Set(), crew=[]; for(let i=0;i<STAGES[0].crew;i++)crew.push(newCrew(used));
   return {v:1,stage:0,xp:0,rep:50,day:1,seed:(Math.random()*1e9)|0,crew,sched:{},streak:0,done:false,uid,stats:{knock:0},vol:S?S.vol:{m:.5,s:.7,mute:false,shadow:true}};
 }
+function persist(){ if(!S)return; S.uid=uid; Save.save(S); }
 function fixSave(s){ s.stats=s.stats||{knock:0}; s.vol=s.vol||{m:.5,s:.7,mute:false}; if(s.vol.shadow==null)s.vol.shadow=true; s.crew.forEach(c=>{if(c.mood==null)c.mood=70;if(c.av==null)c.av=pickAv(c)}); return s; }
 
 /* ============ 音效（全部用 Web Audio 合成） ============ */
@@ -882,7 +883,7 @@ function openSched(){ S.crew.forEach(c=>{if(!S.sched[c.id]||S.sched[c.id].length
 /* ============ 值勤開始／結束 ============ */
 function startDuty(){
   buildWorld(); G.mode='duty'; G.paused=false; G.talking=false; G.t=0; G.clock=0; G.slot=0; G.log=[]; G.cardInc=null; G.spawnT=R(9,14); G.dayDone=false; G.jinx=0; G.sleep=false; $('sleepV').hidden=true;
-  show(null); $('hud').hidden=false; resize(); Snd.mode('calm'); applySlot(true);
+  show(null); $('hud').hidden=false; resize(); Snd.mode('calm'); applySlot(true); persist();
   toast('第 '+S.day+' 天值勤開始。等派遣時可以到處晃晃','',3000);
   // 每天可能有人心情不好
   if(S.day>1||S.crew.length>4){ const c=pick(S.crew); if(Math.random()<.55&&c.mood>=30){ c.mood=RI(14,26); tagCrew(G.crewEnt[c.id]); setTimeout(()=>{ if(G.mode==='duty'&&G.crewEnt[c.id]){toast(c.name+' 今天'+pick(['沒睡好','便當被偷吃','跟家人吵架','手機摔破了'])+'，在鬧脾氣。去找他聊聊','bad',4200); say(G.crewEnt[c.id],'哼！',4)} },2500); } }
@@ -970,7 +971,7 @@ function finishIncident(inc,ok,crewList,byCaptain){
   G.log.push({sub:inc.sub,ok,stars:st_,xp,rep,by:byCaptain?'隊長出勤':crewList&&crewList.length?crewList.map(c=>c.name).join('、'):'無人處理'});
   if(G.mission&&G.mission.inc===inc){ G.mission=null; const P=G.player; P.hose=null; P.carry=false; if(G.unit){G.unit.veh.hyd=null} }
   if(G.cardInc===inc)closeCard();
-  closeIncident(inc);
+  closeIncident(inc); persist();
 }
 function eff(list,stat,inc,withCap){ if(!list.length)return withCap?.9:.3; let a=0,f=0,rb=0,md=0; const want=inc.kind==='ems'?1:2;
   list.forEach(c=>{a+=c[stat];f+=c.fat;md+=c.mood;rb+=roleOf(c)===want?1.12:.92}); const n=list.length, head=n+(withCap?1:0);
@@ -1350,14 +1351,15 @@ $('bFull').addEventListener('click',()=>{ if(document.fullscreenElement||documen
 document.addEventListener('fullscreenchange',()=>setTimeout(resize,200));
 
 /* ============ 主迴圈 ============ */
-let last=performance.now(), fpsN=0, fpsT=0, fpsDone=false;
+let last=performance.now(), fpsN=0, fpsT=0, fpsDone=false, saveT=0;
 function frame(now){ requestAnimationFrame(frame); const raw=(now-last)/1000, dt=Math.min(.05,raw); last=now;
   if(G.mode==='duty'){ const n=G.sleep?5:1; for(let k=0;k<n&&G.mode==='duty';k++)update(dt);
-    if(G.mode==='duty'){ updateButtons(); hudT-=dt; if(hudT<=0){hudT=.15;updateHUD()} }
+    if(G.mode==='duty'){ updateButtons(); saveT+=raw; if(saveT>15){saveT=0;persist()} hudT-=dt; if(hudT<=0){hudT=.15;updateHUD()} }
     if(!fpsDone&&!G.paused&&raw<.5){ fpsN++; fpsT+=raw; if(fpsT>6){ fpsDone=true; if(fpsN/fpsT<22&&sun.castShadow)setShadow(false,true); } } }
   else if(world){ updateFX(dt); }
   if(world){ syncMeshes(dt); renderer.render(scene,camera); } }
-document.addEventListener('visibilitychange',()=>{ Snd.suspend(document.hidden); last=performance.now(); });
+document.addEventListener('visibilitychange',()=>{ if(document.hidden)persist(); Snd.suspend(document.hidden); last=performance.now(); });
+addEventListener('pagehide',persist);
 
 /* ============ 啟動 ============ */
 function boot(){
@@ -1368,7 +1370,7 @@ function boot(){
   sun.castShadow=S.vol.shadow!==false; resize(); buildWorld(); requestAnimationFrame(frame);
 }
 $('bCont').addEventListener('click',()=>{Snd.init();Snd.click();autoFull();openSched()});
-$('bNew').addEventListener('click',()=>{Snd.init();Snd.click();autoFull(); const vol=S.vol; S=freshSave(); S.vol=vol; openSched(); buildWorld(); });
+$('bNew').addEventListener('click',()=>{Snd.init();Snd.click();autoFull(); const vol=S.vol; S=freshSave(); S.vol=vol; openSched(); buildWorld(); persist(); });
 window.__ff={genMap,buildWorld,G,findPath,roadCellNear,getUse,getAct,doUse,dist,get S(){return S},get world(){return world},spawnIncident,openCard,Input,STAGES,endDay,finishIncident,Save,say,jinx,crewTalk,pedTalk,whistle,honk,sun,useThing};
 boot();
 })();
