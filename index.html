@@ -378,7 +378,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
 <script src="three.min.js"></script>
 <script>
 (()=>{'use strict';
-const VERSION='車干製V2.6';
+const VERSION='車干製V2.7';
 const $=id=>document.getElementById(id);
 (function cover(){ const t=$('ovTitle'), im=new Image(); im.onload=()=>{t.style.backgroundImage='url(cover.jpg)'}; im.onerror=()=>t.classList.add('nocover'); im.src='cover.jpg'; })();
 if(!window.THREE){ $('tSub').textContent='3D 元件載入失敗，請檢查網路後重新整理'; return; }
@@ -531,7 +531,32 @@ const Snd=(()=>{
     const g=ac.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); s.connect(f); f.connect(g); g.connect(dest||sfx); s.start(t,Math.random()); s.stop(t+dur+.05); }
   function loop(name,freq,type){ const s=ac.createBufferSource(); s.buffer=nbuf; s.loop=true; const f=ac.createBiquadFilter(); f.type=type; f.frequency.value=freq; const g=ac.createGain(); g.gain.value=0;
     s.connect(f); f.connect(g); g.connect(sfx); s.start(); loops[name]={g,f}; }
+  /* 各地圖風格的背景音樂：sc 音階、dr 每小節的長音、mel 八小節旋律（音階編號，-1 休止）、ins 樂器、pc 打擊。台灣沿用原本那首 */
+  function pluck(f,t,dur,type,vol,cut,bend){ if(!ac)return; const o=ac.createOscillator(),fl=ac.createBiquadFilter(),g=ac.createGain(); o.type=type; o.frequency.setValueAtTime(f*(bend||1),t); if(bend)o.frequency.exponentialRampToValueAtTime(f,t+.05);
+    fl.type='lowpass'; fl.frequency.setValueAtTime(cut,t); fl.frequency.exponentialRampToValueAtTime(Math.max(300,cut*.25),t+dur);
+    g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(vol,t+.006); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.connect(fl); fl.connect(g); g.connect(mus); o.start(t); o.stop(t+dur+.05); }
+  const dum=(t,v)=>tone(130,t,.22,'sine',v,mus,.004,55), tek=(t,v)=>noise(t,.05,v,2600,'bandpass',mus);
+  const MUS={
+   jp:{bpm:[66,98],sc:[293.7,311.1,392,440,466.2,587.3,622.3,784],dr:[[146.8,220],[146.8,220],[196,293.7],[146.8,220]],
+     mel:[[5,-1,4,3,-1,-1,2,-1],[3,-1,4,-1,3,2,1,-1],[0,-1,-1,2,3,-1,4,-1],[3,-1,-1,-1,-1,-1,-1,-1],[5,6,5,-1,4,-1,3,-1],[4,-1,5,-1,7,-1,6,5],[4,-1,3,-1,1,-1,2,-1],[0,-1,-1,-1,-1,-1,-1,-1]],
+     ins(f,t){ pluck(f,t,1.5,'triangle',.085,3200,1.035); pluck(f*2,t,.5,'sine',.02,5000); },
+     pc(s,t,e,go,bar){ if(s===0&&bar%4===3)tone(587.3,t+e*2,e*5,'sine',.03,mus,.35); if(!go)return; if(s===0||s===3)tone(95,t,.3,'sine',.13,mus,.004,48); if(s===6)tone(1400,t,.04,'square',.02,mus,.002); } },
+   eg:{bpm:[80,112],sc:[293.7,311.1,370,392,440,466.2,523.3,587.3,622.3,740],dr:[[146.8,220],[146.8,220],[196,293.7],[146.8,220]],
+     mel:[[0,-1,1,2,1,0,-1,-1],[2,3,4,-1,3,2,1,-1],[4,-1,5,4,3,2,3,-1],[2,1,0,-1,-1,-1,-1,-1],[7,-1,8,7,6,5,4,-1],[5,4,3,-1,4,5,6,-1],[7,6,5,4,3,2,1,2],[0,-1,-1,-1,0,-1,-1,-1]],
+     ins(f,t){ pluck(f,t,.55,'sawtooth',.05,2400); pluck(f/2,t,.4,'triangle',.03,1200); },
+     pc(s,t,e,go){ const v=go?1:.45; if(s===0||s===4)dum(t,.12*v); if(s===1||s===3||s===6)tek(t,.05*v); } },
+   db:{bpm:[84,116],sc:[440,493.9,523.3,587.3,659.3,698.5,830.6,880],dr:[[220,261.6,329.6],[174.6,220,261.6],[146.8,220,293.7],[164.8,207.7,246.9]],
+     mel:[[4,-1,-1,2,-1,0,-1,-1],[2,-1,0,-1,-1,-1,5,-1],[3,-1,5,-1,4,3,-1,-1],[4,-1,6,-1,4,-1,-1,-1],[7,-1,-1,6,5,4,-1,-1],[5,-1,4,2,-1,0,-1,-1],[3,5,3,-1,2,-1,1,-1],[1,-1,6,-1,4,-1,-1,-1]],
+     ins(f,t,e){ pluck(f,t,.4,'square',.035,1800); pluck(f*2,t,.25,'sine',.02,6000); pluck(f,t+e*1.5,.3,'square',.011,1200); },
+     pc(s,t,e,go,bar){ if(!go){ if(s===2||s===6)noise(t,.05,.012,5000,'highpass',mus); return; } const r=this.dr[bar%4][0]/2; if(s===0||s===3||s===6){ dum(t,.11); tone(r,t,e*.9,'triangle',.08,mus,.01); } if(s===4)tek(t,.05); if(s%2===1)noise(t,.03,.014,7000,'highpass',mus); } },
+  };
+  let cur='tw';
   function sched(){ if(!ac||ac.state!=='running')return; if(nextT<ac.currentTime)nextT=ac.currentTime+.05;
+    const k=(typeof S!=='undefined'&&S&&typeof G!=='undefined'&&!(G&&G.coop))?S.theme:'tw'; if(k!==cur){cur=k;step=0} const M=MUS[cur];
+    while(M&&nextT<ac.currentTime+.35){ const go=mode==='go', e=(60/M.bpm[go?1:0])/2, bar=Math.floor(step/8)%8, s=step%8;
+      if(s===0) M.dr[bar%4].forEach(f=>tone(f,nextT,e*8.4,'sine',.04,mus,.5));
+      const n=M.mel[bar][s]; if(n>=0) M.ins(M.sc[n],nextT,e);
+      M.pc(s,nextT,e,go,bar); nextT+=e; step++; }
     while(nextT<ac.currentTime+.35){ const go=mode==='go', e=(go?60/104:60/74)/2, bar=Math.floor(step/8)%4, s=step%8, lp=Math.floor(step/32);
       if(s===0) CH[bar].forEach((f,i)=>tone(i===0?f/2:f,nextT,e*8.4,'sine',.045,mus,.5));
       const n=MEL[bar][s]; if(n>=0&&(go||lp%2===0)) tone(P[n],nextT,e*1.9,'triangle',.05,mus,.012);
@@ -2331,7 +2356,7 @@ function boot(){
 }
 $('bCont').addEventListener('click',()=>{Snd.init();Snd.click();autoFull();openSched()});
 $('bNew').addEventListener('click',()=>{Snd.init();Snd.click();autoFull(); const vol=S.vol; S=freshSave(); S.vol=vol; Cloud.mark(true,-1); openSched(); buildWorld(); persist(true); });
-window.__ff={spawnEvent,finishEvent,useEvent,buildWorld,G,findPath,roadCellNear,getUse,getAct,doUse,dist,get S(){return S},get world(){return world},spawnIncident,openCard,Input,STAGES,endDay,finishIncident,Save,say,jinx,crewTalk,pedTalk,whistle,honk,sun,useThing,VEH,NOZ,coin,openShop,closeShop,makeVehicle,fixBays,scene,camera,renderer,persist,startDuty,openSched,update:dt=>update(dt),gotoMap,openMap,THEMES,ST,get CO(){return CO},RT,netCreate,netJoin,netStart,netLeave,netTick:r=>netTick(r),goHome,resumeDuty,enterIndoor,exitIndoor,SKINS,rollBox,openBox,skinThumb,quest,makePerson,rescueTrap,fxOf,ladderUp,ladderDown,sendSup,updateHUD:()=>updateHUD(),closeCard:()=>closeCard(),FX,cemHost,CEM,COOP_LV,hitNode};
+window.__ff={Snd,spawnEvent,finishEvent,useEvent,buildWorld,G,findPath,roadCellNear,getUse,getAct,doUse,dist,get S(){return S},get world(){return world},spawnIncident,openCard,Input,STAGES,endDay,finishIncident,Save,say,jinx,crewTalk,pedTalk,whistle,honk,sun,useThing,VEH,NOZ,coin,openShop,closeShop,makeVehicle,fixBays,scene,camera,renderer,persist,startDuty,openSched,update:dt=>update(dt),gotoMap,openMap,THEMES,ST,get CO(){return CO},RT,netCreate,netJoin,netStart,netLeave,netTick:r=>netTick(r),goHome,resumeDuty,enterIndoor,exitIndoor,SKINS,rollBox,openBox,skinThumb,quest,makePerson,rescueTrap,fxOf,ladderUp,ladderDown,sendSup,updateHUD:()=>updateHUD(),closeCard:()=>closeCard(),FX,cemHost,CEM,COOP_LV,hitNode};
 boot();
 })();
 </script>
