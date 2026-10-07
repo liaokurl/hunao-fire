@@ -2083,7 +2083,7 @@ function netOnRoom(){ const R=CO.room, M=R.meta; if(!M){ if(CO.joined)netLeave('
 function renderNet(){ const inRoom=!!(CO&&CO.joined&&CO.room.meta); $('nJoin').hidden=!!CO; $('nRoom').hidden=!inRoom; $('bNBack').textContent=CO?'離開房間':'回主畫面'; if(!inRoom)return;
   const R=CO.room, M=R.meta, Pm=R.p||{}, ids=Object.keys(Pm).sort((a,b)=>a===M.host?-1:b===M.host?1:a<b?-1:1), live=ids.filter(netAlive), lv=M.lv==='fac'?'fac':'cem', L=COOP_LV[lv]; $('nCodeBig').textContent=CO.code;
   setH('nLv',Object.keys(COOP_LV).map(k=>'<button type="button" class="opt'+(lv===k?' sel':'')+'" data-lv="'+k+'"'+(CO.host||lv===k?'':' disabled')+'>'+COOP_LV[k].n+'</button>').join('')); $('nLvNote').textContent=L.d+(CO.host?'':'（關卡由房主選）');
-  { const art=$('nLvArt'); art.hidden=lv!=='cem'; if(lv==='cem'&&!art._ok){ art._ok=1; art.innerHTML='<img class="lvimg" src="cem.jpg" alt="清明公墓火警"><img class="lvimg" src="cemsteps.jpg" alt="玩法：佈署水源、分區滅火、防止延燒、任務完成">'; } }
+  { const art=$('nLvArt'); art.hidden=false; if(art._lv!==lv){ art._lv=lv; art.innerHTML=lv==='cem'?'<img class="lvimg" src="cem.jpg" alt="清明公墓火警"><img class="lvimg" src="cemsteps.jpg" alt="玩法：佈署水源、分區滅火、防止延燒、任務完成">':'<img class="lvimg" src="fac.jpg" alt="連棟工廠大火">'; } }
   setH('nList',ids.map(pid=>{ const p=Pm[pid]||{}, ok=netAlive(pid); return '<div class="li'+(ok?'':' bad')+'"><span>'+(pid===M.host?'★ ':'')+esc(p.n||'隊員')+(pid===CO.me?'（你）':'')+'</span><span>'+(ok?(VEH[p.veh]||VEH.small).n:'離線')+'</span></div>'; }).join(''));
   setH('nVeh',myVehList().map(id=>'<button type="button" class="opt'+(CO.veh===id?' sel':'')+'" data-nv="'+id+'">'+VEH[id].n+'<small>水 '+(VEH[id].cap||'無')+'</small></button>').join(''));
   const end=CO.phase==='end'&&CO.res, r=CO.res||{}; $('nRes').hidden=!end;
@@ -2108,7 +2108,7 @@ function coopStart(){ const R=CO.room, M=R.meta, order=M.order, Pm=R.p||{}; CO.r
     CO.rem[v.pid]={mesh,veh:v,nz:NOZ[p.nz]?p.nz:0,x:v.x+2.3,z:v.z+4.6,h:0,tx:v.x+2.3,tz:v.z+4.6,th:0,f:0,walk:0,moving:false,on:true,n:p.n||'隊友'}; });
   const inc=lv==='cem'?cemIncident(M.seed,order.length):coopIncident(M.seed,order.length); G.mission={inc}; CO.dmg=inc.nodes.map(()=>0); CO.q=0; CO.sendT=0; CO.wT=0; CO.wq=0; CO.wSeen=-1; CO.seen={}; CO.stat={}; CO.sp=0; CO.spT=0; CO.myRes=false; CO.by=''; CO.ending=false; CO.lastKey=''; CO.res=null;
   CO.stat[CO.me]={dmg:0,res:0}; show(null); $('hud').hidden=false; resize(); Snd.mode('go'); Snd.bell(); if(P.tag)drawTag(P.tag,String((Pm[CO.me]||{}).n||'隊長').slice(0,8),'#1c2836');
-  if(lv==='cem')showBrief(); else toast('<b>連棟工廠大火</b><br>上車開到現場。接消防栓、射水、入室救人，分工合作！','bad big',5200); }
+  showBrief(lv==='cem'?'cem.jpg':'fac.jpg'); }
 function coopIncident(seed,n){ const rnd=mulberry32(seed^0x51ed27), w=world, far=b=>b&&b.south&&Math.hypot(b.x-w.station.cx,b.z-w.station.cz)>28&&Math.hypot(b.x-w.hosp.cx,b.z-w.hosp.cz)>22; let runs=[];
   w.blds.forEach(b=>{ if(!far(b))return; const l=(w.bAt[b.i-1]&&w.bAt[b.i-1][b.j])||null, r=(w.bAt[b.i+1]&&w.bAt[b.i+1][b.j])||null, bs=[l,b,r]; runs.push({bs,f:bs.filter(q=>q&&q.type==='factory').length*2+bs.filter(Boolean).length}); }); const mf=Math.max(...runs.map(r=>r.f)); runs=runs.filter(r=>r.f===mf); const B3=runs[Math.floor(rnd()*runs.length)].bs, mid=B3[1], rx=cx(mid.i), rz=cx(mid.j+1);
   const inc={id:incId++,kind:'fire',sub:'連棟工廠大火',desc:'三棟相連，屋內有人受困',xp:800,b:mid,road:{i:mid.i,j:mid.j+1},x:mid.x,z:mid.maxZ+.4,addr:'工業路 119 號',state:'player',shown:true,age:0,lastHit:-99,spread:false,objs:[],nodes:[],by:null,want:null,high:false,chem:false,fx:{},
@@ -2293,7 +2293,7 @@ function cemTick(inc,dt){ const P=G.player, host=!!(CO&&CO.host), ev=inc.ev; let
   if(best){inc.x=best.x;inc.z=best.z} inc.cnt={burn:nb,imps}; inc.ff=Math.min(1,sum/inc.fmax); }
 function cemResult(inc,ok,per){ const HS=inc.houses, hp=Math.round(100-HS.reduce((a,H)=>a+(H.burnt?100:H.dmg),0)/Math.max(1,HS.length)), wp=Math.round(inc.spots.filter(s=>!s.was).length/inc.spots.length*100), fr=inc.left/inc.total;
   let st=5-inc.lost; if(hp<80)st--; if(fr<.2)st--; return {lv:'cem',ok,stars:ok?clamp(st,1,5):0,left:Math.max(0,Math.round(inc.left)),lost:inc.lost,hp,wp,per}; }
-function showBrief(){ const b=$('brief'), im=$('briefImg'); if(!im.getAttribute('src'))im.src='cem.jpg'; b.hidden=false; clearTimeout(showBrief.t); showBrief.t=setTimeout(()=>{b.hidden=true},6500); }
+function showBrief(src){ const b=$('brief'), im=$('briefImg'); if(im.getAttribute('src')!==src)im.src=src; b.hidden=false; clearTimeout(showBrief.t); showBrief.t=setTimeout(()=>{b.hidden=true},6500); }
 $('brief').addEventListener('click',()=>{ clearTimeout(showBrief.t); $('brief').hidden=true; });
 $('nLv').addEventListener('click',e=>{ const b=e.target.closest('[data-lv]'); if(!b||!CO||!CO.host||CO.phase==='play')return; Snd.click(); RT.patch('rooms/'+CO.code+'/meta',{lv:b.dataset.lv}).catch(()=>{}); });
 
