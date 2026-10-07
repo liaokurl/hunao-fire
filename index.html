@@ -371,7 +371,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
       <p class="note" id="cStat">雲端：尚未連線</p>
       <p class="note">如果畫面會卡，把陰影關掉。進度會自動存在這台裝置，並同步到雲端。換裝置時，在新裝置的設定輸入接續碼按「載入」就能接著玩。值勤中也可以從這裡開排班表和分隊倉庫（點上方的「獎金」也行）。中途關掉，下次從當天早上重新值勤，經驗與聲望保留。</p>
       <div class="btns"><button class="b" id="bWipe" type="button">刪除存檔重新開始</button></div>
-      <p class="note">音樂：主畫面〈我怎麼在濟州島〉車干　Walk Around／day free (Free D)　夜の花 Night Blossom／音樂故事會 TAVC City Pop　Mysterious Sorrows／Aakash Gandhi</p>
+      <p class="note">音樂：主畫面〈我怎麼在濟州島〉車干　Walk Around／day free (Free D)　夜の花 Night Blossom／音樂故事會 TAVC City Pop　Mysterious Sorrows／Aakash Gandhi　埃及進貢／胤樂音樂 InMusic Share</p>
     </div>
   </div></div>
 </div>
@@ -553,7 +553,7 @@ const Snd=(()=>{
   };
   let cur='tw';
   /* 音樂檔：有檔案的風格播檔案（主畫面和連線關卡用台灣那首），沒有檔案或載入失敗就用上面的合成音樂 */
-  const BGM={menu:'bgm_menu.mp3',tw:'bgm_tw.mp3',jp:'bgm_jp.mp3',db:'bgm_db.mp3'}; let bel=null,bk=null,bok=false,btry=0;
+  const BGM={menu:'bgm_menu.mp3',tw:'bgm_tw.mp3',jp:'bgm_jp.mp3',eg:'bgm_eg.mp3',db:'bgm_db.mp3'}; let bel=null,bk=null,bok=false,btry=0;
   function bgm(k){ const src=BGM[k]; if(!src){ if(bel&&!bel.paused)bel.pause(); bk=k; bok=false; return false; }
     if(!bel){ bel=new Audio(); bel.loop=true; bel.preload='auto'; try{ const g=ac.createGain(); g.gain.value=.8; ac.createMediaElementSource(bel).connect(g); g.connect(mus); }catch(e){}
       bel.addEventListener('playing',()=>{bok=true}); bel.addEventListener('error',()=>{bok=false}); }
