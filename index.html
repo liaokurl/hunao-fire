@@ -371,6 +371,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
       <p class="note" id="cStat">雲端：尚未連線</p>
       <p class="note">如果畫面會卡，把陰影關掉。進度會自動存在這台裝置，並同步到雲端。換裝置時，在新裝置的設定輸入接續碼按「載入」就能接著玩。值勤中也可以從這裡開排班表和分隊倉庫（點上方的「獎金」也行）。中途關掉，下次從當天早上重新值勤，經驗與聲望保留。</p>
       <div class="btns"><button class="b" id="bWipe" type="button">刪除存檔重新開始</button></div>
+      <p class="note">音樂：主畫面〈我怎麼在濟州島〉車干　Walk Around／day free (Free D)　夜の花 Night Blossom／音樂故事會 TAVC City Pop　Mysterious Sorrows／Aakash Gandhi</p>
     </div>
   </div></div>
 </div>
@@ -378,7 +379,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
 <script src="three.min.js"></script>
 <script>
 (()=>{'use strict';
-const VERSION='車干製V2.7';
+const VERSION='車干製V2.8';
 const $=id=>document.getElementById(id);
 (function cover(){ const t=$('ovTitle'), im=new Image(); im.onload=()=>{t.style.backgroundImage='url(cover.jpg)'}; im.onerror=()=>t.classList.add('nocover'); im.src='cover.jpg'; })();
 if(!window.THREE){ $('tSub').textContent='3D 元件載入失敗，請檢查網路後重新整理'; return; }
@@ -551,8 +552,18 @@ const Snd=(()=>{
      pc(s,t,e,go,bar){ if(!go){ if(s===2||s===6)noise(t,.05,.012,5000,'highpass',mus); return; } const r=this.dr[bar%4][0]/2; if(s===0||s===3||s===6){ dum(t,.11); tone(r,t,e*.9,'triangle',.08,mus,.01); } if(s===4)tek(t,.05); if(s%2===1)noise(t,.03,.014,7000,'highpass',mus); } },
   };
   let cur='tw';
+  /* 音樂檔：有檔案的風格播檔案（主畫面和連線關卡用台灣那首），沒有檔案或載入失敗就用上面的合成音樂 */
+  const BGM={menu:'bgm_menu.mp3',tw:'bgm_tw.mp3',jp:'bgm_jp.mp3',db:'bgm_db.mp3'}; let bel=null,bk=null,bok=false,btry=0;
+  function bgm(k){ const src=BGM[k]; if(!src){ if(bel&&!bel.paused)bel.pause(); bk=k; bok=false; return false; }
+    if(!bel){ bel=new Audio(); bel.loop=true; bel.preload='auto'; try{ const g=ac.createGain(); g.gain.value=.8; ac.createMediaElementSource(bel).connect(g); g.connect(mus); }catch(e){}
+      bel.addEventListener('playing',()=>{bok=true}); bel.addEventListener('error',()=>{bok=false}); }
+    if(bk!==k){ bk=k; bok=false; btry=0; bel.src=src; bel.play().catch(()=>{}); }
+    else if(bel.paused&&!bel.error&&++btry%18===0)bel.play().catch(()=>{});
+    return bok&&!bel.paused; }
   function sched(){ if(!ac||ac.state!=='running')return; if(nextT<ac.currentTime)nextT=ac.currentTime+.05;
-    const k=(typeof S!=='undefined'&&S&&typeof G!=='undefined'&&!(G&&G.coop))?S.theme:'tw'; if(k!==cur){cur=k;step=0} const M=MUS[cur];
+    const ok=typeof S!=='undefined'&&S&&typeof G!=='undefined', m=ok?G.mode:'title', k=m==='menu'?(bk||'menu'):(m==='title'||m==='net'||((m==='sched'||m==='shop'||m==='map')&&!inDuty))?'menu':G.coop?'tw':S.theme; if(bgm(k)){ nextT=ac.currentTime+.1; cur=k; return; }
+    if(k==='menu'){ nextT=ac.currentTime+.1; return; }
+    if(k!==cur){cur=k;step=0} const M=MUS[cur];
     while(M&&nextT<ac.currentTime+.35){ const go=mode==='go', e=(60/M.bpm[go?1:0])/2, bar=Math.floor(step/8)%8, s=step%8;
       if(s===0) M.dr[bar%4].forEach(f=>tone(f,nextT,e*8.4,'sine',.04,mus,.5));
       const n=M.mel[bar][s]; if(n>=0) M.ins(M.sc[n],nextT,e);
@@ -572,7 +583,7 @@ const Snd=(()=>{
       const eo=ac.createOscillator(),ef=ac.createBiquadFilter(),eg=ac.createGain(); eo.type='sawtooth'; eo.frequency.value=50; ef.type='lowpass'; ef.frequency.value=260; eg.gain.value=0;
       eo.connect(ef); ef.connect(eg); eg.connect(sfx); eo.start(); loops.engine={g:eg,o:eo};
       apply(); nextT=ac.currentTime+.2; timer=setInterval(sched,110); if(ac.state==='suspended')ac.resume().catch(()=>{}); },
-    suspend(on){ if(!ac)return; (on?ac.suspend():ac.resume()).catch(()=>{}); },
+    suspend(on){ if(!ac)return; if(on&&bel)bel.pause(); (on?ac.suspend():ac.resume()).catch(()=>{}); },
     set(k,v){ st[k]=v; apply(); },
     mode(m){ mode=m; },
     level(name,v){ const l=loops[name]; if(l&&ac)l.g.gain.setTargetAtTime(v,ac.currentTime,.12); },
@@ -603,6 +614,7 @@ const Snd=(()=>{
   };
 })();
 
+document.addEventListener('pointerdown',()=>Snd.init(),{once:true,capture:true});
 /* ============ Three 基礎 ============ */
 const renderer=new THREE.WebGLRenderer({canvas:$('c'),antialias:true,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
@@ -656,6 +668,29 @@ function merge(parts){ const pos=[],nor=[],col=[],C=new THREE.Color();
   const o=new THREE.BufferGeometry(); o.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); o.setAttribute('normal',new THREE.Float32BufferAttribute(nor,3)); o.setAttribute('color',new THREE.Float32BufferAttribute(col,3)); return o; }
 const B=(c,w,h,d,x,y,z,r)=>({g:GB,c,s:[w,h,d],p:[x,y,z],r}), Sp=(c,d,x,y,z,s)=>({g:GS,c,s:s?[d*s[0],d*s[1],d*s[2]]:d,p:[x,y,z]}),
       Cy=(c,d,h,x,y,z,r)=>({g:GC,c,s:[d,h,d],p:[x,y,z],r}), Ko=(c,d,h,x,y,z,r)=>({g:GK,c,s:[d,h,d],p:[x,y,z],r});
+const GP4=new THREE.ConeGeometry(.7071,1,4); GP4.rotateY(Math.PI/4);
+const Py=(c,w,h,d,x,y,z)=>({g:GP4,c,s:[w,h,d],p:[x,y,z]});
+/* 各風格的地標（原點在地面中心，正面朝 +z）。box 是碰撞半寬，tr 表示公園的樹要不要留 */
+const LMK={
+  pyramid:{box:[4,4],f(){ return [B(0xd9c48c,9.4,.2,9.4,0,.1,0),Py(0xdcb96e,8,6.4,8,0,3.3,0),Py(0xf3d88a,1.7,1.36,1.7,0,6.05,0)]; }},
+  sphinx:{box:[2.1,4.6],sc:1.2,f(){ const c=0xd8b878,d=0xc4a160; return [B(0xcdb684,3.6,.3,8,0,.15,.4),B(c,2.2,1.5,5,0,1.05,-.4),B(c,2.6,2,1.9,0,1.3,-2.2),B(c,.7,.6,2.6,-.75,.6,3),B(c,.7,.6,2.6,.75,.6,3),
+      B(0x2f6fb0,2.3,2.1,1,0,3,1.5),B(0xe2bd4e,2.4,.3,1.05,0,3.9,1.5),B(0xe2bd4e,2.4,.25,1.05,0,3.1,1.5),B(0xe2bd4e,2.4,.25,1.05,0,2.4,1.5),B(c,1.5,1.6,1.4,0,3,2.1),B(d,.3,.5,.3,0,2.75,2.9),B(0x3a2c1c,.26,.16,.1,-.36,3.3,2.82),B(0x3a2c1c,.26,.16,.1,.36,3.3,2.82),B(d,.34,.7,.3,0,1.95,2.75)]; }},
+  obelisk:{box:[1,1],tr:1,f(){ return [B(0xcdb684,2.2,.5,2.2,0,.25,0),B(0xdcb96e,1,6.4,1,0,3.7,0),Py(0xf3d88a,1,1.2,1,0,7.5,0)]; }},
+  fuji:{box:[4,4],f(){ return [Cy(0x8fc98a,9.6,.24,0,.12,0),Ko(0x6f86a8,8.6,6.2,0,3.2,0),Ko(0xffffff,3.5,2.5,0,5.1,0),Ko(0xffffff,1.3,1.6,1.2,4.1,.5),Ko(0xffffff,1.3,1.6,-1.1,4.1,.7),Ko(0xffffff,1.2,1.5,.1,4,1.4)]; }},
+  shrine:{box:[2.9,2.3],tr:1,f(){ const r=0xd8322a; return [Cy(r,.4,4.2,-1.8,2.1,3.6),Cy(r,.4,4.2,1.8,2.1,3.6),B(r,5.4,.36,.5,0,4.3,3.6),B(0x1c1c20,5.9,.22,.6,0,4.6,3.6),B(r,4.2,.26,.36,0,3.5,3.6),
+      B(0x9aa0a6,5.6,.5,4.4,0,.25,-1),B(0x9aa0a6,2,.25,1,0,.12,1.6),B(0xf4efe4,4.2,2.1,3,0,1.55,-1),B(0x6b4a2e,1.3,1.6,.1,0,1.3,.52),Cy(r,.3,2.1,-2.2,1.55,.6),Cy(r,.3,2.1,2.2,1.55,.6),Cy(r,.3,2.1,-2.2,1.55,-2.6),Cy(r,.3,2.1,2.2,1.55,-2.6),
+      B(0x2f3a48,6.6,.28,5.2,0,2.74,-1),Py(0x3d4654,6,1.9,4.6,0,3.8,-1),Sp(0xe2bd4e,.4,0,4.85,-1),B(0x9aa0a6,.4,1,.4,-2.9,.5,2.4),B(0xfff2a8,.5,.4,.5,-2.9,1.2,2.4),B(0x9aa0a6,.4,1,.4,2.9,.5,2.4),B(0xfff2a8,.5,.4,.5,2.9,1.2,2.4)]; }},
+  pagoda:{box:[1.8,1.8],tr:1,f(){ const a=[B(0x9aa0a6,4.6,.4,4.6,0,.2,0)]; for(let k=0;k<5;k++){ const w=2.8-.34*k, y=.4+1.75*k; a.push(B(0xd8322a,w,1.2,w,0,y+.6,0),B(0xf4efe4,w*.5,.7,w+.04,0,y+.6,0),Py(0x2f3a48,w+1.3,.8,w+1.3,0,y+1.5,0)); } a.push(Cy(0xe2bd4e,.14,2.2,0,10.4,0),Sp(0xe2bd4e,.36,0,11.5,0)); return a; }},
+  khalifa:{box:[1.9,1.9],sc:.72,f(){ const a=[Cy(0x5b7fa6,6,.3,0,.15,0)], D=[3.6,3.1,2.6,2.1,1.6,1.1,.7], H=[4,3.6,3.4,3.2,3,2.8,2.4]; let y=.3; D.forEach((d,i)=>{ a.push(Cy(i%2?0xa9c9e6:0xcfe3f2,d,H[i],0,y+H[i]/2,0)); y+=H[i]; });
+      [[0,6],[2.094,9.4],[4.189,12.8]].forEach(q=>a.push(B(0x9fc3e0,1.3,q[1],1.3,Math.sin(q[0])*1.9,.3+q[1]/2,Math.cos(q[0])*1.9),B(0xb9d4ea,1,q[1]*.55,1,Math.sin(q[0])*2.8,.3+q[1]*.275,Math.cos(q[0])*2.8))); a.push(Cy(0xe8f0f6,.22,3.4,0,y+1.7,0)); return a; }},
+  arab:{box:[2.9,1.3],sc:.8,f(){ const a=[Cy(0x4aa3df,9.4,.12,0,.06,0),Cy(0xe9d9a8,6.6,.3,0,.15,0),B(0xffffff,.5,16.6,.5,-3.2,8.3,0),Cy(0xffffff,.16,3,-3.2,17.6,0)];
+      for(let k=0;k<12;k++){ const d=5.6*Math.cos(k/12*Math.PI/2)+.7, y=.9+1.2*k; a.push(B(0xf5f7fa,d,1.22,2.6,-3+d/2,y,0),B(0x6fb6e8,d*.74,.8,2.7,-3+d*.5,y,0)); }
+      a.push(B(0xf5f7fa,2.2,.3,.4,-4.2,12.6,0),Cy(0xe8f0f6,2,.16,-5.2,12.8,0),Cy(0x2f9e6b,1.3,.18,-5.2,12.82,0)); return a; }},
+  tower:{box:[1.2,1.2],tr:1,f(){ return [Cy(0xb9d4ea,2.2,8,0,4,0),Cy(0x9fc3e0,1.5,5,0,10.5,0),Cy(0xe8f0f6,.5,4,0,15,0),Cy(0x5b7fa6,2.5,.3,0,.15,0)]; }},
+};
+const LMSET={torii:['shrine','fuji','pagoda'],pyramid:['pyramid','sphinx','obelisk'],tower:['khalifa','arab','tower']};
+/* 地圖北邊外面的大型遠景：[地標, x 位移, 離北緣距離, 放大倍率] */
+const LMFAR={torii:[['fuji',0,24,2.6],['pagoda',-34,12,1.5],['shrine',34,12,1.5]],pyramid:[['pyramid',-12,21,2.2],['pyramid',38,17,1.6],['pyramid',-38,14,1.2],['sphinx',13,12,2.2]],tower:[['khalifa',-24,14,1.3],['arab',26,16,1.5]]};
 function vmesh(parts,keep){ const g=merge(parts); if(keep)KEEP.add(g); const m=new THREE.Mesh(g,VC); m.castShadow=true; return m; }
 function vmeshAt(parts,x,y,z){ const m=vmesh(parts); m.position.set(x,y,z); m.receiveShadow=true; return m; }
 function inst(geo,mat,items,fn,shadow){
@@ -989,17 +1024,15 @@ function buildWorld(){
   WG.add(inst(GB,lam(0xdfe3e6),ac,(q,d)=>{d.position.set(q.x,q.y,q.z);d.scale.set(.9,.7,.7)}));
   const ch=bl.filter(b=>b.type==='factory'); WG.add(inst(new THREE.CylinderGeometry(.5,.62,3.4,8),lam(0x9a6a55),ch,(b,d)=>{d.position.set(b.x+2.8,b.h+1.6,b.z-2.4)}));
   const sch=bl.filter(b=>b.type==='school'); WG.add(inst(GC,lam(0xd5d9de),sch,(b,d)=>{d.position.set(b.maxX-.6,3.5,b.maxZ+.8);d.scale.set(.12,7,.12)},false)); WG.add(inst(GB,lam(0xe63946),sch,(b,d)=>{d.position.set(b.maxX+.1,6.5,b.maxZ+.8);d.scale.set(1.3,.8,.05)},false));
-  const trees=[]; w.parks.forEach(p=>{for(let k=0;k<4;k++)trees.push({x:p.x+[-2.6,2.6,-2.2,2.4][k],z:p.z+[-2.6,-2.2,2.4,2.6][k],s:1+((p.i*3+p.j+k)%3)*.2,c:TH.tree[(p.i+k)%3]})});
+  { const L=LMSET[TH.deco]; if(L)w.parks.slice(1).forEach((p,n)=>{ if(n<L.length)p.lm=L[n]; else if((p.i*7+p.j*3)%2===0)p.lm=L[n%L.length]; }); }
+  const trees=[]; w.parks.forEach(p=>{ if(p.lm&&!LMK[p.lm].tr)return; for(let k=0;k<4;k++)trees.push({x:p.x+[-2.6,2.6,-2.2,2.4][k],z:p.z+[-2.6,-2.2,2.4,2.6][k],s:1+((p.i*3+p.j+k)%3)*.2,c:TH.tree[(p.i+k)%3]})});
   bl.forEach(b=>{if(b.type==='house'&&(b.i+b.j)%3===0)trees.push({x:b.minX-.5,z:b.maxZ+.6,s:.8,c:TH.tree[1]})}); if(w.xtrees)w.xtrees.forEach(t=>trees.push(t));
   const palm=!!TH.palm;
   WG.add(inst(new THREE.CylinderGeometry(.2,.28,1.3,6),lam(palm?0x9a7a4e:0x7a5236),trees,(t,d)=>{d.position.set(t.x,palm?1.5*t.s:.65,t.z);if(palm)d.scale.set(1,2.3*t.s,1)}));
   WG.add(inst(new THREE.SphereGeometry(1.25,9,7),white(),trees,(t,d)=>{d.position.set(t.x,(palm?3.1:2.2)*t.s,t.z);d.scale.set(palm?t.s*1.3:t.s,palm?t.s*.42:t.s*1.1,palm?t.s*1.3:t.s);return t.c}));
   WG.add(inst(new THREE.SphereGeometry(.9,8,6),white(),trees,(t,d)=>{d.position.set(t.x+(palm?0:.5*t.s),(palm?3.45:2.9)*t.s,t.z-(palm?0:.2));d.scale.set(palm?t.s*.9:t.s,palm?t.s*.4:t.s,palm?t.s*.9:t.s);return darken(t.c,1.12)},false));
-  if(TH.deco)w.parks.slice(1).forEach(p=>{ if((p.i*7+p.j*3)%2)return; let m;
-    if(TH.deco==='torii')m=vmeshAt([Cy(0xd8322a,.4,4.2,-1.8,2.1,0),Cy(0xd8322a,.4,4.2,1.8,2.1,0),B(0xd8322a,5.4,.36,.5,0,4.3,0),B(0x1c1c20,5.9,.22,.6,0,4.6,0),B(0xd8322a,4.2,.26,.36,0,3.5,0)],p.x,0,p.z+1.2);
-    else if(TH.deco==='pyramid'){ m=new THREE.Mesh(new THREE.ConeGeometry(3.3,4.6,4),lam(0xdcb96e)); m.position.set(p.x,2.3,p.z); m.rotation.y=Math.PI/4; m.castShadow=true; w.extra.push({minX:p.x-2.1,maxX:p.x+2.1,minZ:p.z-2.1,maxZ:p.z+2.1}); }
-    else { m=vmeshAt([Cy(0xb9d4ea,2.2,8,0,4,0),Cy(0x9fc3e0,1.5,5,0,10.5,0),Cy(0xe8f0f6,.5,4,0,15,0),Cy(0x5b7fa6,2.5,.3,0,.15,0)],p.x,0,p.z); w.extra.push({minX:p.x-1.2,maxX:p.x+1.2,minZ:p.z-1.2,maxZ:p.z+1.2}); }
-    WG.add(m); });
+  if(TH.deco){ w.parks.forEach(p=>{ if(!p.lm)return; const K=LMK[p.lm]; const lm=vmeshAt(K.f(),p.x,0,p.z); if(K.sc)lm.scale.setScalar(K.sc); WG.add(lm); w.extra.push({minX:p.x-K.box[0],maxX:p.x+K.box[0],minZ:p.z-K.box[1],maxZ:p.z+K.box[1]}); });
+    (LMFAR[TH.deco]||[]).forEach(q=>{ const m=vmeshAt(LMK[q[0]].f(),q[1],0,-size/2-q[2]); m.scale.setScalar(q[3]); m.castShadow=false; WG.add(m); }); }
   const lamps=w.roads.filter(r=>(r.i*5+r.j*3)%4===0).map(r=>({x:r.x+4.5,z:r.z-4.5}));
   WG.add(inst(GC,lam(0x6b7280),lamps,(q,d)=>{d.position.set(q.x,2.2,q.z);d.scale.set(.14,4.4,.14)},false)); w.lampMat=lam(0xfff2a8); WG.add(inst(GB,w.lampMat,lamps,(q,d)=>{d.position.set(q.x-.4,4.4,q.z+.3);d.scale.set(.9,.14,.36)},false));
   w.hydGeo=merge([Cy(0xe63946,.5,.9,0,.45,0),Sp(0xe63946,.5,0,.9,0),Cy(0xd9dde2,.22,.74,0,.6,0,[0,0,Math.PI/2]),Cy(0xb5302a,.66,.12,0,.06,0)]);
