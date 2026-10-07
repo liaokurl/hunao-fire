@@ -28,6 +28,7 @@
 - 存檔：localStorage `ffcaptain_v1`，並同步到 Firebase（專案 `hunao-fire`，匿名登入 + Firestore `saves/{接續碼}`，用 REST 直接呼叫，沒有載 SDK）。`S.rev` 只在有實際進度時加一，雲端用它判斷新舊。
 - 經濟：`S.coin` 獎金（`coin()`）。`S.own` 記擁有的車、瞄子、消防衣、塗裝；`S.bays` 是這個階段的車位編成（`fixBays()` 會修正），`buildWorld()` 依它擺車。車輛實體有 `v.type`（`amb` 或 `VEH` 的鍵）和 `v.M`（規格）。
 - 案件旗標：`inc.high`（高處火點，要雲梯）、`inc.chem`（化學火，要泡沫）、`inc.cut`（車禍受困）、`inc.trap`（受困者，`hidden` 表示到場才揭露）、`inc.want`（建議車種）。傷害一律走 `hitNode()`，它會套用這些規則。`inc.fx` 每幀由 `fxOf()` 算出現場有哪些車在幫忙。
+- 補水規則：水量一律會消耗（水帶 5／秒、雲梯 6、美洲豹水砲 9）。車可接多個消防栓（`V.hyds`，上限 `HYD_MAX`＝6，距車 30 內才算），每個每秒補 `HYD_R`＝7.5（＝水帶耗水的 1.5 倍），在 `update()` 開頭統一補。水庫車到場支援每台每秒補 `RES_R`＝11.25（消防栓的 1.5 倍，`fx.supply` 是水庫車數量）。
 - 支援車是 `G.ai` 裡 `sup:true` 的項目，階段 `go → stay → back`，不占隊員。
 - 入室搶救的屋內場景搭在地圖外（z = 地圖半徑 + 140），`G.indoor` 存在時 `resolve()` 改用屋內碰撞，`hoseSrc()` 改從屋內門口算。
 - 消防衣只是外觀；性能差異只來自車和瞄子（之後做連線時要維持這個原則）。
