@@ -379,7 +379,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
 <script src="three.min.js"></script>
 <script>
 (()=>{'use strict';
-const VERSION='車干製V2.8';
+const VERSION='車干製V2.9';
 const $=id=>document.getElementById(id);
 (function cover(){ const t=$('ovTitle'), im=new Image(); im.onload=()=>{t.style.backgroundImage='url(cover.jpg)'}; im.onerror=()=>t.classList.add('nocover'); im.src='cover.jpg'; })();
 if(!window.THREE){ $('tSub').textContent='3D 元件載入失敗，請檢查網路後重新整理'; return; }
@@ -432,13 +432,13 @@ const LVL=['','小火','中火','大火'];
 const VEH={
  amb:    {n:'救護車',cap:0,seats:3,max:20,turn:2.7,L:5,W:2.2},
  small:  {n:'小水箱車',img:0,price:0,   cap:100,seats:4,max:17.5,turn:3.1,L:5.2,W:2.2,good:'靈活、巷子進得去',bad:'水少',role:'起始車'},
- mid:    {n:'中水箱車',img:1,price:800, cap:180,seats:6,max:16.5,turn:2.6,L:6.3,W:2.4,good:'載更多隊員、水更多',bad:'車身較大',role:'主力'},
- res:    {n:'水庫車',  img:2,price:1800,cap:480,seats:2,max:14,  turn:2.1,L:7,  W:2.5,good:'12 噸水',bad:'只能坐兩人',role:'幫全隊供水'},
- ladder: {n:'雲梯車',  img:3,price:3200,cap:90, seats:3,max:14.5,turn:2,  L:7.4,W:2.5,minStage:1,good:'救高樓層',bad:'需要空間展開',role:'高樓專用'},
- chem:   {n:'化學車',  img:4,price:2600,cap:170,seats:4,max:15.5,turn:2.4,L:6.3,W:2.4,minStage:1,good:'特殊火警專用',bad:'一般火警沒優勢',role:'工廠、油料'},
- rescue: {n:'器材車',  img:5,price:2000,cap:0,  seats:4,max:17,  turn:2.7,L:5.9,W:2.4,good:'車禍破壞救援',bad:'不能滅火',role:'車禍專用'},
- support:{n:'後勤照護車',img:6,price:2200,cap:0,seats:3,max:16,  turn:2.6,L:6,  W:2.4,minStage:1,good:'快速補體力和裝備',bad:'不能滅火',role:'長時間大火'},
- panther:{n:'美洲豹',  img:7,price:8000,cap:380,seats:4,max:19,  turn:2.5,L:7,  W:2.8,minStage:2,good:'水量大、射程遠',bad:'最貴',role:'機場、大型火警'},
+ mid:    {n:'中水箱車',img:1,price:1800,cap:180,seats:6,max:16.5,turn:2.6,L:6.3,W:2.4,good:'載更多隊員、水更多',bad:'車身較大',role:'主力'},
+ res:    {n:'水庫車',  img:2,price:4000,cap:480,seats:2,max:14,  turn:2.1,L:7,  W:2.5,good:'12 噸水',bad:'只能坐兩人',role:'幫全隊供水'},
+ ladder: {n:'雲梯車',  img:3,price:7000,cap:90, seats:3,max:14.5,turn:2,  L:7.4,W:2.5,minStage:1,good:'救高樓層',bad:'需要空間展開',role:'高樓專用'},
+ chem:   {n:'化學車',  img:4,price:5800,cap:170,seats:4,max:15.5,turn:2.4,L:6.3,W:2.4,minStage:1,good:'特殊火警專用',bad:'一般火警沒優勢',role:'工廠、油料'},
+ rescue: {n:'器材車',  img:5,price:4400,cap:0,  seats:4,max:17,  turn:2.7,L:5.9,W:2.4,good:'車禍破壞救援',bad:'不能滅火',role:'車禍專用'},
+ support:{n:'後勤照護車',img:6,price:4800,cap:0,seats:3,max:16,  turn:2.6,L:6,  W:2.4,minStage:1,good:'快速補體力和裝備',bad:'不能滅火',role:'長時間大火'},
+ panther:{n:'美洲豹',  img:7,price:18000,cap:380,seats:4,max:19,  turn:2.5,L:7,  W:2.8,minStage:2,good:'水量大、射程遠',bad:'最貴',role:'機場、大型火警'},
 };
 const VORDER=['small','mid','res','ladder','chem','rescue','support','panther'];
 const NOZ=[{n:'一般瞄子',price:0,range:13,dmg:40,col:0x6fc3ff,d:'公發的基本款'},{n:'強力瞄子',price:300,range:16,dmg:52,col:0x4da3ff,d:'水柱更集中'},
@@ -708,6 +708,7 @@ const CS=10; let world=null;
 const cx=i=>(i-world.N/2+.5)*CS, toCell=x=>Math.floor(x/CS+world.N/2);
 function genMap(st,seed){
   if(st.cem)return genCemMap(st,seed);
+  if(st.fac)return genFacMap(st,seed);
   for(let attempt=0;attempt<40;attempt++){
     const rnd=mulberry32(seed+attempt*7919), ri=(a,b)=>a+Math.floor(rnd()*(b-a+1)), N=st.grid;
     const g=[]; for(let i=0;i<N;i++)g.push(new Array(N).fill(0));
@@ -991,6 +992,7 @@ function buildWorld(){
   WG.add(inst(GB,lam(0xb9b3a4),curb,(r,d)=>{d.position.set(r.x,.09,r.z);d.scale.set(r.h?CS:.3,.18,r.h?.3:CS)},'recv'));
   WG.add(inst(flat,lam(TH.park),w.parks,(p,d)=>{d.position.set(p.x,.03,p.z);d.scale.set(8.8,1,8.8)},'recv'));
   if(w.cem)buildCem(w,flat);
+  if(w.fac)WG.add(inst(flat,lam(0x8e939b),w.facPad,(q,d)=>{d.position.set(q.x,.03,q.z);d.scale.set(CS,1,CS)},'recv'));
   // 建築：牆面、踢腳、屋頂、門窗、陽台、招牌、水塔
   const white=()=>new THREE.MeshLambertMaterial({color:0xffffff}), bl=w.blds;
   w.bodyMesh=inst(GB,white(),bl,(b,d)=>{d.position.set(b.x,b.h/2,b.z);d.scale.set(b.w,b.h,b.d);return b.col}); WG.add(w.bodyMesh);
@@ -1432,7 +1434,7 @@ function mciNext(inc){ const P=G.player, left=inc.pts.filter(p=>p.state==='groun
 /* 現場有哪些車在幫忙：供水、雲梯、泡沫、破壞器材、照護 */
 function fxOf(inc){ const fx={}; const add=(v,sup,dry)=>{ const t=v.type; if(t==='res'&&sup&&!dry)fx.supply=(fx.supply||0)+1; if(t==='ladder')fx.ladder=1; if(t==='chem')fx.foam=1; if(t==='rescue')fx.tool=1; if(t==='support')fx.care=1; if(t==='amb'&&sup)fx.amb2=1; };
   G.ai.forEach(m=>{ if(m.inc===inc&&(m.sup?m.phase==='stay':m.phase==='work'))add(m.veh,m.sup) }); if(G.mission&&G.mission.inc===inc&&G.unit&&dist(G.unit.veh,inc)<32)add(G.unit.veh,false);
-  if(inc.net&&CO){ const o=inc.cem&&G.unit?G.unit.veh:inc; Object.keys(CO.rem).forEach(k=>{ const e=CO.rem[k]; if(e.on&&dist(e.veh,o)<(inc.cem?34:38))add(e.veh,true,e.dry) }); } return fx; }
+  if(inc.net&&CO){ const o=(inc.cem||inc.fac)&&G.unit?G.unit.veh:inc; Object.keys(CO.rem).forEach(k=>{ const e=CO.rem[k]; if(e.on&&dist(e.veh,o)<((inc.cem||inc.fac)?34:38))add(e.veh,true,e.dry) }); } return fx; }
 function hitNode(inc,n,amt,o){ const fx=inc.fx||{}; let k=1; if(n.high&&!(o&&o.elev))k*=.3; if(n.chem)k*=((o&&o.foam)||fx.foam)?1.2:.3; n.hp-=amt*k; inc.lastHit=G.t; if(inc.net&&CO){ n.lh=G.t; if(CO.host)(CO.stat[CO.me]||(CO.stat[CO.me]={dmg:0,res:0})).dmg+=amt*k; else if(n.i!=null)CO.dmg[n.i]+=amt*k; } return k; }
 function supText(inc,v){ const t=v.type, f=inc.kind==='fire';
   if(t==='amb')return inc.mci?'載送：多載 2 名傷患':null;
@@ -1964,6 +1966,7 @@ function updateIncidents(dt){
       if(!inc.net&&G.t-inc.lastHit>3){ inc.nodes.forEach(n=>{if(n.hp>0)n.hp=Math.min(n.max,n.hp+3*dt)});
         if(inc.where!=='road'&&inc.lvl<3&&inc.age>48*inc.lvl){ inc.lvl++; addBuildingNodes(inc,inc.b,inc.lvl); inc.nodes.forEach(n=>{if(n.hp<=0)n.hp=n.max*.4}); toast(inc.sub+'：火勢擴大為'+LVL[inc.lvl],'bad',2400); }
         else if(inc.where!=='road'&&inc.lvl>=3&&!inc.spread&&inc.age>150){ const nb=world.bAt[inc.b.i+1]&&world.bAt[inc.b.i+1][inc.b.j]||world.bAt[inc.b.i-1]&&world.bAt[inc.b.i-1][inc.b.j]; inc.spread=true; if(nb){addNode(inc,nb.x,1.4,nb.maxZ+.35,90);addNode(inc,nb.x,nb.h+.4,nb.z,90)} toast(inc.sub+'：延燒到隔壁建築！','bad',2600); } }
+      if(inc.fac)facAim(inc);
       if(inc.cem)cemTick(inc,dt); else inc.nodes.forEach(n=>{ const f=Math.max(0,n.hp/n.max); n.m.visible=f>0; if(f>0){const s=(.6+f*.9)*(1+Math.sin(G.t*11+n.m.userData.ph)*.12)*(1+(inc.lvl-1)*.18); n.m.scale.set(s,s*(1+Math.sin(G.t*17+n.m.userData.ph)*.18),s); n.m.rotation.y+=dt*3; if(Math.random()<dt*5*f)emitSmoke(n.x,n.y+1.8*s,n.z,.8+f*.8+inc.lvl*.2)} });
       if(!inc.net&&fireFrac(inc)<=0){ const cap=G.mission&&G.mission.inc===inc; rescueTrap(inc,'',true); finishIncident(inc,true,inc.by||[],cap); continue; }
     } else if(inc.snake){ const s=inc.snake; let sp=1.6; const dP=dist(P,s);
@@ -2040,7 +2043,7 @@ function updateHUD(){
   const M=G.mission, P=G.player, U=G.unit, bx=$('mission');
   if(M||U){ bx.hidden=false; const inc=M&&M.inc; let obj='';
     if(!inc){ $('mTitle').textContent=U.patrol?'轄區巡邏':'返隊'; obj=P.veh?(U.patrol?'到處逛逛，開回車庫就收隊':'把車開回分隊車庫'):'回到 '+U.veh.label+' 上車'; $('mLifeRow').hidden=$('mFireRow').hidden=$('mWaterRow').hidden=true; }
-    else { $('mTitle').textContent=inc.cem?inc.sub+'・火點 '+inc.cnt.burn+'・小火人 '+inc.cnt.imps+'・民宅燒毀 '+inc.lost+'／'+CEM.LOSE:inc.sub+'・'+inc.addr+(inc.mci?'（現場剩 '+inc.pts.filter(q=>q.state==='ground'||q.state==='carried').length+' 人）':''); $('mLifeRow').hidden=false; $('mLifeLbl').textContent=inc.kind==='ems'?'生命':'時間'; $('mLife').firstElementChild.style.width=clamp(inc.left/inc.total*100,0,100)+'%';
+    else { $('mTitle').textContent=inc.fac&&CO?inc.sub+'・正面 '+gpPct(inc,0)+'%・後方 '+gpPct(inc,1)+'%・東側 '+((CO.sp&1)?gpPct(inc,2)+'%':'尚未延燒')+((CO.sp&2)?'・民宅 '+gpPct(inc,3)+'%':''):inc.cem?inc.sub+'・火點 '+inc.cnt.burn+'・小火人 '+inc.cnt.imps+'・民宅燒毀 '+inc.lost+'／'+CEM.LOSE:inc.sub+'・'+inc.addr+(inc.mci?'（現場剩 '+inc.pts.filter(q=>q.state==='ground'||q.state==='carried').length+' 人）':''); $('mLifeRow').hidden=false; $('mLifeLbl').textContent=inc.kind==='ems'?'生命':'時間'; $('mLife').firstElementChild.style.width=clamp(inc.left/inc.total*100,0,100)+'%';
       const fire=inc.kind==='fire', dv=dist(U.veh,inc), wv=fire||!!(P.hose&&P.hose.veh); $('mFireRow').hidden=!fire; $('mWaterRow').hidden=!wv;
       if(wv)$('mWater').firstElementChild.style.width=clamp(U.veh.water/U.veh.cap*100,0,100)+'%';
       const drive=P.veh?(dist(P,inc)>18?'開往現場（'+Math.round(dist(P,inc)*10)+' 公尺）':'到了！按「下車」'):null;
@@ -2140,7 +2143,7 @@ function netOnRoom(){ const R=CO.room, M=R.meta; if(!M){ if(CO.joined)netLeave('
   if(G.mode==='net')renderNet(); }
 function renderNet(){ const inRoom=!!(CO&&CO.joined&&CO.room.meta); $('nJoin').hidden=!!CO; $('nRoom').hidden=!inRoom; $('bNBack').textContent=CO?'離開房間':'回主畫面'; if(!inRoom)return;
   const R=CO.room, M=R.meta, Pm=R.p||{}, ids=Object.keys(Pm).sort((a,b)=>a===M.host?-1:b===M.host?1:a<b?-1:1), live=ids.filter(netAlive), lv=M.lv==='fac'?'fac':'cem', L=COOP_LV[lv]; $('nCodeBig').textContent=CO.code;
-  setH('nLv',Object.keys(COOP_LV).map(k=>'<button type="button" class="opt'+(lv===k?' sel':'')+'" data-lv="'+k+'"'+(CO.host||lv===k?'':' disabled')+'>'+COOP_LV[k].n+'</button>').join('')); $('nLvNote').textContent=L.d+(CO.host?'':'（關卡由房主選）');
+  setH('nLv',Object.keys(COOP_LV).map(k=>'<button type="button" class="opt'+(lv===k?' sel':'')+'" data-lv="'+k+'"'+(CO.host||lv===k?'':' disabled')+'>'+COOP_LV[k].n+'</button>').join('')); $('nLvNote').textContent=L.d+'　目前編成：火勢強度 ×'+coopMult(live.map(pid=>(VEH[(Pm[pid]||{}).veh]?(Pm[pid]||{}).veh:'small'))).toFixed(1)+(CO.host?'':'（關卡由房主選）');
   { const art=$('nLvArt'); art.hidden=false; if(art._lv!==lv){ art._lv=lv; art.innerHTML=lv==='cem'?'<img class="lvimg" src="cem.jpg" alt="清明公墓火警"><img class="lvimg" src="cemsteps.jpg" alt="玩法：佈署水源、分區滅火、防止延燒、任務完成">':'<img class="lvimg" src="fac.jpg" alt="連棟工廠大火">'; } }
   setH('nList',ids.map(pid=>{ const p=Pm[pid]||{}, ok=netAlive(pid); return '<div class="li'+(ok?'':' bad')+'"><span>'+(pid===M.host?'★ ':'')+esc(p.n||'隊員')+(pid===CO.me?'（你）':'')+'</span><span>'+(ok?(VEH[p.veh]||VEH.small).n:'離線')+'</span></div>'; }).join(''));
   setH('nVeh',myVehList().map(id=>'<button type="button" class="opt'+(CO.veh===id?' sel':'')+'" data-nv="'+id+'">'+VEH[id].n+'<small>水 '+(VEH[id].cap||'無')+'</small></button>').join(''));
@@ -2159,22 +2162,69 @@ function netTick(raw){ const c=CO; if(!c||!c.joined)return; c.hbT-=raw;
   if(c.phase==='play'&&G.coop)coopNet(raw); }
 /* 開打：大家用同一個種子生成同一張地圖和同一場火 */
 function coopStart(){ const R=CO.room, M=R.meta, order=M.order, Pm=R.p||{}; CO.rd=M.rd;
-  const lv=CO.lv=M.lv==='fac'?'fac':'cem'; G.coopCfg={st:lv==='cem'?COOP_CEM:COOP_ST,seed:M.seed,vehs:order.map(pid=>({pid,type:VEH[(Pm[pid]||{}).veh]?(Pm[pid]||{}).veh:'small',paint:(Pm[pid]||{}).pt||'red'}))};
+  const lv=CO.lv=M.lv==='fac'?'fac':'cem', nPl=window.__testN||order.length, mm=coopMult(window.__testTypes||order.map(pid=>VEH[(Pm[pid]||{}).veh]?(Pm[pid]||{}).veh:'small')); G.coopCfg={st:lv==='cem'?COOP_CEM:COOP_FAC,seed:M.seed,m:mm,vehs:order.map(pid=>({pid,type:VEH[(Pm[pid]||{}).veh]?(Pm[pid]||{}).veh:'small',paint:(Pm[pid]||{}).pt||'red'}))};
   buildWorld(); G.coop=true; G.mode='duty'; G.paused=false; G.talking=false; G.t=0; G.clock=120; G.slot=curSlot(); G.log=[]; G.cardInc=null; G.spawnT=1e9; G.evT=1e9; G.dayDone=false; G.rain=false; G.sleep=false; G.dayCoin=0; G.jinx=0; inDuty=false; FX.wm.color.setHex(NOZ[S.noz].col); $('sleepV').hidden=true;
   const P=G.player, mine=G.vehicles.find(v=>v.pid===CO.me); mine.state='player'; G.unit={veh:mine,mates:[],out:false}; P.x=mine.x+2.3; P.z=mine.z+4.6; G.camT.x=P.x; G.camT.z=P.z;
   CO.rem={}; G.vehicles.forEach(v=>{ if(v.pid===CO.me)return; const p=Pm[v.pid]||{}, mesh=makePerson({helmet:0xffffff,sk:p.sk}); WG.add(mesh); const t=makeLabel(256,64,3.5,.875,3.05); mesh.add(t.sp); drawTag(t,String(p.n||'隊友').slice(0,8),'#2f6fd0'); v.label=(p.n||'隊友')+'的'+v.M.n; v.tx=v.x; v.tz=v.z; v.th=0;
     CO.rem[v.pid]={mesh,veh:v,nz:NOZ[p.nz]?p.nz:0,x:v.x+2.3,z:v.z+4.6,h:0,tx:v.x+2.3,tz:v.z+4.6,th:0,f:0,walk:0,moving:false,on:true,n:p.n||'隊友'}; });
-  const inc=lv==='cem'?cemIncident(M.seed,order.length):coopIncident(M.seed,order.length); G.mission={inc}; CO.dmg=inc.nodes.map(()=>0); CO.q=0; CO.sendT=0; CO.wT=0; CO.wq=0; CO.wSeen=-1; CO.seen={}; CO.stat={}; CO.sp=0; CO.spT=0; CO.myRes=false; CO.by=''; CO.ending=false; CO.lastKey=''; CO.res=null;
+  const inc=lv==='cem'?cemIncident(M.seed,nPl,mm):coopIncident(M.seed,nPl,mm); G.mission={inc}; CO.dmg=inc.nodes.map(()=>0); CO.q=0; CO.sendT=0; CO.wT=0; CO.wq=0; CO.wSeen=-1; CO.seen={}; CO.stat={}; CO.sp=0; CO.spT=0; CO.myRes=false; CO.by=''; CO.ending=false; CO.lastKey=''; CO.res=null;
   CO.stat[CO.me]={dmg:0,res:0}; show(null); $('hud').hidden=false; resize(); Snd.mode('go'); Snd.bell(); if(P.tag)drawTag(P.tag,String((Pm[CO.me]||{}).n||'隊長').slice(0,8),'#1c2836');
-  showBrief(lv==='cem'?'cem.jpg':'fac.jpg'); }
-function coopIncident(seed,n){ const rnd=mulberry32(seed^0x51ed27), w=world, far=b=>b&&b.south&&Math.hypot(b.x-w.station.cx,b.z-w.station.cz)>28&&Math.hypot(b.x-w.hosp.cx,b.z-w.hosp.cz)>22; let runs=[];
-  w.blds.forEach(b=>{ if(!far(b))return; const l=(w.bAt[b.i-1]&&w.bAt[b.i-1][b.j])||null, r=(w.bAt[b.i+1]&&w.bAt[b.i+1][b.j])||null, bs=[l,b,r]; runs.push({bs,f:bs.filter(q=>q&&q.type==='factory').length*2+bs.filter(Boolean).length}); }); const mf=Math.max(...runs.map(r=>r.f)); runs=runs.filter(r=>r.f===mf); const B3=runs[Math.floor(rnd()*runs.length)].bs, mid=B3[1], rx=cx(mid.i), rz=cx(mid.j+1);
-  const inc={id:incId++,kind:'fire',sub:'連棟工廠大火',desc:'三棟相連，屋內有人受困',xp:800,b:mid,road:{i:mid.i,j:mid.j+1},x:mid.x,z:mid.maxZ+.4,addr:'工業路 119 號',state:'player',shown:true,age:0,lastHit:-99,spread:false,objs:[],nodes:[],by:null,want:null,high:false,chem:false,fx:{},
-    net:true,lvl:3,need:n,where:'factory',total:330,left:330}; const hp=Math.round(420*(.6+.5*n));
-  B3.forEach((b,bk)=>{ if(!b)return; const z=b.maxZ+.35, top=b.h+(b.gable?1:.4); [[0,1.2,z],[-b.w*.3,2.2,z],[b.w*.3,1.6,z],[0,top,b.z+b.d*.2]].forEach(s=>{ const nd=addNode(inc,b.x+s[0],s[1],s[2],hp); nd.i=inc.nodes.length-1; nd.bk=bk; if(bk!==1)nd.hp=0; }); });
-  inc.trap={state:'in',high:false,t:170,prog:0,hidden:false}; showTrap(inc);
-  if(!w.hyd.some(h=>Math.hypot(h.x-rx,h.z-rz)<17)){ const h={x:rx+4,z:rz+4}; w.hyd.push(h); addHydrantMesh(h); }
+  showBrief(lv==='cem'?'cem.jpg':'fac.jpg');
+  setTimeout(()=>{ if(!G.coop||!G.mission)return; toast('火勢強度 ×'+mm.toFixed(1)+'（依全隊的水量）','',3200);
+    if(lv==='fac'){ const ix=Math.max(0,order.indexOf(CO.me)), T=['正面組：壓住正面火場，掩護隊友入室救人','東側組：守住東側，別讓火燒到民宅','後方組：從後面道路攻堅，壓制後側火場'][ix%3]; setTimeout(()=>{ if(G.coop)toast('建議分工　'+T,'good big',5200) },3300); } },6700); }
+/* ============ 連線關卡一：連棟工廠大火（固定廠區地圖） ============ */
+const FAC={T:480,HP:190,E0:45,H0:55};
+/* 地圖格局固定：中間是兩排廠房（前排 A～D 棟、倉庫、原料倉，後排對應的後棟），四面都有路。東邊隔一條路是民宅，南邊是分隊 */
+function genFacMap(st,seed){
+  const rnd=mulberry32(seed), ri=(a,b)=>a+Math.floor(rnd()*(b-a+1)), f=(a,b)=>a+rnd()*(b-a), N=20, g=[]; for(let i=0;i<N;i++)g.push(new Array(N).fill(0));
+  [3,6,9,12,15].forEach(j=>{for(let i=0;i<N;i++)g[i][j]=1}); [0,4,11,19].forEach(i=>{for(let j=3;j<=15;j++)g[i][j]=1});
+  for(let i=8;i<=10;i++)for(let j=13;j<=14;j++)g[i][j]=2; for(let i=1;i<=2;i++)for(let j=13;j<=14;j++)g[i][j]=3;
+  const w={N,g,seed,st,LX:[0,4,11,19],LZ:[3,6,9,12,15],fac:true}; world=w;
+  w.station={i0:8,j0:13,w:3,h:2,cx:cx(8)+CS,cz:cx(13)+CS/2,W:3*CS}; w.station.front={i:9,j:15};
+  w.hosp={i0:1,j0:13,w:2,h:2,cx:cx(1)+CS/2,cz:cx(13)+CS/2}; w.hosp.drop={x:w.hosp.cx,z:w.hosp.cz+CS+5}; w.hosp.cell={i:1,j:15};
+  const TH=st.th||THEMES.tw, HC=TH.hc, HR=TH.hr;
+  w.blds=[]; w.parks=[]; w.bAt=[]; for(let i=0;i<N;i++)w.bAt.push(new Array(N).fill(null)); w.facPad=[];
+  for(let i=0;i<N;i++)for(let j=0;j<N;j++){ if(g[i][j]!==0)continue; if(j<=2||j>=17){w.parks.push({i,j,x:cx(i),z:cx(j)});continue}
+    if(i>=5&&i<=10&&(j===10||j===11)){ w.facPad.push({x:cx(i),z:cx(j)}); continue }   // 廠區前面是空地（停車場），鏡頭才看得到火場
+    const hall=i>=5&&i<=10&&(j===7||j===8), r=rnd(); let type=hall?'factory':(i>=12&&i<=14&&(j===7||j===8))?'house':r<.5?'house':r<.78?'shop':'office';
+    let bw,bd,fl,col,roof,gable=false;
+    if(type==='house'){bw=f(5.8,7.6);bd=f(5.8,7.2);fl=ri(1,2);col=HC[ri(0,HC.length-1)];roof=HR[ri(0,HR.length-1)];gable=rnd()<.55}
+    else if(type==='shop'){bw=8;bd=6.8;fl=ri(1,2);col=[0xf6e2b3,0xf2c9a6,0xcfe8e0,0xf4d0d8,0xe6e0d2][ri(0,4)];roof=0x7a7f88}
+    else if(type==='office'){bw=f(6.4,7.8);bd=f(6.4,7.4);fl=ri(2,3);col=[0xa9bfdc,0xd0dae8,0xbfd2c1,0xd9d2c4][ri(0,3)];roof=0x5b6578}
+    else {bw=8.6;bd=7.8;fl=1;col=[0xc2c2ba,0xb1bcc5,0xcbc0ad][(i+j)%3];roof=0x6f7f95;gable=true}
+    const bh=type==='factory'?4.4:fl*2.5+.4, x=cx(i), z=cx(j);
+    const b={i,j,type,zone:hall?'ind':'res',x,z,w:bw,d:bd,h:bh,fl,col,roof,gable,door:hall?1:ri(0,2),sign:TH.signs[ri(0,TH.signs.length-1)],tower:rnd()<.6,
+      minX:x-bw/2,maxX:x+bw/2,minZ:z-bd/2,maxZ:z+bd/2,south:j+1<N&&g[i][j+1]===1,burnt:false,idx:w.blds.length};
+    b.doorX=type==='house'||type==='office'?x+(b.door-1)*(bw/3.2):x; w.blds.push(b); w.bAt[i][j]=b; if(hall)w.facPad.push({x,z}); }
+  w.roads=[]; for(let i=0;i<N;i++)for(let j=0;j<N;j++)if(g[i][j]===1)w.roads.push({i,j,x:cx(i),z:cx(j)});
+  w.hyd=[[6,9,0,-4],[9,9,0,-4],[5,6,0,4],[9,6,0,4],[11,8,-4,0],[4,7,4,0],[11,15,4,-4],[7,15,-4,-4],[11,4,-4,0]].map(([i,j,dx,dz])=>({x:cx(i)+dx,z:cx(j)+dz}));
+  w.fac={front:[5,6,7,8,9,10].map(i=>w.bAt[i][8]),back:[5,6,7,8,9,10].map(i=>w.bAt[i][7]),houses:[w.bAt[12][7],w.bAt[12][8]],names:['A棟','B棟','C棟','D棟','倉庫','化學原料']};
+  const S0=w.station, hw=S0.W/2;
+  w.extra=[{minX:S0.cx-hw,maxX:S0.cx+hw,minZ:S0.cz-10,maxZ:S0.cz-9.5},{minX:S0.cx-hw,maxX:S0.cx-hw+.5,minZ:S0.cz-10,maxZ:S0.cz-1},{minX:S0.cx+hw-.5,maxX:S0.cx+hw,minZ:S0.cz-10,maxZ:S0.cz-1},
+    {minX:w.hosp.cx-8,maxX:w.hosp.cx+8,minZ:w.hosp.cz-9,maxZ:w.hosp.cz+2}];
+  return w;
+}
+/* 四組火點：0 正面（A～C 棟前面）、1 後方（後棟）、2 東側（D 棟、倉庫、原料倉，延燒才起火）、3 東邊民宅（再延燒）。房主算延燒，大家照同步的血量畫 */
+function coopIncident(seed,n,m){ m=m||1; const w=world, F=w.fac, K=FAC.HP*n*Math.pow(m,.75), T=Math.round(clamp(FAC.T+150*m,540,960)), mid=F.front[1];
+  const inc={id:incId++,kind:'fire',sub:'連棟工廠大火',desc:'正面和後面同時起火，屋內有人受困',xp:800,b:mid,road:{i:mid.i,j:mid.j+1},x:mid.x,z:mid.maxZ+.4,addr:'工業路 119 號',state:'player',shown:true,age:0,lastHit:-99,spread:false,objs:[],nodes:[],by:null,want:null,high:false,chem:false,fx:{},
+    net:true,fac:true,lvl:3,need:n,where:'factory',total:T,left:T,n,m,gp:[[],[],[],[]],eT:0};
+  const add=(g,x,y,z,hp,high)=>{ const nd=addNode(inc,x,y,z,Math.round(hp),{high}); nd.i=inc.nodes.length-1; nd.gp=g; inc.gp[g].push(nd); if(g>=2)nd.hp=0; return nd; };
+  const face=(g,b,side,cnt,k)=>[[0,1.2],[-.3,2.2],[.3,1.6]].slice(0,cnt).forEach(q=>add(g,b.x+q[0]*b.w,q[1],side>0?b.maxZ+.35:b.minZ-.35,K*k)), roof=(g,b,side)=>add(g,b.x,b.h+(b.gable?1:.4),b.z+side*b.d*.2,K*.6,true);
+  [0,1,2].forEach(k=>{ face(0,F.front[k],1,3,1); roof(0,F.front[k],1); face(1,F.back[k],-1,3,1); roof(1,F.back[k],-1); });
+  [3,4,5].forEach(k=>{ face(2,F.front[k],1,2,1); face(2,F.back[k],-1,2,1); });
+  [F.front[5],F.back[5]].forEach(b=>[[1.4,-1.2],[2.4,1.2]].forEach(q=>add(2,b.maxX+.35,q[0],b.z+q[1],K))); roof(2,F.front[3],1); roof(2,F.back[3],-1);
+  F.houses.forEach(b=>[[1.6,-1],[2.6,1]].forEach(q=>add(3,b.minX-.35,q[0],b.z+q[1],K)));
+  F.front.forEach((b,k)=>{ const t=textSprite(F.names[k],k<3?'#2f6fd0':k<5?'#7a7f88':'#2fa36b','#ffffff',4.4,1.5); t.position.set(b.x,b.h+3.4,b.z); WG.add(t); inc.objs.push(t); });
+  [['①正面組',F.front[1].x,F.front[1].maxZ+5],['②東側組',F.front[5].maxX+7,F.front[5].z-4],['③後方組',F.back[1].x,F.back[1].minZ-5]].forEach(q=>{ const t=textSprite(q[0],'#d8322a','#ffffff',4.6,1.5); t.position.set(q[1],7,q[2]); WG.add(t); inc.objs.push(t); });
+  inc.trap={state:'in',high:false,t:300,prog:0,hidden:false}; showTrap(inc);
   const mk=textSprite('火','#df3a2c','#ffffff',5.4,5.4,true); mk.position.set(inc.x,Math.max(10,mid.h+6),inc.z); WG.add(mk); inc.marker=mk; inc.objs.push(mk); G.incidents.push(inc); return inc; }
+/* 房主：東側在 45 秒後（或正面和後方都快滅了）燒起來；東側起火後再過 55 秒、火還在，就延燒到民宅 */
+function facHost(inc,dt){ const c=CO, gp=inc.gp, fr=g=>{ let a=0,b=0; gp[g].forEach(q=>{a+=Math.max(0,q.hp);b+=q.max}); return b?a/b:0 }, ign=g=>gp[g].forEach(q=>{q.hp=q.max;q.lh=G.t});
+  if(!(c.sp&1)){ const a=(fr(0)*gp[0].length+fr(1)*gp[1].length)/(gp[0].length+gp[1].length); if(G.t>=FAC.E0||a<.4){ c.sp|=1; inc.eT=G.t; ign(2); toast('延燒到 D 棟！東側也起火了！','bad big',3200); Snd.fail(); } }
+  else if(!(c.sp&2)&&G.t-inc.eT>=FAC.H0&&fr(2)>.15){ c.sp|=2; ign(3); toast('火勢延燒到東邊民宅！','bad big',3200); Snd.fail(); } }
+/* 每台：箭頭和拿水帶的距離跟著離自己最近的火點 */
+const gpPct=(inc,g)=>{ let a=0,b=0; inc.gp[g].forEach(q=>{a+=Math.max(0,q.hp);b+=q.max}); return b?Math.round(a/b*100):0 };
+function facAim(inc){ const P=G.player, o=P.veh?P.veh:P; let best=null,bd=1e9; inc.nodes.forEach(n=>{ if(n.hp<=0)return; const d=Math.hypot(n.x-o.x,n.z-o.z); if(d<bd){bd=d;best=n} }); if(best){inc.x=best.x;inc.z=best.z} }
 function coopNet(raw){ const c=CO, R=c.room, P=G.player, U=G.unit, inc=G.mission&&G.mission.inc; if(!inc||!U)return; const base='rooms/'+c.code, N=inc.nodes, Pm=R.p||{}, tr=inc.trap, gdt=Math.min(.05,raw);
   c.sendT-=raw; if(c.sendT<=0){ c.sendT=.15; const V=U.veh, onL=!!(P.lad&&V.bkt), f=(P.veh?1:0)|(P.spray?2:0)|((G.indoor||P.sleep)?4:0)|(V.lights?8:0)|(onL?16:0), r2=v=>Math.round(v*100)/100;
     const s={q:c.q+1,rd:c.rd,x:r2(onL?V.bkt.x:P.x),z:r2(onL?V.bkt.z:P.z),h:r2(P.h),vx:r2(V.x),vz:r2(V.z),vh:r2(V.h),f,d:c.dmg.map(v=>Math.round(v)),r:c.myRes?1:0,wt:V.type==='res'?Math.round(V.water):undefined}, key=JSON.stringify([s.x,s.z,s.h,s.vx,s.vz,s.vh,f,s.d,s.r]);
@@ -2193,9 +2243,8 @@ function coopNet(raw){ const c=CO, R=c.room, P=G.player, U=G.unit, inc=G.mission
     Object.keys(c.rem).forEach(pid=>{ const p=Pm[pid]||{}, s=p.s; if(!s||s.rd!==c.rd)return; const seen=c.seen[pid]||(c.seen[pid]=[]), st=c.stat[pid]||(c.stat[pid]={dmg:0,res:0});
       (s.d||[]).forEach((cum,i)=>{ const d=(cum||0)-(seen[i]||0); if(d<0){seen[i]=cum||0;return} if(d>0&&N[i]){ seen[i]=cum; st.dmg+=d; if(N[i].k==='s')st.sp=(st.sp||0)+d; if(N[i].hp>0){N[i].hp-=d;N[i].lh=G.t;inc.lastHit=G.t} } });
       if(tr&&s.r&&tr.state==='in'){ st.res=1; c.by=p.n||'隊友'; rescueTrap(inc,c.by,false,true); } });
-    if(inc.cem)cemHost(inc,gdt); else { N.forEach(n=>{ if(n.hp>0&&n.hp<n.max&&G.t-(n.lh||0)>3)n.hp=Math.min(n.max,n.hp+3*gdt) });
-    c.spT+=gdt; [0,2].forEach((bk,j)=>{ const bit=1<<j; if((c.sp&bit)||c.spT<28+j*26)return; if(N.filter(n=>n.bk===1&&n.hp>0).length<2||!N.some(n=>n.bk===bk))return; c.sp|=bit; N.forEach(n=>{if(n.bk===bk){n.hp=n.max*.7;n.lh=G.t}}); toast('延燒到隔壁了！','bad big',3000); Snd.fail(); }); }
-    const out=!N.some(n=>n.hp>0), late=inc.left<=0, lose=!!inc.cem&&inc.lost>=CEM.LOSE;
+    if(inc.cem)cemHost(inc,gdt); else { N.forEach(n=>{ if(n.hp>0&&n.hp<n.max&&G.t-(n.lh||0)>3)n.hp=Math.min(n.max,n.hp+3*gdt) }); facHost(inc,gdt); }
+    const out=!N.some(n=>n.hp>0)&&(!inc.fac||(c.sp&1)), late=inc.left<=0, lose=!!inc.cem&&inc.lost>=CEM.LOSE;
     if((out||late||lose)&&!c.ending){ c.ending=true; if(tr&&out&&tr.state==='in')rescueTrap(inc,'',true); const fr=inc.left/inc.total, per={}; c.stat[c.me]=c.stat[c.me]||{dmg:0,res:0};
       Object.keys(c.stat).forEach(pid=>{ per[pid]={n:String((Pm[pid]||{}).n||'隊友').slice(0,8),dmg:Math.round(c.stat[pid].dmg),res:c.stat[pid].res||0,sp:inc.cem?Math.round((c.stat[pid].sp||0)/inc.sprites[0].max):0} });
       const res=inc.cem?cemResult(inc,out&&!lose,per):{ok:out,stars:out?Math.max(1,(fr>.5?5:fr>.36?4:fr>.22?3:fr>.1?2:1)-(tr.state==='hurt'?1:0)):0,left:Math.max(0,Math.round(inc.left)),trap:tr.state,per};
@@ -2203,10 +2252,10 @@ function coopNet(raw){ const c=CO, R=c.room, P=G.player, U=G.unit, inc=G.mission
     c.wT-=raw; if(c.wT<=0){ c.wT=.25; RT.put(base+'/w',Object.assign({q:++c.wq,rd:c.rd,hp:N.map(n=>Math.max(0,Math.round(n.hp))),left:Math.round(inc.left)},inc.cem?cemPack(inc):{trap:tr.state,tt:Math.round(tr.t),by:c.by||'',sp:c.sp})).catch(()=>{}); } }
   else { const w=R.w; if(w&&w.rd===c.rd&&w.q!==c.wSeen){ c.wSeen=w.q; const hp=w.hp||[]; N.forEach((n,i)=>{ const h=hp[i]||0; if(h<n.hp||G.t-(n.lh||-9)>1.2)n.hp=h; }); inc.left=w.left; if(inc.cem)cemApply(inc,w); else { tr.t=w.tt;
       if(w.trap==='safe'&&tr.state==='in')rescueTrap(inc,w.by||'隊友',false,true); else if(w.trap==='hurt'&&tr.state==='in')hurtTrap(inc);
-      if((w.sp|0)!==c.sp){ c.sp=w.sp|0; toast('延燒到隔壁了！','bad big',3000); Snd.fail(); } } } } }
+      if((w.sp|0)!==c.sp){ const nb=(w.sp|0)&~c.sp; c.sp=w.sp|0; toast(nb&1?'延燒到 D 棟！東側也起火了！':'火勢延燒到東邊民宅！','bad big',3000); Snd.fail(); } } } } }
 function coopEnd(res){ const P=G.player, inc=G.mission&&G.mission.inc; $('brief').hidden=true; if(G.indoor)exitIndoor(true); if(P.lad)ladderDown(); P.hose=null; P.veh=null; P.carry=false; if(inc)closeIncident(inc); G.mission=null; G.unit=null; G.coop=false; stopLoops(); G.mode='net'; $('hud').hidden=true;
   Object.keys(CO.rem).forEach(pid=>WG.remove(CO.rem[pid].mesh)); CO.rem={}; let c=0;
-  if(!res.abort){ const me=(res.per||{})[CO.me]||{dmg:0,res:0}, tot=Object.keys(res.per||{}).reduce((a,k)=>a+(res.per[k].dmg||0),0)||1; c=res.lv==='cem'?(res.ok?160+res.stars*50+Math.round(140*(me.dmg||0)/tot)+(me.sp||0)*15:50):res.ok?120+res.stars*40+Math.round(120*(me.dmg||0)/tot)+(me.res?80:0):40; coin(c); S.stats.coop=(S.stats.coop||0)+1; bump(); persist(true); if(res.ok)Snd.promo(); else Snd.fail(); }
+  if(!res.abort){ const me=(res.per||{})[CO.me]||{dmg:0,res:0}, tot=Object.keys(res.per||{}).reduce((a,k)=>a+(res.per[k].dmg||0),0)||1; c=res.lv==='cem'?(res.ok?160+res.stars*50+Math.round(140*(me.dmg||0)/tot)+(me.sp||0)*15:50):res.ok?120+res.stars*40+Math.round(120*(me.dmg||0)/tot)+(me.res?80:0):40; c=Math.round(c*(.75+.25*((G.coopCfg&&G.coopCfg.m)||1))); coin(c); S.stats.coop=(S.stats.coop||0)+1; bump(); persist(true); if(res.ok)Snd.promo(); else Snd.fail(); }
   CO.res=res; CO.coin=c; renderNet(); show('ovNet'); }
 $('bNet').addEventListener('click',()=>{Snd.init();Snd.click();openNet()});
 $('bNCreate').addEventListener('click',()=>{Snd.click();netCreate()});
@@ -2222,8 +2271,12 @@ addEventListener('pagehide',()=>{ if(CO){ const c=CO; (c.host?RT.del('rooms/'+c.
    所以射水、傷害回報、血量同步都沿用原本連線的流程。節點的 k：'w' 雜草火堆、'h' 民宅、's' 小火人。 */
 const COOP_CEM=Object.assign({},COOP_ST,{cem:true,grid:20});
 const CEM={T:480,LOSE:3,SP:6};
+/* 火勢強度：依全隊帶的車算「供水分數」，水越多火越大。全部小水箱車＝1 倍；水庫車的水會一直補給別人，分數特別高。上限 5 倍 */
+const WSC={small:100,mid:180,panther:380,chem:170,ladder:90,res:1150,rescue:0,support:0};
+function coopMult(types){ const n=Math.max(1,types.length); let W=0; types.forEach(t=>{W+=WSC[t]||0}); return clamp(1+.45*Math.log(Math.max(.3,W/(n*100))),.6,5); }
+const COOP_FAC=Object.assign({},COOP_ST,{fac:true,grid:20});
 const COOP_LV={cem:{n:'清明公墓火警',d:'雜草火會一直延燒，還會跑出小火人去點民宅。要有人顧水、有人打火、有人守住右邊的民宅。'},
-               fac:{n:'連棟工廠大火',d:'三棟相連的工廠，屋內有人受困。要有人接消防栓顧水、有人射水、有人入室救人。'}};
+               fac:{n:'連棟工廠大火',d:'大型廠區正面和後面同時起火，屋內有人受困，東側還有 D 棟和民宅會被延燒。分三組：正面壓制（含入室救人）、東側防線、後方攻堅，記得接消防栓顧水。'}};
 /* 地圖格局固定：北邊雜草地（4）、中間公墓（5）、東邊民宅、南邊分隊和大馬路；只有房子的樣子跟著種子變 */
 function genCemMap(st,seed){
   const rnd=mulberry32(seed), ri=(a,b)=>a+Math.floor(rnd()*(b-a+1)), f=(a,b)=>a+rnd()*(b-a), N=20, g=[]; for(let i=0;i<N;i++)g.push(new Array(N).fill(0));
@@ -2289,20 +2342,20 @@ function cemGeo(){ if(CEMG)return CEMG; FVC=new THREE.MeshBasicMaterial({vertexC
       B(0x4a2410,.22,.55,.22,-.33,.27,0),B(0x4a2410,.22,.55,.22,.33,.27,0),B(0x4a2410,.3,.14,.44,-.33,.07,.1),B(0x4a2410,.3,.14,.44,.33,.07,.1)])),
     weed:keep(merge([[0,0],[1.2,.5],[-1.1,.7],[.6,-1.2],[-.8,-1],[1.9,-.6],[-2,-.2],[.2,1.7],[-1.4,1.9]].map(([x,z],k)=>{const h=1.6+(k%3)*.5;return Ko([0xc9b458,0xa9a84a,0xd6c46a][k%3],.8,h,x,h/2,z)}))),
     char:new THREE.MeshBasicMaterial({color:0x2b2622,transparent:true,opacity:.82,depthWrite:false}) }; KEEP.add(CEMG.char); return CEMG; }
-function cemIncident(seed,n){ const Gm=cemGeo(), rnd=mulberry32(seed^0x2545f49), f=(a,b)=>a+rnd()*(b-a), w=world, K=.5+.4*n;
+function cemIncident(seed,n,m){ m=m||1; const Gm=cemGeo(), rnd=mulberry32(seed^0x2545f49), f=(a,b)=>a+rnd()*(b-a), w=world, K=(.2+.48*n)*Math.pow(m,.75), T=Math.round(clamp(600+260*(m-1),600,1000)), sm=Math.sqrt(m);
   const inc={id:incId++,kind:'fire',sub:'清明公墓火警',desc:'雜草火延燒中',xp:900,b:null,road:{i:7,j:6},x:cx(7),z:cx(1),addr:'清明公墓',state:'player',shown:true,age:0,lastHit:-99,spread:false,objs:[],nodes:[],by:null,want:null,high:false,chem:false,fx:{},
-    net:true,cem:true,lvl:2,need:n,where:'field',total:CEM.T,left:CEM.T,n,spots:[],houses:[],sprites:[],lost:0,spn:0,spT:24,grace:16,sprT:34/(.8+.1*n),spCap:[2,2,3,4,4,5][Math.min(5,n-1)],spMax:5+3*n,spSpeed:3.2+.1*n,ev:{t:0},cnt:{burn:0,imps:0},ff:1};
+    net:true,cem:true,lvl:2,need:n,where:'field',total:T,left:T,n,m,minIgn:Math.min(26,18+Math.round(2*(m-1))),spots:[],houses:[],sprites:[],lost:0,spn:0,spT:24,grace:16,sprT:34/(.8+.1*n)/sm,spCap:Math.min(CEM.SP,[2,2,3,4,4,5][Math.min(5,n-1)]+Math.round((m-1)*1.2)),spMax:Math.round((5+3*n)*Math.pow(m,.6)),spSpeed:Math.min(5.2,3.2+.1*n+.25*(m-1)),ev:{t:0},cnt:{burn:0,imps:0},ff:1};
   const node=(k,x,y,z,hp,geo)=>{ const m=new THREE.Mesh(geo,FVC); m.position.set(x,y,z); m.visible=false; WG.add(m); const nd={k,x,y,z,hp:0,max:Math.round(hp),m,i:inc.nodes.length,ph:rnd()*9,lh:-9}; inc.nodes.push(nd); return nd; };
   // 雜草火堆的候選位置：雜草地 7×3 個、公墓裡 8 個。雜草地和公墓中間隔著一條路，火過不去，只有小火人會把火帶過去
-  const spot=(x,z,big)=>{ const s=node('w',x,0,z,220*K*(big?1.6:1),Gm.fire); s.big=big; s.bt=f(0,9); s.was=false; s.out=false;
+  const spot=(x,z,big)=>{ const s=node('w',x,0,z,1100*K*(big?1.6:1),Gm.fire); s.big=big; s.bt=f(0,9); s.was=false; s.out=false;
     const wd=new THREE.Mesh(Gm.weed,VC); wd.position.set(x,0,z); wd.rotation.y=f(0,6); wd.scale.setScalar(big?1.5:1.15); WG.add(wd); inc.objs.push(wd); s.wd=wd;
     const dc=new THREE.Mesh(blobGeo,Gm.char); dc.position.set(x,.07,z); dc.scale.set(big?7.5:6,1,big?7.5:6); dc.visible=false; WG.add(dc); inc.objs.push(dc); s.dec=dc; inc.spots.push(s); return s; };
   for(let r=0;r<3;r++)for(let c=0;c<7;c++)spot(cx(.5+c*2)+f(-2.5,2.5),cx(.5+r*2)+f(-2.5,2.5),r===0&&c%3===1);
   [1.5,4.5,9.5,12.2].forEach(a=>[7.9,10.6].forEach(b=>spot(cx(a)+f(-1.5,1.5),cx(b)+f(-1.5,1.5),false)));
   inc.spots.forEach((s,k)=>{ if(k<7||k===10){ s.hp=s.max; s.was=true; } });   // 一開始：最北邊一整排加中間一堆，共 8 個
-  w.cemH.forEach(b=>{ const nd=node('h',b.minX-.35,1.9,b.z,260*K,Gm.fire), mk=textSprite('!','#ff7a1a','#ffffff',3.2,3.2,true); mk.position.set(b.x,b.h+4.2,b.z); mk.visible=false; WG.add(mk); inc.objs.push(mk);
+  w.cemH.forEach(b=>{ const nd=node('h',b.minX-.35,1.9,b.z,420*K,Gm.fire), mk=textSprite('!','#ff7a1a','#ffffff',3.2,3.2,true); mk.position.set(b.x,b.h+4.2,b.z); mk.visible=false; WG.add(mk); inc.objs.push(mk);
     const H={b,node:nd,heat:0,dmg:0,burnt:false,mk,px:b.minX-1.5,pz:b.z,st:0}; nd.H=H; inc.houses.push(H); });
-  for(let k=0;k<CEM.SP;k++){ const s=node('s',0,0,0,90*K,Gm.imp), t=makeLabel(256,64,2.9,.72,3.9); s.m.add(t.sp); drawTag(t,'小火人','#d8322a'); s.h=0; s.ig=0; s.tg=null; s.wait=0; inc.sprites.push(s); }
+  for(let k=0;k<CEM.SP;k++){ const s=node('s',0,0,0,150*K,Gm.imp), t=makeLabel(256,64,2.9,.72,3.9); s.m.add(t.sp); drawTag(t,'小火人','#d8322a'); s.h=0; s.ig=0; s.tg=null; s.wait=0; inc.sprites.push(s); }
   inc.fmax=inc.spots.reduce((a,s)=>a+s.hp,0); G.incidents.push(inc); return inc; }
 /* 小火人找下一個目標：還沒燒過的雜草，或還沒起火的民宅（民宅比較吸引它） */
 function cemPick(inc,s){ const taken=new Set(inc.sprites.filter(q=>q!==s&&q.hp>0&&q.tg).map(q=>q.tg)); let best=null,bs=1e9;
@@ -2314,9 +2367,10 @@ function cemHost(inc,dt){ const now=G.t, W=inc.spots, SP=inc.sprites, n=inc.n; i
   W.forEach(s=>{ if(s.hp<=0){ if(s.was)s.out=true; return; } s.was=true; const idle=now-(s.lh||-9)>3; if(idle&&s.hp<s.max)s.hp=Math.min(s.max,s.hp+2.5*dt); if(!go)return;
     if(idle&&s.hp>s.max*.5){ s.bt+=dt; if(s.bt>inc.sprT){ s.bt=0; let b=null,bd=27; W.forEach(q=>{ if(q.hp>0||q.was)return; const d=Math.hypot(q.x-s.x,q.z-s.z)-(q.z>s.z?3:0)-(q.x>s.x?2:0); if(d<bd){bd=d;b=q} }); if(b){b.hp=b.max*.5;b.was=true;b.bt=0;b.lh=now-1.5} } }
     else s.bt=Math.max(0,s.bt-dt*.5); });
+  if(go&&!W.some(s=>s.hp>0)&&!SP.some(s=>s.hp>0)&&W.filter(s=>s.was).length<inc.minIgn){ inc.reT=(inc.reT==null?4:inc.reT)-dt; if(inc.reT<=0){ inc.reT=5; const c=W.filter(s=>!s.was); if(c.length){ const ls=W.filter(s=>s.was)[Math.floor(Math.random()*W.filter(s=>s.was).length)]||c[0]; c.sort((a,b)=>Math.hypot(a.x-ls.x,a.z-ls.z)-Math.hypot(b.x-ls.x,b.z-ls.z)); const b=c[0]; b.hp=b.max*.6; b.was=true; b.bt=0; b.lh=now-1.5; toast('風一吹，又有新的火點復燃了！','bad',2400); } } }
   if(go){ inc.spT-=dt; if(inc.spT<=0){ inc.spT=3; const alive=SP.filter(s=>s.hp>0).length, sl=SP.find(s=>s.hp<=0);
       if(sl&&alive<inc.spCap&&inc.spn<inc.spMax){ let src=null,bs=-1e9; W.forEach(q=>{ if(q.hp<q.max*.6||now-(q.lh||-9)<3)return; const sc=q.x+q.z+R(0,40); if(sc>bs){bs=sc;src=q} });
-        if(src){ src.hp*=.75; sl.hp=sl.max; sl.x=src.x; sl.z=src.z+1.5; sl.h=0; sl.ig=0; sl.tg=null; sl.wait=1.2; sl.lh=now; inc.spn++; inc.spT=R(17,25)/(.75+.12*n); } } } }
+        if(src){ src.hp*=.75; sl.hp=sl.max; sl.x=src.x; sl.z=src.z+1.5; sl.h=0; sl.ig=0; sl.tg=null; sl.wait=1.2; sl.lh=now; inc.spn++; inc.spT=R(17,25)/(.75+.12*n)/Math.sqrt(inc.m||1); } } } }
   SP.forEach(s=>{ if(s.hp<=0){s.tg=null;return} if(s.wait>0){s.wait-=dt;return}
     let t=s.tg; if(!t||(t.H?(t.H.burnt||t.hp>0):(t.hp>0||t.was))){ t=s.tg=cemPick(inc,s); if(!t){s.hp=0;return} }
     const H=t.H, tx=H?H.px:t.x, tz=H?H.pz:t.z, dx=tx-s.x, dz=tz-s.z, d=Math.hypot(dx,dz);
