@@ -1554,11 +1554,13 @@ function getUse(){ const P=G.player, U=G.unit, M=G.mission; if(G.mode!=='duty'||
     if(P.carry)return null;
     if(inc&&inc.kind==='ems'&&inc.patient.state==='ground'&&inc.patient.treated&&dist(P,inc.patient)<3)return {label:'抬上<br>擔架',fn(){inc.patient.state='carried';P.carry=true;Snd.click()}};
     if(inc&&inc.snake&&dist(P,inc.snake)<2.6)return {label:'抓蛇',fn(){const s=inc.snake; if(s.miss<2&&Math.random()<.65){s.miss++;s.dash=1.2;s.h=Math.atan2(s.x-P.x,s.z-P.z);say(P,'滑掉了！',1.8);Snd.boing()} else {say(P,'抓到了！',2);finishIncident(inc,true,U.mates,true)}}};
-    if(inc&&inc.kind!=='ems'){ if(P.hose&&P.hose.veh&&dV<4.2)return {label:'收水帶',fn(){P.hose=null;Snd.click()}};
+    if(inc&&inc.kind!=='ems'){ if(P.hose&&P.hose.veh&&dV<4.2)return {label:'收水帶',fn(){P.hose=null;P.stow=V;Snd.click()}};
+      if(P.stow===V&&!P.hose&&dV<4.8)return {label:'上車',fn(){P.stow=null;P.veh=V;if(V.type!=='panther')V.hyds=[];U.mates.forEach(c=>G.crewEnt[c.id].mode='hidden');Snd.door();if(inc&&V.type!=='amb')Snd.horn()}};
+      if(P.stow&&(P.stow!==V||dV>6))P.stow=null;
       if(inc.kind==='fire'){const h=V.hyds.length<HYD_MAX?nearestHyd(P,3.2,V.hyds):null; if(h&&Math.hypot(h.x-V.x,h.z-V.z)<30)return {label:'接<br>消防栓',fn(){V.hyds.push(h);Snd.ok();toast('已接上 '+V.hyds.length+' 個消防栓，慢慢補水（越多越快）','good',2600)}}}
       if(V.type==='ladder'&&inc.kind==='fire'&&!P.hose&&dV<4.8&&dist(V,inc)<17)return {label:'升雲梯',fn(){ladderUp(V,inc)}};
       if(!P.hose&&V.cap>0&&V.type!=='ladder'&&dV<4.8&&dist(V,inc)<26)return {label:'拿水帶',fn(){P.hose={veh:V};Snd.click()}}; }
-    if(dV<4.8&&!P.hose)return {label:'上車',fn(){P.veh=V;if(V.type!=='panther')V.hyds=[];U.mates.forEach(c=>G.crewEnt[c.id].mode='hidden');Snd.door();if(inc&&V.type!=='amb')Snd.horn()}};
+    if(dV<4.8&&!P.hose)return {label:'上車',fn(){P.stow=null;P.veh=V;if(V.type!=='panther')V.hyds=[];U.mates.forEach(c=>G.crewEnt[c.id].mode='hidden');Snd.door();if(inc&&V.type!=='amb')Snd.horn()}};
   }
   if(P.hose&&P.hose.reel){ if(dist(P,P.hose.reel)<3.2)return {label:'收水帶',fn(){P.hose=null;Snd.click()}}; return null; }
   if(P.hose)return null;
