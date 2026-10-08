@@ -372,8 +372,8 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
       <div class="cl"><input id="iCode" type="text" placeholder="輸入另一台裝置的接續碼" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="9"><button class="b sm" id="bLoad" type="button">載入</button></div>
       <p class="note" id="cStat">雲端：尚未連線</p>
       <p class="note">如果畫面會卡，把陰影關掉。進度會自動存在這台裝置，並同步到雲端。換裝置時，在新裝置的設定輸入接續碼按「載入」就能接著玩。值勤中也可以從這裡開排班表和分隊倉庫（點上方的「獎金」也行）。中途關掉，下次從當天早上重新值勤，經驗與聲望保留。</p>
-      <div class="btns"><button class="b" id="bWipe" type="button">刪除存檔重新開始</button></div>
       <p class="note">音樂：主畫面〈我怎麼在濟州島〉車干　Walk Around／day free (Free D)　夜の花 Night Blossom／音樂故事會 TAVC City Pop　Mysterious Sorrows／Aakash Gandhi　埃及進貢／胤樂音樂 InMusic Share</p>
+      <div style="text-align:right;margin-top:14px"><button id="bWipe" type="button" style="background:none;border:0;padding:4px 2px;font-size:11px;color:#b9b2a6;cursor:pointer;text-decoration:underline">刪除存檔重新開始</button></div>
     </div>
   </div></div>
 </div>
@@ -2087,8 +2087,8 @@ $('hCoin').addEventListener('click',()=>{ if(G.mode!=='duty'||G.coop||G.cardInc|
 $('pending').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const inc=G.incidents.find(i=>i.id===+b.dataset.i);if(inc&&inc.state==='pending'&&!G.cardInc&&!G.talking)openCard(inc)});
 
 /* ============ 設定 ============ */
-let menuFrom=null, wipeArm=false;
-function openMenu(){ if(G.mode==='menu')return; menuFrom={mode:G.mode}; G.mode='menu'; $('vMus').value=Snd.st.m*100; $('vSfx').value=Snd.st.s*100; $('bMute').textContent='靜音：'+(Snd.st.mute?'開':'關'); $('bShadow').textContent='陰影：'+(sun.castShadow?'開':'關'); $('bWipe').textContent='刪除存檔重新開始'; wipeArm=false; { const d=menuFrom.mode==='duty'&&!G.coop; $('bMSched').hidden=$('bMShop').hidden=!d; $('bHome').hidden=menuFrom.mode==='title'; $('bHome').textContent=CO?'離開連線房間':d?'回主畫面（今天從早上重來）':'回主畫面'; $('bAutoFull').textContent='自動全螢幕：'+(S.vol.full?'開':'關'); } $('cCode').textContent=fmtCode(S.code); Cloud.set(Cloud.st.ok,Cloud.st.msg); show('ovMenu'); }
+let menuFrom=null;
+function openMenu(){ if(G.mode==='menu')return; menuFrom={mode:G.mode}; G.mode='menu'; $('vMus').value=Snd.st.m*100; $('vSfx').value=Snd.st.s*100; $('bMute').textContent='靜音：'+(Snd.st.mute?'開':'關'); $('bShadow').textContent='陰影：'+(sun.castShadow?'開':'關'); { const d=menuFrom.mode==='duty'&&!G.coop; $('bMSched').hidden=$('bMShop').hidden=!d; $('bHome').hidden=menuFrom.mode==='title'; $('bHome').textContent=CO?'離開連線房間':d?'回主畫面（今天從早上重來）':'回主畫面'; $('bAutoFull').textContent='自動全螢幕：'+(S.vol.full?'開':'關'); } $('cCode').textContent=fmtCode(S.code); Cloud.set(Cloud.st.ok,Cloud.st.msg); show('ovMenu'); }
 function saveVol(){ if(S){S.vol.m=Snd.st.m;S.vol.s=Snd.st.s;S.vol.mute=Snd.st.mute;Save.save(S)} }
 $('bMenu').addEventListener('click',()=>{Snd.init();openMenu()});
 $('vMus').addEventListener('input',e=>{Snd.set('m',e.target.value/100);saveVol()});
@@ -2105,11 +2105,11 @@ $('bHome').addEventListener('click',()=>{ Snd.click(); if(CO)netLeave(); else go
 function goHome(){ persist(true); stopLoops(); inDuty=false; G.paused=false; G.talking=false; G.cardInc=null; G.sleep=false; $('sleepV').hidden=true; $('hud').hidden=true; try{ if(document.fullscreenElement||document.webkitFullscreenElement)(document.exitFullscreen||document.webkitExitFullscreen).call(document) }catch(e){}
   buildWorld(); G.mode='title'; $('bCont').hidden=false; $('bNew').textContent='重新開始'; $('bNew').className='b'; $('tSub').textContent=VERSION+'　第 '+S.day+' 天・'+ST().name+'・獎金 '+S.coin; show('ovTitle'); Snd.mode('calm'); }
 $('bCopy').addEventListener('click',()=>{ const t=fmtCode(S.code), done=()=>{$('bCopy').textContent='已複製';setTimeout(()=>$('bCopy').textContent='複製',1500)}; try{navigator.clipboard.writeText(t).then(done).catch(()=>{const r=document.createRange();r.selectNodeContents($('cCode'));const s=getSelection();s.removeAllRanges();s.addRange(r)})}catch(e){} });
-$('bLoad').addEventListener('click',()=>{ const code=$('iCode').value.toUpperCase().replace(/[^A-Z0-9]/g,''); if(code.length!==8){Cloud.set(false,'接續碼是 8 個英數字');return} Cloud.set(null,'讀取中…'); $('bLoad').disabled=true;
+$('bLoad').addEventListener('click',()=>{ const code=$('iCode').value.toUpperCase().replace(/[^A-Z0-9]/g,''); { const gm=/^GM(\d{1,6})$/.exec(code); if(gm&&S){ const n=+gm[1]; coin(n); bump(); persist(true); shopDirty=true; $('iCode').value=''; Cloud.set(true,'GM：獎金 +'+n+'（現有 '+S.coin+'）'); return } } if(code.length!==8){Cloud.set(false,'接續碼是 8 個英數字');return} Cloud.set(null,'讀取中…'); $('bLoad').disabled=true;
   Cloud.pull(code).then(c=>{ $('bLoad').disabled=false; if(!c||c.v!==1||!c.crew){Cloud.set(false,'找不到這組接續碼的存檔');return}
     const vol=S.vol; S=fixSave(c); S.code=code; S.vol=vol; uid=S.uid||100; Save.save(S); Cloud.mark(true,S.rev); stopLoops(); $('iCode').value=''; $('bCont').hidden=false; openSched(); buildWorld(); Cloud.set(true,'已載入：第 '+S.day+' 天・'+ST().name); })
   .catch(()=>{ $('bLoad').disabled=false; }); });
-$('bWipe').addEventListener('click',()=>{ if(!wipeArm){wipeArm=true;$('bWipe').textContent='再按一次確認刪除';return} Save.clear(); const vol=S.vol; S=freshSave(); S.vol=vol; Cloud.mark(true,-1); persist(true); stopLoops(); openSched(); buildWorld(); });
+$('bWipe').addEventListener('click',()=>{ if(!confirm('確定要刪除存檔重新開始嗎？\n\n獎金、車輛、消防衣、進度都會歸零。\n\n目前存檔的接續碼：'+fmtCode(S.code)+'\n若刪錯，用這組接續碼載入可救回。'))return; try{localStorage.setItem('ffcaptain_bak',JSON.stringify(S))}catch(e){} Save.clear(); const vol=S.vol; S=freshSave(); S.vol=vol; Cloud.mark(true,-1); persist(true); stopLoops(); openSched(); buildWorld(); });
 
 /* ============ 連線合作（Firebase Realtime Database，用 REST + EventSource，沒有載 SDK） ============
    rooms/{房號}/meta 房間狀態（房主寫）、p/{玩家}/ 名字車種與即時位置（各自寫）、w 火場狀態（房主寫）。
