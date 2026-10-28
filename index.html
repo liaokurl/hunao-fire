@@ -34,7 +34,7 @@ body{margin:0;background:var(--sky);color:var(--ink);font-family:var(--font);fon
 button{font-family:inherit;color:inherit;font-size:inherit}
 button:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 
-#hud{position:absolute;inset:0;pointer-events:none}
+#hud{position:absolute;inset:0;pointer-events:none;top:env(safe-area-inset-top,0px);right:env(safe-area-inset-right,0px);bottom:env(safe-area-inset-bottom,0px);left:env(safe-area-inset-left,0px)}
 #hud>*{pointer-events:auto}
 #top{position:absolute;left:8px;right:8px;top:6px;display:flex;gap:6px;align-items:stretch;flex-wrap:wrap}
 .pill{background:var(--paper);border-radius:10px;padding:4px 10px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px;
@@ -75,7 +75,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 @keyframes pop{from{transform:scale(.7);opacity:0}}
 #sleepV{position:absolute;inset:0;background:rgba(15,20,50,.5);display:grid;place-items:center;color:#fff;font-weight:900;font-size:26px;text-align:center;pointer-events:none!important;text-shadow:0 2px 6px rgba(0,0,0,.5)}
 
-.ov{position:absolute;inset:0;background:var(--shade);display:flex;align-items:center;justify-content:center;padding-block:10px;padding-inline:16px;
+.ov{position:absolute;inset:0;background:var(--shade);display:flex;align-items:center;justify-content:center;padding:max(10px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
   touch-action:pan-y;overflow:auto}
 .panel{background:var(--paper);border-radius:16px;box-shadow:0 8px 0 rgba(0,0,0,.25);width:min(100%,640px);max-height:100%;overflow:auto;-webkit-overflow-scrolling:touch}
 .ph{padding:10px 16px;color:#fff;background:var(--red);border-radius:16px 16px 0 0;display:flex;align-items:center;gap:10px;justify-content:space-between}
@@ -95,7 +95,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 .opt.cap.sel{border-color:var(--amber);background:#fff1cc}
 .opt.sulk small{color:var(--red-d)}
 .btns{display:flex;gap:8px;flex-wrap:wrap}
-.btns.stick{position:sticky;bottom:0;background:var(--paper);padding:8px 0 10px;margin-bottom:-14px;z-index:2}
+.btns.stick{position:sticky;bottom:0;background:var(--paper);padding:8px 0 10px;margin-bottom:-14px;z-index:2;-webkit-transform:translateZ(0);transform:translateZ(0)}   /* iOS：黏在底部的按鈕要獨立圖層，點擊位置才會跟畫面一致 */
 .b{flex:1;border:0;border-radius:12px;padding:11px 14px;font-weight:900;font-size:16px;cursor:pointer;background:var(--line);min-width:120px;box-shadow:0 4px 0 rgba(0,0,0,.18)}
 .b:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.18)}
 .b.go{background:var(--red);color:#fff} .b.teal{background:var(--teal);color:#fff}
@@ -103,7 +103,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 .note{font-size:12.5px;color:var(--mute);font-weight:700;margin:0;line-height:1.5}
 .warn{color:var(--red-d)}
 
-#ovTalk{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;padding-block:10px;padding-inline:16px;pointer-events:none}
+#ovTalk{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;padding:10px max(16px,env(safe-area-inset-right,0px)) max(10px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));pointer-events:none}
 #ovTalk .panel{pointer-events:auto;width:min(100%,560px);border:3px solid var(--ink)}
 .tk{padding:10px 14px 12px;display:flex;flex-direction:column;gap:8px}
 #tkName{font-weight:900;color:var(--red-d);font-size:13px;letter-spacing:.06em}
@@ -381,7 +381,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
 <script src="three.min.js"></script>
 <script>
 (()=>{'use strict';
-const VERSION='車干製V3.1';
+const VERSION='車干製V3.2';
 const $=id=>document.getElementById(id);
 (function cover(){ const t=$('ovTitle'), im=new Image(); im.onload=()=>{t.style.backgroundImage='url(cover.jpg)'}; im.onerror=()=>t.classList.add('nocover'); im.src='cover.jpg'; })();
 if(!window.THREE){ $('tSub').textContent='3D 元件載入失敗，請檢查網路後重新整理'; return; }
