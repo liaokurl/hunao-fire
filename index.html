@@ -99,7 +99,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 .b{flex:1;border:0;border-radius:12px;padding:11px 14px;font-weight:900;font-size:16px;cursor:pointer;background:var(--line);min-width:120px;box-shadow:0 4px 0 rgba(0,0,0,.18)}
 .b:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.18)}
 .b.go{background:var(--red);color:#fff} .b.teal{background:var(--teal);color:#fff}
-.b:disabled{opacity:.45;cursor:default}
+.b:disabled,.b.dim{opacity:.45;cursor:default}
 .note{font-size:12.5px;color:var(--mute);font-weight:700;margin:0;line-height:1.5}
 .warn{color:var(--red-d)}
 
@@ -381,7 +381,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
 <script src="three.min.js"></script>
 <script>
 (()=>{'use strict';
-const VERSION='車干製V3.0';
+const VERSION='車干製V3.1';
 const $=id=>document.getElementById(id);
 (function cover(){ const t=$('ovTitle'), im=new Image(); im.onload=()=>{t.style.backgroundImage='url(cover.jpg)'}; im.onerror=()=>t.classList.add('nocover'); im.src='cover.jpg'; })();
 if(!window.THREE){ $('tSub').textContent='3D 元件載入失敗，請檢查網路後重新整理'; return; }
@@ -425,7 +425,7 @@ const FIRE_T=[
 const SVC_T=[{sub:'捉蛇',xp:70,desc:'民宅前有蛇出沒',type:'snake'},{sub:'貓咪受困',xp:70,desc:'貓爬上樹不敢下來',type:'cat'},{sub:'車禍受困',xp:130,desc:'駕駛卡在車內出不來',type:'crash',need:3,want:'rescue'},
  {sub:'捕蜂',xp:80,desc:'屋簷下有虎頭蜂窩',type:'bee'},{sub:'路樹倒塌',xp:90,desc:'路樹倒在馬路上擋住車道',type:'tree'},{sub:'瓦斯外洩',xp:100,desc:'屋內有瓦斯味',type:'gas'},{sub:'電梯受困',xp:90,desc:'有人卡在電梯裡',type:'lift',minStage:1}];
 /* 按住就能完成的零星勤務：l 按鈕文字、d 秒數、say 完成時說的話 */
-const JOB={bee:{l:'噴除<br>蜂窩',d:5,say:'蜂窩清掉了！'},tree:{l:'鋸開<br>路樹',d:6,say:'路通了！'},gas:{l:'關閉<br>瓦斯',d:4,say:'瓦斯關好了，開窗通風'},lift:{l:'撬開<br>電梯門',d:5.5,say:'門開了，請慢慢出來'}};
+const JOB={bee:{l:'噴除<br>蜂窩',d:3,say:'蜂窩清掉了！'},tree:{l:'鋸開<br>路樹',d:3.6,say:'路通了！'},gas:{l:'關閉<br>瓦斯',d:2.5,say:'瓦斯關好了，開窗通風'},lift:{l:'撬開<br>電梯門',d:3.3,say:'門開了，請慢慢出來'}};
 /* 圳頂分隊的轄區用真實路名 */
 const ROADS_ZD=['埔頂路二段','仁善街','公園路','埔仁路','長興街二段','仁德二街','仁德六街','仁德南街','仁善一街','仁善二街','仁善三街','仁善七街','埔頂七街','埔頂八街','埔頂六街','埔頂五街','埔頂三街','埔頂二街','埔頂一街','埔頂街','員林路一段','仁和路一段','介壽路','長興街三段','埔頂路一段','仁和路二段'];
 const PETS=[['cat','波波'],['tabby','花花'],['tabby','捲捲']];
@@ -1537,7 +1537,8 @@ function renderCard(){ const inc=G.cardInc; if(!inc)return; const cs=capState(in
   if(inc.mci)note.textContent+='　一台救護車只能載 2 人，記得加派第二台，不然要多跑一趟。';
   if(inc.want&&!hasVeh(inc.want))note.textContent+='　這種案件最好有'+VEH[inc.want].n+'，沒有會慢很多。';
   if(S.crew.some(c=>c.mood<30&&!isBusy(c)))note.textContent+='　有人在鬧脾氣，先去找他聊聊才派得動。';
-  $('bSend').disabled=!hasV||n===0;
+  sel.why=!hasV?'目前沒有可用的'+(fire?'消防車':'救護車')+'，先按「稍後處理」，等車輛返隊再派':n===0?'還沒選人：至少選一名隊員，或選「隊長親自出勤」':null;
+  $('bSend').disabled=false; $('bSend').classList.toggle('dim',!!sel.why);   // 不用 disabled：按了要跳出原因，不然玩家以為沒反應
 }
 $('cVeh').addEventListener('click',e=>{const b=e.target.closest('.opt');if(!b||b.disabled)return;sel.veh=+b.dataset.v;Snd.click();renderCard()});
 $('cSup').addEventListener('click',e=>{const b=e.target.closest('.opt');if(!b)return;const id=+b.dataset.s;sel.sup.has(id)?sel.sup.delete(id):sel.sup.add(id);Snd.click();renderCard()});
@@ -1545,21 +1546,24 @@ $('cCrew').addEventListener('click',e=>{const b=e.target.closest('.opt');if(!b||
   if(b.dataset.cap){sel.cap=!sel.cap; if(capState(G.cardInc).unit&&!sel.cap){sel.veh=null}} else {const id=+b.dataset.c;sel.crew.has(id)?sel.crew.delete(id):sel.crew.add(id)} renderCard()});
 function closeCard(){ G.cardInc=null; G.paused=false; show(null); const nx=G.incidents.find(i=>i.state==='pending'&&!i.shown); if(nx)setTimeout(()=>{if(G.mode==='duty'&&!G.cardInc)openCard(nx)},350); }
 $('bLater').addEventListener('click',()=>{Snd.click();closeCard()});
-$('bSend').addEventListener('click',()=>{ const inc=G.cardInc; if(!inc)return;
-  const crew=S.crew.filter(c=>sel.crew.has(c.id)); crew.forEach(c=>{const r=roleOf(c);c.fat=clamp(c.fat+8+(r===3?12:0),0,100);if(r===3)mood(c,-8);G.crewEnt[c.id].busy=true});
+$('bSend').addEventListener('click',()=>{ const inc=G.cardInc; if(!inc){show(null);return}
+  if(sel.why){ toast(sel.why,'bad',2800); Snd.beep(); const nt=$('cNote'); if(nt&&nt.scrollIntoView)nt.scrollIntoView({block:'nearest',behavior:'smooth'}); return; }
+  try{ sendCard(inc); }catch(err){ console.error(err); toast('派遣時出了點問題，這件先改成稍後處理','bad',3000); closeCard(); } });
+function sendCard(inc){
+  const crew=S.crew.filter(c=>sel.crew.has(c.id)&&G.crewEnt[c.id]); crew.forEach(c=>{const r=roleOf(c);c.fat=clamp(c.fat+8+(r===3?12:0),0,100);if(r===3)mood(c,-8);G.crewEnt[c.id].busy=true});
   inc.by=crew; const stat=inc.kind==='ems'?'ems':'fire';
   if(sel.cap){ const P=G.player; if(P.hose&&P.hose.reel)P.hose=null;
-    if(!G.unit){const v=G.vehicles.find(v=>v.id===sel.veh);v.state='player';v.load=0;G.unit={veh:v,mates:[],out:false}}
+    if(!G.unit){const v=G.vehicles.find(v=>v.id===sel.veh); if(!v){toast('那台車已經不在車庫了，請重新選車','bad',2600);renderCard();return} v.state='player';v.load=0;G.unit={veh:v,mates:[],out:false}}
     G.unit.patrol=false; crew.forEach(c=>{G.unit.mates.push(c);G.crewEnt[c.id].mode='toVeh'}); inc.state='player'; G.mission={inc}; Snd.mode('go');
     toast(P.veh?'轉往下一件：'+inc.sub:'到車庫登上 '+G.unit.veh.label,'',2600); }
-  else { const v=G.vehicles.find(v=>v.id===sel.veh); v.state='ai'; inc.state='ai';
+  else { const v=G.vehicles.find(v=>v.id===sel.veh); if(!v||v.state!=='parked'||!crew.length){toast('車或人員已經不能出勤了，請重新選','bad',2600);renderCard();return} v.state='ai'; inc.state='ai';
     const m={inc,veh:v,crew,phase:'go',pi:0,workT:0}; const f=world.station.front; m.path=findPath(f.i,f.j,inc.road.i,inc.road.j);
     const drive=Math.max(...crew.map(c=>c.drive)); m.speed=12*(.7+drive/200);
     m.workDur=(inc.kind==='fire'?(10+9*inc.lvl):inc.cut?16:inc.mci?30:13)/Math.max(.25,eff(crew,stat,inc,false));
     crew.forEach(c=>G.crewEnt[c.id].mode='hidden'); G.ai.push(m); Snd.blip(v.type==='amb'?'amb':'fire'); if(v.type!=='amb')Snd.horn();
     toast(v.label+' 出勤：'+crew.map(c=>c.name).join('、'),'',2200); }
   [...sel.sup].forEach((id,k)=>{ const v=G.vehicles.find(v=>v.id===id); if(v&&v.state==='parked')sendSup(inc,v,k) });
-  closeCard(); });
+  closeCard(); }
 
 /* ============ 隊員自動出勤 ============ */
 function moveAlong(V,m,dt){ const p=m.path[m.pi]; if(!p)return true; const dx=p.x-V.x,dz=p.z-V.z,d=Math.hypot(dx,dz), stp=m.speed*dt;
@@ -1776,8 +1780,8 @@ function spawnEvent(force){ if(G.events.length>=2||!world)return null; const P=G
   if(!c.length)return null; const r=pick(c), type=force||pick(Object.keys(EV)), ev={id:evId++,type,x:r.x,z:r.z,t:type==='kid'?95:62,objs:[],prog:0};
   const add=m=>{WG.add(m);ev.objs.push(m);return m};
   if(type==='fire'){ ev.x=r.x+3.4; ev.z=r.z-3.4; add(vmeshAt([Cy(0xb5302a,1.1,1.3,0,.65,0),Cy(0xd9a441,1.2,.12,0,1.3,0),Cy(0xd9a441,1.2,.12,0,.2,0),Cy(0x222222,.8,.06,0,1.37,0)],ev.x,0,ev.z)); ev.fl=add(makeFlame()); ev.fl.position.set(ev.x,1.3,ev.z); ev.hp=3; ev.use='滅火器'; }
-  else if(type==='collapse'){ ev.x=r.x+3; ev.z=r.z+1.5; const m=add(makePerson(randomCiv())); m.rotation.x=-Math.PI/2; m.position.set(ev.x,.5,ev.z+.9); ev.act='CPR'; ev.dur=3.5; }
-  else if(type==='crash'){ const mk=(col,dx,dz,ry)=>{const m=add(new THREE.Mesh(carGeo('sedan',col),VC));m.castShadow=true;m.position.set(r.x+dx,0,r.z+dz);m.rotation.y=ry}; mk(0xe76f51,-1.2,.3,.6); mk(0x8ecae6,1.3,-.8,-2.2); ev.act='排除'; ev.dur=3; G.blockers.push(ev); }
+  else if(type==='collapse'){ ev.x=r.x+3; ev.z=r.z+1.5; const m=add(makePerson(randomCiv())); m.rotation.x=-Math.PI/2; m.position.set(ev.x,.5,ev.z+.9); ev.act='CPR'; ev.dur=2.2; }
+  else if(type==='crash'){ const mk=(col,dx,dz,ry)=>{const m=add(new THREE.Mesh(carGeo('sedan',col),VC));m.castShadow=true;m.position.set(r.x+dx,0,r.z+dz);m.rotation.y=ry}; mk(0xe76f51,-1.2,.3,.6); mk(0x8ecae6,1.3,-.8,-2.2); ev.act='排除'; ev.dur=2; G.blockers.push(ev); }
   else if(type==='pig'){ const m=add(animalMesh('pig')); ev.pig={mesh:m,x:r.x,z:r.z,h:R(0,6),y:0,vy:0,bubY:2.8,turn:0,dash:0,miss:0}; ev.use='抓豬'; }
   else if(type==='burst'){ ev.x=r.x-4; ev.z=r.z-4; add(new THREE.Mesh(world.hydGeo,VC)).position.set(ev.x,0,ev.z); ev.use='關水'; }
   else { const m=add(makePerson({civ:true,kind:'kid',suit:0xffca3a,pants:0x3d405b,hat:0xe63946,scale:.78})); ev.kid={mesh:m,x:r.x+3.5,z:r.z+3.5,h:0,walk:0,moving:false,bubY:3.6,cry:0}; ev.use='牽他走';
@@ -1872,7 +1876,7 @@ function updatePlayer(dt){ const P=G.player, j=Input.vec(), M=G.mission, inc=M&&
     if(!G.mission&&U.out&&inZone){ V.water=V.cap; P.veh=null; P.x=V.bay.x+2.6; P.z=s0.cz+8; releaseUnit(); Snd.door(); toast('返隊完成，車輛恢復待命','good',2200); }
     return; }
   const act=getAct(); let sp=7.6; if(P.carry)sp=G.unit&&G.unit.mates.length?5.6:3.9; else if(P.hose)sp=6.2; if(P.boost>0)sp*=1.35; if(P.slow>0)sp*=.55; if(inc&&inc.fx&&inc.fx.care&&dist(P,inc)<32)sp*=1.15;
-  if(act&&Input.act&&act.kind==='treat'){ sp=0; P.treat=true; const pt=inc.patient, n=G.unit?G.unit.mates.length:0; pt.prog+=dt/(4.6/(1+.5*n)); P.h=angLerp(P.h,Math.atan2(pt.x-P.x,pt.z-P.z),dt*10);
+  if(act&&Input.act&&act.kind==='treat'){ sp=0; P.treat=true; const pt=inc.patient, n=G.unit?G.unit.mates.length:0; pt.prog+=dt/(3.2/(1+.5*n)); P.h=angLerp(P.h,Math.atan2(pt.x-P.x,pt.z-P.z),dt*10);
     if(pt.prog>=1){pt.treated=true;Snd.ok();toast('傷患已穩定，抬上擔架送醫','good',2200)} }
   if(act&&Input.act&&act.kind==='coax'){ sp=0; P.treat=true; const c=inc.cat; c.prog+=dt/3.6; P.h=angLerp(P.h,Math.atan2(c.x-P.x,c.z-P.z),dt*10); if(!(c.bubT>0))say(c,pick(['喵…','喵？','…喵']),1.2); if(c.prog>=1){c.down=true;Snd.animal('cat')} }
   if(act&&Input.act&&act.kind==='ev'){ sp=0; P.treat=true; const ev=act.ev; ev.prog+=dt/ev.dur; P.h=angLerp(P.h,Math.atan2(ev.x-P.x,ev.z-P.z),dt*10); if(ev.prog>=1)finishEvent(ev,true); }
@@ -2084,7 +2088,7 @@ function updateHUD(){
 }
 $('hQuest').addEventListener('click',()=>{ if(!S.quest)return; Snd.click(); S.quest.q.forEach(x=>toast(QDEF[x.k].t(x.need)+'　'+(x.n>=x.need?'完成':x.n+'／'+x.need),x.n>=x.need?'good':'',3200)); });
 $('hCoin').addEventListener('click',()=>{ if(G.mode!=='duty'||G.coop||G.cardInc||G.talking)return; Snd.click(); openShop(); });
-$('pending').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const inc=G.incidents.find(i=>i.id===+b.dataset.i);if(inc&&inc.state==='pending'&&!G.cardInc&&!G.talking)openCard(inc)});
+$('pending').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const inc=G.incidents.find(i=>i.id===+b.dataset.i);if(!inc||G.cardInc)return; if(G.talking){toast('先把對話看完再派遣','',1800);return} if(inc.state!=='pending'){toast(inc.state==='player'?'這件是隊長在處理，跟著黃色箭頭去':'這件已經派人在處理了','',2000);return} openCard(inc); if(!G.cardInc)toast('現在不能派遣（'+(G.mode!=='duty'?'不在值勤中':'請稍後再試')+'）','',2000)});
 
 /* ============ 設定 ============ */
 let menuFrom=null;
