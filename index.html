@@ -70,7 +70,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 #bUse{right:128px;bottom:20px;width:82px;height:82px;background:var(--teal);font-size:15px}
 #toast{position:absolute;left:50%;top:86px;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(92%,460px);z-index:6}
 .tst{background:var(--ink);color:#fff;border-radius:10px;padding:7px 14px;font-weight:800;font-size:14px;text-align:center;animation:pop .25s}
-.tst.good{background:var(--teal)} .tst.bad{background:var(--red-d)} .tst.big{font-size:17px;padding:10px 18px} .tst.fun{background:var(--amber);color:var(--ink)}
+.tst.good{background:var(--teal)} .tst.bad{background:var(--red-d)} .tst.big{font-size:17px;padding:10px 18px;color:#fff;margin:0;text-align:center} .tst.fun{background:var(--amber);color:var(--ink)}
 .tst b{color:var(--amber);letter-spacing:.08em}
 @keyframes pop{from{transform:scale(.7);opacity:0}}
 #sleepV{position:absolute;inset:0;background:rgba(15,20,50,.5);display:grid;place-items:center;color:#fff;font-weight:900;font-size:26px;text-align:center;pointer-events:none!important;text-shadow:0 2px 6px rgba(0,0,0,.5)}
@@ -100,6 +100,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 .b:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.18)}
 .b.go{background:var(--red);color:#fff} .b.teal{background:var(--teal);color:#fff}
 .b:disabled,.b.dim{opacity:.45;cursor:default}
+button,.chip{touch-action:manipulation}
 .note{font-size:12.5px;color:var(--mute);font-weight:700;margin:0;line-height:1.5}
 .warn{color:var(--red-d)}
 
@@ -381,7 +382,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
 <script src="three.min.js"></script>
 <script>
 (()=>{'use strict';
-const VERSION='車干製V3.2';
+const VERSION='車干製V3.3';
 const $=id=>document.getElementById(id);
 (function cover(){ const t=$('ovTitle'), im=new Image(); im.onload=()=>{t.style.backgroundImage='url(cover.jpg)'}; im.onerror=()=>t.classList.add('nocover'); im.src='cover.jpg'; })();
 if(!window.THREE){ $('tSub').textContent='3D 元件載入失敗，請檢查網路後重新整理'; return; }
@@ -1136,6 +1137,13 @@ function syncAll(){ G.cars.forEach(put); G.vehicles.forEach(put); Object.values(
 const Input={jx:0,jy:0,act:false,keys:{},pid:null,ox:0,oy:0,
   vec(){let x=this.jx,y=this.jy;const k=this.keys,kx=(k.d||k.arrowright?1:0)-(k.a||k.arrowleft?1:0),ky=(k.w||k.arrowup?1:0)-(k.s||k.arrowdown?1:0);
     if(kx||ky){const m=Math.hypot(kx,ky);x=kx/m;y=ky/m} return {x,y,mag:Math.min(1,Math.hypot(x,y))}}};
+/* iOS：手指在可捲動的面板上點按鈕時，只要稍微動一下，Safari 就當成捲動而不送 click，玩家覺得「按了沒反應」。
+   改成：同一顆按鈕按下又放開、位移不大，就在放開時直接觸發；之後瀏覽器補送的那一次 click 吃掉，避免按兩次 */
+(function fastTap(){ let ft=null, fired=null; const sel='.ov button,#ovTalk button,#pending .chip,#hud button:not(#bUse):not(#bAct)';
+  document.addEventListener('pointerdown',e=>{ const b=e.target.closest&&e.target.closest(sel); ft=b?{b,x:e.clientX,y:e.clientY}:null; },true);
+  document.addEventListener('pointerup',e=>{ const f=ft; ft=null; if(!f||f.b.disabled||!document.contains(f.b))return; if(Math.hypot(e.clientX-f.x,e.clientY-f.y)>16)return; fired={b:f.b,t:performance.now()}; f.b.click(); },true);
+  document.addEventListener('pointercancel',()=>{ft=null},true);
+  document.addEventListener('click',e=>{ if(!e.isTrusted||!fired)return; const b=e.target.closest&&e.target.closest(sel); if(b&&performance.now()-fired.t<700){ e.stopPropagation(); e.preventDefault(); } fired=null; },true); })();   // 按鈕常在觸發後重畫，所以不比對是不是同一個元素
 (function bindInput(){
   const z=$('stickZone'), st=$('stick'), kn=st.firstElementChild, game=$('game');
   const end=e=>{ if(e.pointerId!==Input.pid)return; Input.pid=null; Input.jx=Input.jy=0; st.hidden=true; };
