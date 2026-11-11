@@ -100,6 +100,21 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
 .b:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.18)}
 .b.go{background:var(--red);color:#fff} .b.teal{background:var(--teal);color:#fff}
 .b:disabled,.b.dim{opacity:.45;cursor:default}
+.b.qz{background:linear-gradient(135deg,#ff9f1c,#ff5d2a);color:#fff} .b.qz small{display:block;font-size:11px;font-weight:700;opacity:.9}
+.ph.qz{background:linear-gradient(135deg,#ff8a1f,#e8452c)}
+#ovQuizQ,#ovQuizRes{z-index:8} #qqHead{font-size:17px} #qqTag{font-size:11.5px;font-weight:700;opacity:.9;text-align:right}
+#qqText{font-size:19px;font-weight:900;line-height:1.5;color:var(--ink);padding:4px 2px}
+#qqOpts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.qopt{display:flex;gap:8px;align-items:center;text-align:left;border:2px solid var(--line);background:#fff;border-radius:12px;padding:12px 12px;font-weight:800;font-size:16px;line-height:1.35;color:var(--ink);cursor:pointer;min-height:56px}
+.qopt b{flex:none;width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:13px}
+.qopt.right{border-color:#1f9d6b;background:#dff7ea} .qopt.right b{background:#1f9d6b}
+.qopt.bad{border-color:var(--red);background:#ffe1dc} .qopt.bad b{background:var(--red)}
+.qopt.off{opacity:.5}
+.qfb{border-radius:12px;padding:10px 12px;font-size:14.5px;line-height:1.55;font-weight:700}
+.qfb b{display:block;font-size:17px;margin-bottom:2px} .qfb.good{background:#dff7ea;color:#14603f} .qfb.bad{background:#ffe9e4;color:#9a2a1b}
+.qrw{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13.5px;line-height:1.5}
+.qrw .qq{font-weight:900} .qrw .qa{color:#14603f;font-weight:900} .qrw .qe{color:var(--mute);font-weight:700}
+@media (max-width:520px){#qqOpts{grid-template-columns:1fr}}
 button,.chip{touch-action:manipulation}
 .note{font-size:12.5px;color:var(--mute);font-weight:700;margin:0;line-height:1.5}
 .warn{color:var(--red-d)}
@@ -259,6 +274,7 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
         <button class="b go" id="bNew" type="button">開始遊戲</button>
         <button class="b" id="bTMap" type="button" hidden>選地圖</button>
         <button class="b teal" id="bNet" type="button">連線合作</button>
+        <button class="b qz" id="bQuiz" type="button">救火答題<small>複習自然・社會</small></button>
         <button class="b sm" id="bCode" type="button">接續碼</button>
       </div>
       <p class="how">左下搖桿移動與開車。綠色「互動」：靠近什麼就能做什麼（上下車、聊天、澆花、掃地、補眠）。紅色按住出水或急救，黃色是吹哨集合與按喇叭。桌機：WASD、E、空白鍵。</p>
@@ -361,6 +377,38 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
     </div></div>
   </div></div>
 
+  <div class="ov" id="ovQuiz" hidden><div class="panel">
+    <div class="ph qz"><h2>救火答題模式</h2><span>邊救火・邊複習</span></div>
+    <div class="pb">
+      <div class="sec">年級</div><div class="opts" id="qzG"></div>
+      <div class="sec">科目</div><div class="opts" id="qzS"></div>
+      <div class="sec">考試範圍（可以複選）</div><div class="opts" id="qzU"></div>
+      <div class="opts" id="qzW"></div>
+      <p class="note" id="qzNote"></p>
+      <div class="btns stick"><button class="b" id="bQzHome" type="button">回主畫面</button><button class="b go" id="bQzGo" type="button">開始救火</button></div>
+    </div>
+  </div></div>
+
+  <div class="ov" id="ovQuizQ" hidden><div class="panel">
+    <div class="ph qz"><h2 id="qqHead"></h2><span id="qqTag"></span></div>
+    <div class="pb">
+      <div id="qqText"></div>
+      <div id="qqOpts"></div>
+      <div id="qqFb" class="qfb" hidden></div>
+      <div class="btns stick"><button class="b go" id="bQqNext" type="button" hidden>繼續射水</button></div>
+    </div>
+  </div></div>
+
+  <div class="ov" id="ovQuizRes" hidden><div class="panel">
+    <div class="ph qz"><h2>火勢撲滅！</h2></div>
+    <div class="pb">
+      <div class="big" id="qrBig"></div>
+      <p class="note" id="qrNote"></p>
+      <div class="lst" id="qrList"></div>
+      <div class="btns stick"><button class="b" id="bQrHome" type="button">回主畫面</button><button class="b go" id="bQrNext" type="button">下一場火</button></div>
+    </div>
+  </div></div>
+
   <div class="ov" id="ovMenu" hidden><div class="panel">
     <div class="ph ink"><h2>設定</h2><span id="mVer"></span></div>
     <div class="pb">
@@ -380,9 +428,10 @@ table.sch{border-collapse:separate;border-spacing:3px;width:100%;font-size:12.5p
 </div>
 
 <script src="three.min.js"></script>
+<script src="qbank.js"></script>
 <script>
 (()=>{'use strict';
-const VERSION='車干製V3.3';
+const VERSION='車干製V3.4';
 const $=id=>document.getElementById(id);
 (function cover(){ const t=$('ovTitle'), im=new Image(); im.onload=()=>{t.style.backgroundImage='url(cover.jpg)'}; im.onerror=()=>t.classList.add('nocover'); im.src='cover.jpg'; })();
 if(!window.THREE){ $('tSub').textContent='3D 元件載入失敗，請檢查網路後重新整理'; return; }
@@ -564,7 +613,7 @@ const Snd=(()=>{
     else if(bel.paused&&!bel.error&&++btry%18===0)bel.play().catch(()=>{});
     return bok&&!bel.paused; }
   function sched(){ if(!ac||ac.state!=='running')return; if(nextT<ac.currentTime)nextT=ac.currentTime+.05;
-    const ok=typeof S!=='undefined'&&S&&typeof G!=='undefined', m=ok?G.mode:'title', k=m==='menu'?(bk||'menu'):(m==='title'||m==='net'||((m==='sched'||m==='shop'||m==='map')&&!inDuty))?'menu':G.coop?'tw':S.theme; if(bgm(k)){ nextT=ac.currentTime+.1; cur=k; return; }
+    const ok=typeof S!=='undefined'&&S&&typeof G!=='undefined', m=ok?G.mode:'title', k=m==='menu'?(bk||'menu'):(m==='title'||m==='net'||m==='quizset'||((m==='sched'||m==='shop'||m==='map')&&!inDuty))?'menu':G.coop?'tw':S.theme; if(bgm(k)){ nextT=ac.currentTime+.1; cur=k; return; }
     if(k==='menu'){ nextT=ac.currentTime+.1; return; }
     if(k!==cur){cur=k;step=0} const M=MUS[cur];
     while(M&&nextT<ac.currentTime+.35){ const go=mode==='go', e=(60/M.bpm[go?1:0])/2, bar=Math.floor(step/8)%8, s=step%8;
@@ -1168,7 +1217,7 @@ function pickAv(c){ const L=FEM.has(c.name)?[1,4]:[0,2,3,5,6,7]; return L[c.id%L
 const avPos=i=>'background-position:'+(i%3)*50+'% '+Math.floor(i/3)*50+'%';
 const avHtml=(i,cls)=>'<i class="av '+(cls||'')+'" style="'+avPos(i)+'"></i>';
 function toast(html,cls,ms){ const d=document.createElement('div'); d.className='tst '+(cls||''); d.innerHTML=html; const bx=$('toast'); bx.appendChild(d); while(bx.children.length>3)bx.firstChild.remove(); setTimeout(()=>d.remove(),ms||2600); }
-function show(id){ if(id==='ovTitle')$('bTMap').hidden=$('bCont').hidden; ['ovTitle','ovSched','ovShop','ovMap','ovNet','ovCard','ovSettle','ovPromo','ovMenu','ovTalk'].forEach(o=>$(o).hidden=o!==id); }
+function show(id){ if(id==='ovTitle')$('bTMap').hidden=$('bCont').hidden; ['ovTitle','ovSched','ovShop','ovMap','ovNet','ovCard','ovSettle','ovPromo','ovMenu','ovTalk','ovQuiz','ovQuizQ','ovQuizRes'].forEach(o=>$(o).hidden=o!==id); }
 const curSlot=()=>Math.min(5,Math.floor(G.clock/SLOT_LEN));
 const roleOf=c=>S.sched[c.id]?S.sched[c.id][curSlot()]:3;
 const isBusy=c=>G.crewEnt[c.id]&&G.crewEnt[c.id].busy;
@@ -1634,7 +1683,7 @@ function getUse(){ const P=G.player, U=G.unit, M=G.mission; if(G.mode!=='duty'||
     if(inc&&inc.kind!=='ems'){ if(P.hose&&P.hose.veh&&dV<4.2)return {label:'收水帶',fn(){P.hose=null;P.stow=V;Snd.click()}};
       if(P.stow===V&&!P.hose&&dV<4.8)return {label:'上車',fn(){P.stow=null;P.veh=V;if(V.type!=='panther')V.hyds=[];U.mates.forEach(c=>G.crewEnt[c.id].mode='hidden');Snd.door();if(inc&&V.type!=='amb')Snd.horn()}};
       if(P.stow&&(P.stow!==V||dV>6))P.stow=null;
-      if(inc.kind==='fire'){const h=V.hyds.length<HYD_MAX?nearestHyd(P,3.2,V.hyds):null; if(h&&Math.hypot(h.x-V.x,h.z-V.z)<30)return {label:'接<br>消防栓',fn(){V.hyds.push(h);Snd.ok();toast('已接上 '+V.hyds.length+' 個消防栓，慢慢補水（越多越快）','good',2600)}}}
+      if(inc.kind==='fire'&&!inc.quiz){const h=V.hyds.length<HYD_MAX?nearestHyd(P,3.2,V.hyds):null; if(h&&Math.hypot(h.x-V.x,h.z-V.z)<30)return {label:'接<br>消防栓',fn(){V.hyds.push(h);Snd.ok();toast('已接上 '+V.hyds.length+' 個消防栓，慢慢補水（越多越快）','good',2600)}}}
       if(V.type==='ladder'&&inc.kind==='fire'&&!P.hose&&dV<4.8&&dist(V,inc)<(inc.hr?24:17))return {label:'升雲梯',fn(){ladderUp(V,inc)}};
       if(!P.hose&&V.cap>0&&V.type!=='ladder'&&dV<4.8&&dist(V,inc)<26)return {label:'拿水帶',fn(){P.hose={veh:V};Snd.click()}}; }
     if(dV<4.8&&!P.hose)return {label:'上車',fn(){P.stow=null;P.veh=V;if(V.type!=='panther')V.hyds=[];U.mates.forEach(c=>G.crewEnt[c.id].mode='hidden');Snd.door();if(inc&&V.type!=='amb')Snd.horn()}};
@@ -1901,7 +1950,7 @@ function updatePlayer(dt){ const P=G.player, j=Input.vec(), M=G.mission, inc=M&&
     if(Input.act){ if(!V||V.water>0){ P.spray=true; if(V)V.water-=5*dt;
         if(inc&&inc.kind==='fire'){ const nodes=G.indoor?G.indoor.fires:inc.nodes; let best=null,bd=NZ.range+2; nodes.forEach(n=>{if(n.hp<=0)return;const d=Math.hypot(n.x-P.x,n.z-P.z);if(d<bd){bd=d;best=n}});
           if(best&&j.mag<.15)P.h=angLerp(P.h,Math.atan2(best.x-P.x,best.z-P.z),Math.min(1,dt*9));
-          let hitN=null,hd=NZ.range; nodes.forEach(n=>{if(n.hp<=0)return;const d=Math.hypot(n.x-P.x,n.z-P.z);if(d<hd&&Math.abs(angDiff(P.h,Math.atan2(n.x-P.x,n.z-P.z)))<.5){hd=d;hitN=n}}); if(hitN){ const kk=hitNode(inc,hitN,NZ.dmg*dt,{foam}); if(kk<.5&&(!P.weakWarn||G.t-P.weakWarn>7)){P.weakWarn=G.t;toast(hitN.chem&&!foam&&!inc.fx.foam?'綠色的是化學火，水沒什麼用，要化學車的泡沫':'水柱打不到高處，要雲梯車幫忙','bad',3000)} } }
+          let hitN=null,hd=NZ.range; nodes.forEach(n=>{if(n.hp<=0)return;const d=Math.hypot(n.x-P.x,n.z-P.z);if(d<hd&&Math.abs(angDiff(P.h,Math.atan2(n.x-P.x,n.z-P.z)))<.5){hd=d;hitN=n}}); if(hitN&&inc.quiz)quizSpray(inc); else if(hitN){ const kk=hitNode(inc,hitN,NZ.dmg*dt,{foam}); if(kk<.5&&(!P.weakWarn||G.t-P.weakWarn>7)){P.weakWarn=G.t;toast(hitN.chem&&!foam&&!inc.fx.foam?'綠色的是化學火，水沒什麼用，要化學車的泡沫':'水柱打不到高處，要雲梯車幫忙','bad',3000)} } }
         const ex=P.x+Math.sin(P.h)*.8, ez=P.z+Math.cos(P.h)*.8; emitWater(ex,1.5,ez,P.h,false,NZ.range/13,foam); if(Math.random()<.6)emitWater(ex,1.5,ez,P.h,false,NZ.range/13,foam);
         sprayWorld(P,dt);
       } else if(!P.dryWarn||G.t-P.dryWarn>4){P.dryWarn=G.t;toast(P.hose.hyd?'消防車沒水了（室內栓的水是車子送上來的）！下樓幫車子接消防栓':'水箱沒水了！去接消防栓','bad',2600)} } }
@@ -1984,18 +2033,18 @@ function updateIncidents(dt){
         if(tr.mesh){tr.mesh.userData.la.rotation.z=-2.4+Math.sin(G.t*9)*.4;tr.mesh.userData.ra.rotation.z=2.4-Math.sin(G.t*9)*.4} if(tr.t<=0&&!(inc.net&&CO&&!CO.host))hurtTrap(inc); } }
     let drain=1; if(inc.kind==='ems'&&inc.patient.treated)drain=.4; inc.left-=dt*drain;
     if(inc.kind==='fire'){
-      if(!inc.net&&G.t-inc.lastHit>3){ inc.nodes.forEach(n=>{if(n.hp>0)n.hp=Math.min(n.max,n.hp+3*dt)});
+      if(!inc.net&&!inc.quiz&&G.t-inc.lastHit>3){ inc.nodes.forEach(n=>{if(n.hp>0)n.hp=Math.min(n.max,n.hp+3*dt)});
         if(inc.where!=='road'&&inc.lvl<3&&inc.age>48*inc.lvl){ inc.lvl++; addBuildingNodes(inc,inc.b,inc.lvl); inc.nodes.forEach(n=>{if(n.hp<=0)n.hp=n.max*.4}); toast(inc.sub+'：火勢擴大為'+LVL[inc.lvl],'bad',2400); }
         else if(inc.where!=='road'&&inc.lvl>=3&&!inc.spread&&inc.age>150){ const nb=world.bAt[inc.b.i+1]&&world.bAt[inc.b.i+1][inc.b.j]||world.bAt[inc.b.i-1]&&world.bAt[inc.b.i-1][inc.b.j]; inc.spread=true; if(nb){addNode(inc,nb.x,1.4,nb.maxZ+.35,90);addNode(inc,nb.x,nb.h+.4,nb.z,90)} toast(inc.sub+'：延燒到隔壁建築！','bad',2600); } }
       if(inc.fac)facAim(inc);
       if(inc.cem)cemTick(inc,dt); else if(inc.hr)hrTick(inc,dt); else inc.nodes.forEach(n=>{ const f=Math.max(0,n.hp/n.max); n.m.visible=f>0; if(f>0){const s=(.6+f*.9)*(1+Math.sin(G.t*11+n.m.userData.ph)*.12)*(1+(inc.lvl-1)*.18); n.m.scale.set(s,s*(1+Math.sin(G.t*17+n.m.userData.ph)*.18),s); n.m.rotation.y+=dt*3; if(Math.random()<dt*5*f)emitSmoke(n.x,n.y+1.8*s,n.z,.8+f*.8+inc.lvl*.2)} });
-      if(!inc.net&&fireFrac(inc)<=0){ const cap=G.mission&&G.mission.inc===inc; rescueTrap(inc,'',true); finishIncident(inc,true,inc.by||[],cap); continue; }
+      if(!inc.net&&!inc.quiz&&fireFrac(inc)<=0){ const cap=G.mission&&G.mission.inc===inc; rescueTrap(inc,'',true); finishIncident(inc,true,inc.by||[],cap); continue; }
     } else if(inc.snake){ const s=inc.snake; let sp=1.6; const dP=dist(P,s);
       if(s.dash>0){s.dash-=dt;sp=9} else if(!P.veh&&dP<4.2&&inc.state==='player'){s.h=angLerp(s.h,Math.atan2(s.x-P.x,s.z-P.z),dt*6);sp=5.3} else { if(Math.hypot(s.tx-s.x,s.tz-s.z)<.6){s.tx=inc.x+R(-5,5);s.tz=inc.z+R(-2.5,4)} s.h=angLerp(s.h,Math.atan2(s.tx-s.x,s.tz-s.z),dt*3) }
       s.x+=Math.sin(s.h)*sp*dt; s.z+=Math.cos(s.h)*sp*dt; const ox=s.x-inc.x, oz=s.z-inc.z, od=Math.hypot(ox,oz); if(od>8){s.x=inc.x+ox/od*8;s.z=inc.z+oz/od*8;s.h+=2.4} resolve(s,.4);
       s.mesh.position.set(s.x,0,s.z); s.mesh.rotation.y=s.h+Math.sin(G.t*12)*.35; }
     else if(inc.cat){ const c=inc.cat; if(c.down&&c.y>0){ c.y=Math.max(0,c.y-9*dt); c.z+=dt*1.2; c.mesh.position.set(c.x,c.y,c.z); if(c.y<=0){ const cap=G.mission&&G.mission.inc===inc; if(!c.wet)say(G.player,'乖，下來了',2); finishIncident(inc,true,cap&&G.unit?G.unit.mates:inc.by||[],cap); continue; } } }
-    if(!inc.net&&inc.left<=0&&inc.state!=='done'){ finishIncident(inc,false,inc.by||[],G.mission&&G.mission.inc===inc); }
+    if(!inc.net&&!inc.quiz&&inc.left<=0&&inc.state!=='done'){ finishIncident(inc,false,inc.by||[],G.mission&&G.mission.inc===inc); }
   }
 }
 function updateFX(dt){ FX.water.forEach(p=>{if(p.life<=0)return;p.life-=dt;p.vy-=14*dt;p.m.position.x+=p.vx*dt;p.m.position.y+=p.vy*dt;p.m.position.z+=p.vz*dt;if(p.life<=0||p.m.position.y<0)p.m.visible=false,p.life=0});
@@ -2005,8 +2054,9 @@ function stopLoops(){ Snd.siren('amb',false); Snd.siren('fire',false); Snd.engin
 let radioT=12;
 function update(dt){
   if(G.paused)return;
+  if(G.quiz&&G.unit)G.unit.veh.water=G.unit.veh.cap;   // 答題模式水用不完
   G.vehicles.forEach(V=>{ if(V.hyds&&V.hyds.length){ V.hyds=V.hyds.filter(h=>Math.hypot(h.x-V.x,h.z-V.z)<=30); if(V.hyds.length)V.water=Math.min(V.cap,V.water+V.hyds.length*HYD_R*dt) } });
-  G.t+=dt; if(!G.coop&&G.clock<DAY_LEN)G.clock=Math.min(DAY_LEN,G.clock+dt);
+  G.t+=dt; if(!G.coop&&!G.quiz&&G.clock<DAY_LEN)G.clock=Math.min(DAY_LEN,G.clock+dt);
   const s=curSlot(); if(s!==G.slot){G.slot=s;applySlot(false)}
   if(G.clock<DAY_LEN-25){ G.spawnT-=dt; const st=ST();
     if(G.spawnT<=0){ if(G.incidents.length<S.stage+2){ const inc=spawnIncident(); if(inc&&!G.cardInc)openCard(inc); }
@@ -2060,7 +2110,7 @@ function updateHUD(){
   $('hRep').textContent='聲望 '+S.rep; $('hCoin').textContent='獎金 '+S.coin; { const Q=S.quest, hq=$('hQuest'); hq.hidden=!Q; if(Q)hq.textContent='今日任務 '+Q.q.filter(x=>x.n>=x.need).length+'／3'; }
   const free=S.crew.filter(c=>!isBusy(c)&&roleOf(c)!==3&&c.mood>=30).length, fv=G.vehicles.filter(v=>v.state==='parked');
   $('hRes').innerHTML='待命 '+free+'人 <small>消'+fv.filter(v=>v.type!=='amb').length+' 救'+fv.filter(v=>v.type==='amb').length+'</small>';
-  $('pending').innerHTML=G.incidents.map(i=>'<button type="button" class="chip '+(i.kind==='ems'?'ems ':i.kind==='svc'?'svc ':'')+(i.state==='pending'?'wait':'')+'" data-i="'+i.id+'">'+i.sub+' '+fmtT(i.left)+(i.state==='pending'?' 待派':i.state==='player'?' 隊長':' 處理中')+'</button>').join('');
+  $('pending').innerHTML=G.incidents.filter(i=>!i.quiz).map(i=>'<button type="button" class="chip '+(i.kind==='ems'?'ems ':i.kind==='svc'?'svc ':'')+(i.state==='pending'?'wait':'')+'" data-i="'+i.id+'">'+i.sub+' '+fmtT(i.left)+(i.state==='pending'?' 待派':i.state==='player'?' 隊長':' 處理中')+'</button>').join('');
   const M=G.mission, P=G.player, U=G.unit, bx=$('mission');
   if(M||U){ bx.hidden=false; const inc=M&&M.inc; let obj='';
     if(!inc){ $('mTitle').textContent=U.patrol?'轄區巡邏':'返隊'; obj=P.veh?(U.patrol?'到處逛逛，開回車庫就收隊':'把車開回分隊車庫'):'回到 '+U.veh.label+' 上車'; $('mLifeRow').hidden=$('mFireRow').hidden=$('mWaterRow').hidden=true; $('mMates').hidden=true; }
@@ -2083,6 +2133,8 @@ function updateHUD(){
       else obj=drive||(inc.cat.down?'貓下來了':'站到樹下，按住「安撫」'+Math.round(inc.cat.prog*100)+'%');
       if(inc.hr&&!G.indoor&&!P.veh){ const vt=U.veh.type; obj=P.lad?(hrWin(inc,U.veh)?'按「雲梯救人」接窗邊求救的人':U.veh.water<=0?'沒水了！收梯下來接消防栓':'按住「出水」打高樓窗口的火（水會灌進屋內）'):vt==='ladder'&&dv<=24?'到雲梯車旁「升雲梯」，或從大門進大樓搜救':P.hose?'窗口的火可以在外面打；要搜救就從大門進大樓':'從大門「進入大樓」上樓搜救'+(vt==='ladder'?'（雲梯車開到大樓前面可以升梯）':''); }
       if(!P.veh&&!G.indoor&&dist(P,U.veh)>8&&dv>26&&!P.hose&&!P.carry)obj='到車庫登上 '+U.veh.label; }
+    if(inc&&inc.quiz&&QS){ $('mTitle').textContent='救火答題・'+(QZ.g===5?'五':'六')+'年級'+QZ.s+'・第 '+G.quiz.round+' 場'; $('mLifeRow').hidden=true; $('mWaterRow').hidden=true; const dv=dist(G.unit.veh,inc);
+      obj=P.veh?(dist(P,inc)>18?'開回火場':'按「下車」'):!P.hose?(dv>26?'回到消防車，開近火場':'到消防車旁按「拿水帶」'):'對準火焰按住「出水」就會出題（答對 '+QS.ok+'／'+QNEED+'）'; }
     $('mObj').textContent=obj; } else bx.hidden=true;
   const N=world.N, k=208/N, x=mctx; x.clearRect(0,0,208,208); if(world.cem){ x.fillStyle='rgba(176,182,104,.85)'; x.fillRect(0,0,14*k,6*k); x.fillStyle='rgba(150,190,120,.8)'; x.fillRect(0,7*k,14*k,5*k); } x.fillStyle='#8fa3b3';
   world.roads.forEach(r=>x.fillRect(r.i*k,r.j*k,k+.5,k+.5));
@@ -2095,26 +2147,26 @@ function updateHUD(){
   a=mp(P); x.fillStyle='#fff'; x.beginPath(); x.arc(a[0],a[1],5.5,0,7); x.fill(); x.strokeStyle='#1c2836'; x.lineWidth=2.5; x.stroke();
 }
 $('hQuest').addEventListener('click',()=>{ if(!S.quest)return; Snd.click(); S.quest.q.forEach(x=>toast(QDEF[x.k].t(x.need)+'　'+(x.n>=x.need?'完成':x.n+'／'+x.need),x.n>=x.need?'good':'',3200)); });
-$('hCoin').addEventListener('click',()=>{ if(G.mode!=='duty'||G.coop||G.cardInc||G.talking)return; Snd.click(); openShop(); });
+$('hCoin').addEventListener('click',()=>{ if(G.mode!=='duty'||G.coop||G.quiz||G.cardInc||G.talking)return; Snd.click(); openShop(); });
 $('pending').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;const inc=G.incidents.find(i=>i.id===+b.dataset.i);if(!inc||G.cardInc)return; if(G.talking){toast('先把對話看完再派遣','',1800);return} if(inc.state!=='pending'){toast(inc.state==='player'?'這件是隊長在處理，跟著黃色箭頭去':'這件已經派人在處理了','',2000);return} openCard(inc); if(!G.cardInc)toast('現在不能派遣（'+(G.mode!=='duty'?'不在值勤中':'請稍後再試')+'）','',2000)});
 
 /* ============ 設定 ============ */
 let menuFrom=null;
-function openMenu(){ if(G.mode==='menu')return; menuFrom={mode:G.mode}; G.mode='menu'; $('vMus').value=Snd.st.m*100; $('vSfx').value=Snd.st.s*100; $('bMute').textContent='靜音：'+(Snd.st.mute?'開':'關'); $('bShadow').textContent='陰影：'+(sun.castShadow?'開':'關'); { const d=menuFrom.mode==='duty'&&!G.coop; $('bMSched').hidden=$('bMShop').hidden=!d; $('bHome').hidden=menuFrom.mode==='title'; $('bHome').textContent=CO?'離開連線房間':d?'回主畫面（今天從早上重來）':'回主畫面'; $('bAutoFull').textContent='自動全螢幕：'+(S.vol.full?'開':'關'); } $('cCode').textContent=fmtCode(S.code); Cloud.set(Cloud.st.ok,Cloud.st.msg); show('ovMenu'); }
+function openMenu(){ if(G.mode==='menu')return; menuFrom={mode:G.mode}; G.mode='menu'; $('vMus').value=Snd.st.m*100; $('vSfx').value=Snd.st.s*100; $('bMute').textContent='靜音：'+(Snd.st.mute?'開':'關'); $('bShadow').textContent='陰影：'+(sun.castShadow?'開':'關'); { const d=menuFrom.mode==='duty'&&!G.coop&&!G.quiz; $('bMSched').hidden=$('bMShop').hidden=!d; $('bHome').hidden=menuFrom.mode==='title'; $('bHome').textContent=CO?'離開連線房間':G.quiz?'回主畫面（結束答題）':d?'回主畫面（今天從早上重來）':'回主畫面'; $('bAutoFull').textContent='自動全螢幕：'+(S.vol.full?'開':'關'); } $('cCode').textContent=fmtCode(S.code); Cloud.set(Cloud.st.ok,Cloud.st.msg); show('ovMenu'); }
 function saveVol(){ if(S){S.vol.m=Snd.st.m;S.vol.s=Snd.st.s;S.vol.mute=Snd.st.mute;Save.save(S)} }
 $('bMenu').addEventListener('click',()=>{Snd.init();openMenu()});
 $('vMus').addEventListener('input',e=>{Snd.set('m',e.target.value/100);saveVol()});
 $('vSfx').addEventListener('input',e=>{Snd.set('s',e.target.value/100);saveVol();Snd.click()});
 $('bMute').addEventListener('click',()=>{Snd.set('mute',!Snd.st.mute);$('bMute').textContent='靜音：'+(Snd.st.mute?'開':'關');saveVol()});
 $('bShadow').addEventListener('click',()=>{fpsDone=true;setShadow(!sun.castShadow)});
-$('bResume').addEventListener('click',()=>{ G.mode=menuFrom.mode; const back={title:'ovTitle',sched:'ovSched',shop:'ovShop',net:'ovNet',map:'ovMap',settle:'ovSettle',promo:'ovPromo'}[G.mode]; show(back||(G.cardInc?'ovCard':G.talking?'ovTalk':null)); });
+$('bResume').addEventListener('click',()=>{ G.mode=menuFrom.mode; const back={title:'ovTitle',sched:'ovSched',shop:'ovShop',net:'ovNet',map:'ovMap',settle:'ovSettle',promo:'ovPromo'}[G.mode]; show(back||(G.cardInc?'ovCard':G.talking?'ovTalk':QS&&QS.open?'ovQuizQ':G.quiz&&G.quiz.res?'ovQuizRes':null)); });
 $('bCode').addEventListener('click',()=>{Snd.init();openMenu()});
 $('bMSched').addEventListener('click',()=>{ Snd.click(); inDuty=true; stopLoops(); openSched(); });
 $('bMShop').addEventListener('click',()=>{ Snd.click(); G.mode='duty'; openShop(); });
 $('bAutoFull').addEventListener('click',()=>{ S.vol.full=!S.vol.full; Save.save(S); $('bAutoFull').textContent='自動全螢幕：'+(S.vol.full?'開':'關'); Snd.click(); });
 $('bHome').addEventListener('click',()=>{ Snd.click(); if(CO)netLeave(); else goHome(); });
 ['bSchedHome','bShopHome','bMapHome'].forEach(id=>$(id).addEventListener('click',()=>{ Snd.click(); shopDirty=false; if(CO)netLeave(); else goHome(); }));
-function goHome(){ persist(true); stopLoops(); inDuty=false; G.paused=false; G.talking=false; G.cardInc=null; G.sleep=false; $('sleepV').hidden=true; $('hud').hidden=true; try{ if(document.fullscreenElement||document.webkitFullscreenElement)(document.exitFullscreen||document.webkitExitFullscreen).call(document) }catch(e){}
+function goHome(){ G.quiz=null; QS=null; persist(true); stopLoops(); inDuty=false; G.paused=false; G.talking=false; G.cardInc=null; G.sleep=false; $('sleepV').hidden=true; $('hud').hidden=true; try{ if(document.fullscreenElement||document.webkitFullscreenElement)(document.exitFullscreen||document.webkitExitFullscreen).call(document) }catch(e){}
   buildWorld(); G.mode='title'; $('bCont').hidden=false; $('bNew').textContent='重新開始'; $('bNew').className='b'; $('tSub').textContent=VERSION+'　第 '+S.day+' 天・'+ST().name+'・獎金 '+S.coin; show('ovTitle'); Snd.mode('calm'); }
 $('bCopy').addEventListener('click',()=>{ const t=fmtCode(S.code), done=()=>{$('bCopy').textContent='已複製';setTimeout(()=>$('bCopy').textContent='複製',1500)}; try{navigator.clipboard.writeText(t).then(done).catch(()=>{const r=document.createRange();r.selectNodeContents($('cCode'));const s=getSelection();s.removeAllRanges();s.addRange(r)})}catch(e){} });
 $('bLoad').addEventListener('click',()=>{ const code=$('iCode').value.toUpperCase().replace(/[^A-Z0-9]/g,''); { const gm=/^GM(\d{1,6})$/.exec(code); if(gm&&S){ const n=+gm[1]; coin(n); bump(); persist(true); shopDirty=true; $('iCode').value=''; Cloud.set(true,'GM：獎金 +'+n+'（現有 '+S.coin+'）'); return } } if(code.length!==8){Cloud.set(false,'接續碼是 8 個英數字');return} Cloud.set(null,'讀取中…'); $('bLoad').disabled=true;
@@ -2672,7 +2724,76 @@ function boot(){
 }
 $('bCont').addEventListener('click',()=>{Snd.init();Snd.click();autoFull();openSched()});
 $('bNew').addEventListener('click',()=>{Snd.init();Snd.click();autoFull(); const vol=S.vol; S=freshSave(); S.vol=vol; Cloud.mark(true,-1); openSched(); buildWorld(); persist(true); });
-window.__ff={Snd,spawnEvent,finishEvent,useEvent,buildWorld,G,findPath,roadCellNear,getUse,getAct,doUse,dist,get S(){return S},get world(){return world},spawnIncident,openCard,Input,STAGES,endDay,finishIncident,Save,say,jinx,crewTalk,pedTalk,whistle,honk,sun,useThing,VEH,NOZ,coin,openShop,closeShop,makeVehicle,fixBays,scene,camera,renderer,persist,startDuty,openSched,update:dt=>update(dt),gotoMap,openMap,THEMES,ST,get CO(){return CO},RT,netCreate,netJoin,netStart,netLeave,netTick:r=>netTick(r),goHome,resumeDuty,enterIndoor,exitIndoor,hrGo,hrClaim,hrUse,hrWin,HRL,HRF,hrBuild,SKINS,rollBox,openBox,skinThumb,quest,makePerson,rescueTrap,fxOf,ladderUp,ladderDown,sendSup,updateHUD:()=>updateHUD(),closeCard:()=>closeCard(),FX,cemHost,CEM,COOP_LV,hitNode};
+/* ============ 救火答題模式：拿水帶對著火射水就會出題，答對 10 題火才會撲滅（題庫在 qbank.js 的 QB） ============ */
+const QZ=(()=>{ let o=null; try{o=JSON.parse(localStorage.getItem('ff_quiz')||'null')}catch(e){} return Object.assign({g:5,s:'自然',units:null,wrongOnly:false},o||{}); })();
+const QWR=(()=>{ let o=null; try{o=JSON.parse(localStorage.getItem('ff_qwrong')||'null')}catch(e){} return o&&typeof o==='object'?o:{}; })();   // 錯題本：題目文字 → 答錯次數
+const qzSave=()=>{ try{ localStorage.setItem('ff_quiz',JSON.stringify(QZ)); localStorage.setItem('ff_qwrong',JSON.stringify(QWR)); }catch(e){} };
+const QNEED=10; let QS=null;
+const qBank=()=>(typeof QB!=='undefined'&&Array.isArray(QB))?QB:[];
+const qUnits=()=>{ const out=[]; qBank().forEach(q=>{ if(q.g===QZ.g&&(QZ.s==='混合'||q.s===QZ.s)){ const k=q.s+'|'+q.u; if(!out.includes(k))out.push(k); } }); return out; };
+const qPool=()=>qBank().filter(q=>q.g===QZ.g&&(QZ.s==='混合'||q.s===QZ.s)&&(!QZ.units||QZ.units.includes(q.s+'|'+q.u))&&(!QZ.wrongOnly||QWR[q.q]>0));
+function openQuiz(){ G.mode='quizset'; $('hud').hidden=true; renderQuiz(); show('ovQuiz'); }
+function renderQuiz(){ const us=qUnits(); if(QZ.units)QZ.units=QZ.units.filter(k=>us.includes(k)); if(QZ.units&&!QZ.units.length)QZ.units=null;
+  setH('qzG',[5,6].map(g=>'<button type="button" class="opt'+(QZ.g===g?' sel':'')+'" data-qg="'+g+'">'+(g===5?'五':'六')+'年級<small>上學期</small></button>').join(''));
+  setH('qzS',['自然','社會','混合'].map(s=>'<button type="button" class="opt'+(QZ.s===s?' sel':'')+'" data-qs="'+s+'">'+s+'<small>'+(s==='混合'?'自然＋社會':s==='自然'?'康軒單元':'翰林單元')+'</small></button>').join(''));
+  setH('qzU','<button type="button" class="opt'+(!QZ.units?' sel':'')+'" data-qu="*">全部單元<small>期末總複習</small></button>'+us.map(k=>{ const [s,u]=k.split('|'), n=qBank().filter(q=>q.g===QZ.g&&q.s===s&&q.u===u).length; return '<button type="button" class="opt'+(QZ.units&&QZ.units.includes(k)?' sel':'')+'" data-qu="'+esc(k)+'">'+(QZ.s==='混合'?s+'・':'')+esc(u)+'<small>'+n+' 題</small></button>'; }).join(''));
+  const nw=qBank().filter(q=>q.g===QZ.g&&(QZ.s==='混合'||q.s===QZ.s)&&QWR[q.q]>0).length;
+  setH('qzW','<button type="button" class="opt'+(QZ.wrongOnly?' sel':'')+'" data-qw="1"'+(nw||QZ.wrongOnly?'':' disabled')+'>只練錯題<small>錯題本 '+nw+' 題</small></button>');
+  const n=qPool().length; $('qzNote').textContent=n<4?'選到的題目太少了（至少要 4 題），多選幾個單元。':'這次的題庫有 '+n+' 題。拿水帶對著火焰按住「出水」就會出題，答對 '+QNEED+' 題火才會撲滅；答錯的題目等一下會再考一次。';
+  $('bQzGo').classList.toggle('dim',n<4); }
+$('ovQuiz').addEventListener('click',e=>{ const b=e.target.closest('.opt'); if(!b||b.disabled)return; Snd.click();
+  if(b.dataset.qg){ QZ.g=+b.dataset.qg; QZ.units=null; QZ.wrongOnly=false; }
+  else if(b.dataset.qs){ QZ.s=b.dataset.qs; QZ.units=null; QZ.wrongOnly=false; }
+  else if(b.dataset.qu){ const k=b.dataset.qu; if(k==='*')QZ.units=null; else { const a=QZ.units?QZ.units.slice():[]; const i=a.indexOf(k); if(i>=0)a.splice(i,1); else a.push(k); QZ.units=a.length?a:null; } }
+  else if(b.dataset.qw){ QZ.wrongOnly=!QZ.wrongOnly; }
+  qzSave(); renderQuiz(); });
+$('bQzHome').addEventListener('click',()=>{ Snd.click(); G.mode='title'; show('ovTitle'); });
+$('bQzGo').addEventListener('click',()=>{ if(qPool().length<4){ toast('選到的題目太少了，多選幾個單元','bad',2400); Snd.beep(); return; } Snd.init(); Snd.click(); autoFull(); quizStart(); });
+function quizStart(){ G.coopCfg=null; buildWorld(); G.quiz={round:0,tot:0,ok:0,res:false}; G.coop=false; G.mode='duty'; G.paused=false; G.talking=false; G.t=0; G.clock=120; G.slot=curSlot(); G.log=[]; G.cardInc=null; G.spawnT=1e9; G.evT=1e9; G.dayDone=false; G.rain=false; G.sleep=false; inDuty=false;
+  FX.wm.color.setHex(NOZ[S.noz].col); $('sleepV').hidden=true; show(null); $('hud').hidden=false; resize(); quizFire(); }
+function quizFire(){ const P=G.player, Gq=G.quiz; if(!Gq)return; Gq.res=false; let inc=null;
+  for(let k=0;k<20&&!inc;k++){ const i=spawnIncident('fire','住宅火警'); if(!i)continue; if(i.trap&&!i.trap.hidden){ closeIncident(i); continue; } inc=i; }
+  if(!inc){ toast('找不到可以出題的火場，請回主畫面再試一次','bad',3000); return; }
+  inc.trap=null; inc.quiz=true; inc.state='player'; inc.shown=true; inc.total=inc.left=9999; inc.chem=false; inc.nodes.forEach(n=>{n.chem=false;n.hp=n.max});
+  let V=G.unit&&G.unit.veh; if(!V){ const vs=G.vehicles.filter(v=>v.state==='parked'&&v.type!=='amb'&&v.M.cap>0); V=vs.find(v=>v.type==='small')||vs[0]; }
+  if(!V){ toast('分隊裡沒有可以出水的消防車','bad',3000); return; }
+  V.state='player'; V.hyds=[]; V.v=0; G.unit={veh:V,mates:[],out:true}; G.mission={inc};
+  const r=inc.road; V.x=cx(r.i)+5.2; V.z=cx(r.j)+2; V.h=-Math.PI/2; V.water=V.cap; P.veh=null; P.hose={veh:V}; P.lad=null; P.carry=false; P.x=V.x-1.5; P.z=V.z+3; P.h=Math.PI; G.camT.x=P.x; G.camT.z=P.z;
+  Gq.round++; QS={inc,ok:0,n:0,first:0,asked:new Set(),retry:[],wrong:[],open:false,cool:0,cur:null};
+  Snd.mode('go'); Snd.bell(); toast('第 '+Gq.round+' 場火！水帶已經拿好了，走近火焰按住「出水」就會出題','big',4200); }
+function qShuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function qNext(){ const pool=qPool(); if(QS.retry.length&&QS.n-QS.retry[0].at>=3)return QS.retry.shift().q;
+  let left=pool.filter(q=>!QS.asked.has(q.q)); if(!left.length){ QS.asked.clear(); left=pool; }
+  const w=left.map(q=>1+Math.min(3,QWR[q.q]||0)*1.5), sum=w.reduce((a,b)=>a+b,0); let r=Math.random()*sum, k=0; for(;k<left.length-1;k++){ r-=w[k]; if(r<=0)break; } return left[k]; }   // 以前答錯過的題目比較常出現
+function quizSpray(inc){ if(!QS||QS.inc!==inc||QS.open||G.t<QS.cool||G.paused)return; const q=qNext(); if(!q)return;
+  QS.open=true; QS.n++; QS.asked.add(q.q); QS.cur={q,opts:qShuffle(q.a),done:false}; Input.act=false; G.paused=true; renderQ(); show('ovQuizQ'); Snd.radio(); }
+function renderQ(){ const c=QS.cur, q=c.q;
+  $('qqHead').textContent='第 '+QS.n+' 題　火勢 '+Math.round((1-QS.ok/QNEED)*100)+'%　答對 '+QS.ok+'／'+QNEED; $('qqTag').textContent=q.g+'年級'+q.s+'・'+q.u;
+  $('qqText').textContent=q.q; setH('qqOpts',c.opts.map((t,i)=>'<button type="button" class="qopt" data-qi="'+i+'"><b>'+'ABCD'[i]+'</b>'+esc(t)+'</button>').join(''));
+  $('qqFb').hidden=true; $('bQqNext').hidden=true; }
+$('qqOpts').addEventListener('click',e=>{ const b=e.target.closest('.qopt'); if(!b||!QS||!QS.cur||QS.cur.done)return; const c=QS.cur, q=c.q, pick=c.opts[+b.dataset.qi], ok=pick===q.a[0]; c.done=true; c.ok=ok;
+  [...$('qqOpts').children].forEach((x,i)=>{ const t=c.opts[i]; x.classList.add(t===q.a[0]?'right':x===b?'bad':'off'); });
+  const fb=$('qqFb'); fb.hidden=false; fb.className='qfb '+(ok?'good':'bad'); fb.innerHTML='<b>'+(ok?'答對了！水柱命中！':'答錯了…正確答案是：'+esc(q.a[0]))+'</b>'+(q.e?'<span>'+esc(q.e)+'</span>':'');
+  if(ok){ QS.ok++; if(!QS.wrong.includes(q))QS.first++; if(QWR[q.q]){ QWR[q.q]--; if(QWR[q.q]<=0)delete QWR[q.q]; } Snd.ok(); }
+  else { if(!QS.wrong.includes(q))QS.wrong.push(q); QS.retry.push({q,at:QS.n}); QWR[q.q]=(QWR[q.q]||0)+2; Snd.boing(); }   // 答錯記 2 次，之後要再答對 2 次才會離開錯題本
+  qzSave(); $('bQqNext').hidden=false; $('bQqNext').textContent=ok&&QS.ok>=QNEED?'撲滅火勢！':'繼續射水'; });
+$('bQqNext').addEventListener('click',()=>{ if(!QS||!QS.cur||!QS.cur.done)return; Snd.click(); const c=QS.cur, inc=QS.inc; QS.cur=null; QS.open=false; QS.cool=G.t+.9; show(null); G.paused=false;
+  const f=Math.max(0,1-QS.ok/QNEED);
+  if(c.ok){ inc.nodes.forEach(n=>{ n.hp=n.max*f; for(let k=0;k<3;k++)emitSmoke(n.x+R(-1,1),n.y+1.5,n.z+R(-1,1),1.2); }); if(QS.ok>=QNEED){ quizWin(); return; } toast('答對！火勢減弱（還要 '+(QNEED-QS.ok)+' 題）','good',1600); }
+  else { inc.nodes.forEach(n=>{ n.hp=Math.min(n.max,Math.max(n.hp,n.max*f)+n.max*.06); }); toast('答錯了，火又變大了！這題等一下會再考一次','bad',2200); } });
+function quizWin(){ const inc=QS.inc, Gq=G.quiz, P=G.player; inc.nodes.forEach(n=>{ n.hp=0; for(let k=0;k<6;k++)emitSmoke(n.x+R(-1.5,1.5),n.y+1,n.z+R(-1.5,1.5),1.5); });
+  const acc=QS.first/QNEED, st=acc>=1?5:acc>=.9?4:acc>=.7?3:acc>=.5?2:1, cn=Math.round(20+QS.first*6); coin(cn); bump(); persist(true); Gq.tot+=QS.n; Gq.ok+=QS.first;
+  Snd.promo(); toast('<b>'+stars(st)+'</b><br>火勢撲滅！獎金 +'+cn,'good big',2600); Input.act=false; P.hose=null; QS.res={st,cn,acc};
+  setTimeout(()=>{ if(!G.quiz||!QS||QS.inc!==inc)return; closeIncident(inc); G.mission=null; Gq.res=true; G.paused=true; renderQRes(); show('ovQuizRes'); },1800); }
+function renderQRes(){ const r=QS.res, W=QS.wrong;
+  $('qrBig').innerHTML='<span class="stars">'+stars(r.st)+'</span>';
+  $('qrNote').textContent='第 '+G.quiz.round+' 場火撲滅！一共答了 '+QS.n+' 題，第一次就答對 '+QS.first+' 題（'+Math.round(r.acc*100)+'%）。獎金 +'+r.cn+(W.length?'。下面是這場答錯的題目，再看一次：':'。全部一次答對，太厲害了！');
+  setH('qrList',W.map(q=>'<div class="qrw"><div class="qq">'+esc(q.q)+'</div><div class="qa">✔ '+esc(q.a[0])+'</div>'+(q.e?'<div class="qe">'+esc(q.e)+'</div>':'')+'</div>').join('')); }
+$('bQrNext').addEventListener('click',()=>{ Snd.click(); show(null); G.paused=false; quizFire(); });
+$('bQrHome').addEventListener('click',()=>{ Snd.click(); goHome(); });
+$('bQuiz').addEventListener('click',()=>{ Snd.init(); Snd.click(); openQuiz(); });
+
+window.__ff={get QS(){return QS},QZ,QWR,quizStart,quizFire,quizSpray,openQuiz,Snd,spawnEvent,finishEvent,useEvent,buildWorld,G,findPath,roadCellNear,getUse,getAct,doUse,dist,get S(){return S},get world(){return world},spawnIncident,openCard,Input,STAGES,endDay,finishIncident,Save,say,jinx,crewTalk,pedTalk,whistle,honk,sun,useThing,VEH,NOZ,coin,openShop,closeShop,makeVehicle,fixBays,scene,camera,renderer,persist,startDuty,openSched,update:dt=>update(dt),gotoMap,openMap,THEMES,ST,get CO(){return CO},RT,netCreate,netJoin,netStart,netLeave,netTick:r=>netTick(r),goHome,resumeDuty,enterIndoor,exitIndoor,hrGo,hrClaim,hrUse,hrWin,HRL,HRF,hrBuild,SKINS,rollBox,openBox,skinThumb,quest,makePerson,rescueTrap,fxOf,ladderUp,ladderDown,sendSup,updateHUD:()=>updateHUD(),closeCard:()=>closeCard(),FX,cemHost,CEM,COOP_LV,hitNode};
 boot();
 })();
 </script>
